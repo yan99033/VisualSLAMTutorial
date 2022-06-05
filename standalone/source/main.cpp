@@ -27,5 +27,8 @@ auto main(int argc, char** argv) -> int {
     return 0;
   }
 
+  vslam_libs::image_loader::LoadFromFolder loader(
+      "/media/bryan/DATA/EuRoC_dataset/MH/MH_01/cam0/data");
+
   return 0;
 }

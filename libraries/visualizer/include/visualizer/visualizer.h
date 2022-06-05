@@ -2,13 +2,11 @@
 #define __LOAD_FROM_FOLDER_H__
 
 namespace vslam_libs {
-namespace visualizer {
+  namespace visualizer {
 
-class Visualizer
-{
-};
+    class Visualizer {};
 
-}  // namespace visualizer
+  }  // namespace visualizer
 }  // namespace vslam_libs
 
 #endif  // __LOAD_FROM_FOLDER_H__

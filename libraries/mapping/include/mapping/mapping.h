@@ -2,13 +2,11 @@
 #define __LOAD_FROM_FOLDER_H__
 
 namespace vslam_libs {
-namespace mapping {
+  namespace mapping {
 
-class Mapping
-{
-};
+    class Mapping {};
 
-}  // namespace mapping
+  }  // namespace mapping
 }  // namespace vslam_libs
 
 #endif  // __LOAD_FROM_FOLDER_H__

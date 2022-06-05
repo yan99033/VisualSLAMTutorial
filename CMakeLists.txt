@@ -35,6 +35,7 @@ CPMAddPackage(
 
 # ---- Add source files ----
 
+set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(libraries/image_loader)
 add_subdirectory(libraries/camera_tracking)
 add_subdirectory(libraries/mapping)
