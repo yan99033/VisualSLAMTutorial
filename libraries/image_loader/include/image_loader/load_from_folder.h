@@ -5,7 +5,6 @@
 #include <vector>
 namespace vslam_libs {
   namespace image_loader {
-
     class LoadFromFolder {
     public:
       LoadFromFolder(const std::string& folder);
