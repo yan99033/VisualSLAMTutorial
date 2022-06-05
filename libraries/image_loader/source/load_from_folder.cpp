@@ -1,0 +1,1 @@
+#include "image_loader/load_from_folder.h"

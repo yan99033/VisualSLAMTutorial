@@ -42,17 +42,6 @@ cmake --build build/standalone
 ./build/standalone/Greeter --help
 ```
 
-See [Format.cmake](https://github.com/TheLartians/Format.cmake) for details.
-### Build everything at once
-
-The project also includes an `all` directory that allows building all targets at the same time.
-This is useful during development, as it exposes all subprojects to your IDE and avoids redundant builds of the library.
-
-```bash
-cmake -S all -B build
-cmake --build build
-```
-
 ## Acknowledgement
 
 This repository is created using [ModernCppStarter](https://github.com/TheLartians/ModernCppStarter): A template for modern C++ project
