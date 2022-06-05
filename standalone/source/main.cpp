@@ -1,12 +1,9 @@
-#include <image_loader/load_from_folder.h>
-
 #include <cxxopts.hpp>
 #include <iostream>
 #include <string>
-#include <unordered_map>
 
 auto main(int argc, char** argv) -> int {
-  cxxopts::Options options(*argv, "A program to welcome the world!");
+  cxxopts::Options options(*argv, "Visual SLAM on a images in a folder");
 
   std::string language;
   std::string name;
@@ -14,9 +11,7 @@ auto main(int argc, char** argv) -> int {
   // clang-format off
   options.add_options()
     ("h,help", "Show help")
-    ("v,version", "Print the current version number")
-    ("n,name", "Name to greet", cxxopts::value(name)->default_value("World"))
-    ("l,lang", "Language code to use", cxxopts::value(language)->default_value("en"))
+    ("v,version", "1.0")
   ;
   // clang-format on
 
