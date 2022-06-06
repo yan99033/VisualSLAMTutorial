@@ -19,8 +19,6 @@ namespace vslam_libs {
     };
 
   }  // namespace image_loader
-
-  class LoadFromFolderError : 
 }  // namespace vslam_libs
 
 #endif  // __LOAD_FROM_FOLDER_H__
