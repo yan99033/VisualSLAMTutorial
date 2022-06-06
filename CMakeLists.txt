@@ -31,11 +31,21 @@ CPMAddPackage(
   GIT_TAG 8.1.1
   GITHUB_REPOSITORY fmtlib/fmt
   OPTIONS "FMT_INSTALL YES" # create an installable target
+          "CMAKE_POSITION_INDEPENDENT_CODE ON"
+)
+
+CPMAddPackage(
+  NAME GSL
+  GITHUB_REPOSITORY "Microsoft/GSL"
+  VERSION "4.0.0"
+  GIT_SHALLOW ON
 )
 
 # ---- Add source files ----
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
 add_subdirectory(libraries/image_loader)
 add_subdirectory(libraries/camera_tracking)
 add_subdirectory(libraries/mapping)

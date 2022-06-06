@@ -1,13 +1,17 @@
 set(LIB_NAME image_loader)
 
+# ---- Add dependencies ----
+find_package(OpenCV REQUIRED)
+
 add_library(${LIB_NAME} SHARED source/load_from_folder.cpp)
 
 target_include_directories(
   ${LIB_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                      $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+  # PRIVATE ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(${LIB_NAME} PRIVATE stdc++fs)
+target_link_libraries(${LIB_NAME} PRIVATE fmt::fmt stdc++fs GSL) # ${OpenCV_LIBRARIES})
 
 packageProject(
   NAME ${LIB_NAME}
@@ -18,5 +22,5 @@ packageProject(
   INCLUDE_DESTINATION include/${LIB_NAME}-${PROJECT_VERSION}
   VERSION_HEADER "${VERSION_HEADER_LOCATION}"
   COMPATIBILITY SameMajorVersion
-  DEPENDENCIES "fmt 8.1.1"
+  DEPENDENCIES "fmt 8.1.1;GSL 4.0.0"
 )
