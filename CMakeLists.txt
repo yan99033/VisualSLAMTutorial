@@ -31,6 +31,7 @@ CPMAddPackage(
   GIT_TAG 8.1.1
   GITHUB_REPOSITORY fmtlib/fmt
   OPTIONS "FMT_INSTALL YES" # create an installable target
+          "CMAKE_POSITION_INDEPENDENT_CODE ON"
 )
 
 # ---- Add source files ----
