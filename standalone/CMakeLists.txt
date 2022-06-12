@@ -16,6 +16,14 @@ CPMAddPackage(
   OPTIONS "CXXOPTS_BUILD_EXAMPLES NO" "CXXOPTS_BUILD_TESTS NO" "CXXOPTS_ENABLE_INSTALL YES"
 )
 
+CPMAddPackage(
+  NAME fmt
+  GIT_TAG 8.1.1
+  GITHUB_REPOSITORY fmtlib/fmt
+  OPTIONS "FMT_INSTALL YES" # create an installable target
+          "CMAKE_POSITION_INDEPENDENT_CODE ON"
+)
+
 CPMAddPackage(NAME VisualSlamLibraries SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # ---- Create standalone executable ----
@@ -28,4 +36,5 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "Vi
 
 target_link_libraries(
   ${PROJECT_NAME} VisualSlamLibraries::image_loader VisualSlamLibraries::camera_tracking cxxopts
+  fmt::fmt
 )

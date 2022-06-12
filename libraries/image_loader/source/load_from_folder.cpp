@@ -10,8 +10,9 @@ namespace vslam_libs {
 
     LoadFromFolder::LoadFromFolder(const std::string& folder, std::string ext) : i(0) {
       // Check if the path points to an empty file or directory
-      if (std::filesystem::is_empty(folder)) {
-        throw ImageLoaderError(fmt::format("The folder ({}) is empty.\n", folder));
+      if (!std::filesystem::exists(folder) or std::filesystem::is_empty(folder)) {
+        throw ImageLoaderError(
+            fmt::format("The folder ({}) is either invalid or empty.\n", folder));
       }
 
       for (const auto& f : std::filesystem::directory_iterator(folder)) {
