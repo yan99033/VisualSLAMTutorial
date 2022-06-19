@@ -46,6 +46,7 @@ CPMAddPackage(
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
+add_subdirectory(libraries/datastructure)
 add_subdirectory(libraries/image_loader)
 add_subdirectory(libraries/camera_tracking)
 add_subdirectory(libraries/mapping)
