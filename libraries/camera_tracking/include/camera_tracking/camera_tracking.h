@@ -4,7 +4,9 @@
 namespace vslam_libs {
   namespace camera_tracking {
 
-    class CameraTracking {};
+    class CameraTracking {
+      CameraTracking() = default;
+    };
 
   }  // namespace camera_tracking
 }  // namespace vslam_libs
