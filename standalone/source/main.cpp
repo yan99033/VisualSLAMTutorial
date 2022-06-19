@@ -1,8 +1,10 @@
 #include <fmt/core.h>
 
 #include <cxxopts.hpp>
+#include <fstream>
 #include <iostream>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <opencv2/highgui.hpp>
 #include <string>
 
@@ -19,7 +21,8 @@ auto main(int argc, char** argv) -> int {
   options.add_options()
     ("h,help", "Show help")
     ("v,version", "1.0")
-    ("intrinsics", "camera intrinsics in a yaml file", cxxopts::value<std::string>()->default_value("config/cam.json"))
+    ("image_folder", "A folder containing the images", cxxopts::value<std::string>())
+    ("intrinsics", "camera intrinsics in a yaml file", cxxopts::value<std::string>()->default_value("standalone/config/cam.json"))
   ;
   // clang-format on
 
@@ -32,10 +35,21 @@ auto main(int argc, char** argv) -> int {
 
   try {
     // Load camera intrinsics
+    double fx, fy, cx, cy;
     std::string intrinsics_yaml = result["intrinsics"].as<std::string>();
+    std::ifstream i(intrinsics_yaml);
+    nlohmann::json intrinsics;
+    i >> intrinsics;
+    intrinsics.at("fx").get_to(fx);
+    intrinsics.at("fy").get_to(fy);
+    intrinsics.at("cx").get_to(cx);
+    intrinsics.at("cy").get_to(cy);
+    fmt::print("intrinsics: {} {} {} {}\n", fx, fy, cx, cy);
 
-    vslam_libs::image_loader::LoadFromFolder loader(
-        "/media/bryan/DATA/EuRoC_dataset/MH/MH_01/cam0/data");
+    // Get the image folder
+    std::string image_folder = result["image_folder"].as<std::string>();
+
+    vslam_libs::image_loader::LoadFromFolder loader(image_folder);
 
     while (true) {
       cv::Mat image = loader.getNextFrame();
