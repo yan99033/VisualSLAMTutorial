@@ -2,9 +2,11 @@
 
 #include <cxxopts.hpp>
 #include <iostream>
+#include <memory>
 #include <opencv2/highgui.hpp>
 #include <string>
 
+#include "datastructure/frame.h"
 #include "image_loader/load_from_folder.h"
 
 auto main(int argc, char** argv) -> int {
@@ -32,9 +34,12 @@ auto main(int argc, char** argv) -> int {
         "/media/bryan/DATA/EuRoC_dataset/MH/MH_01/cam0/data");
 
     while (true) {
-      cv::Mat frame = loader.getNextFrame();
+      cv::Mat image = loader.getNextFrame();
 
-      cv::imshow("frame", frame);
+      vslam_libs::datastructure::FramePtr frame
+          = std::make_shared<vslam_libs::datastructure::Frame>(image);
+
+      cv::imshow("image", image);
       cv::waitKey(1);
     }
   } catch (const std::exception& e) {

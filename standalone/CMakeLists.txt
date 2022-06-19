@@ -35,6 +35,6 @@ add_executable(${PROJECT_NAME} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "VisualSlam")
 
 target_link_libraries(
-  ${PROJECT_NAME} VisualSlamLibraries::image_loader VisualSlamLibraries::camera_tracking cxxopts
-  fmt::fmt
+  ${PROJECT_NAME} VisualSlamLibraries::datastructure VisualSlamLibraries::image_loader
+  VisualSlamLibraries::camera_tracking cxxopts fmt::fmt
 )
