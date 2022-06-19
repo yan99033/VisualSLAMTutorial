@@ -19,6 +19,7 @@ auto main(int argc, char** argv) -> int {
   options.add_options()
     ("h,help", "Show help")
     ("v,version", "1.0")
+    ("intrinsics", "camera intrinsics in a yaml file", cxxopts::value<std::string>()->default_value("config/cam.json"))
   ;
   // clang-format on
 
@@ -30,6 +31,9 @@ auto main(int argc, char** argv) -> int {
   }
 
   try {
+    // Load camera intrinsics
+    std::string intrinsics_yaml = result["intrinsics"].as<std::string>();
+
     vslam_libs::image_loader::LoadFromFolder loader(
         "/media/bryan/DATA/EuRoC_dataset/MH/MH_01/cam0/data");
 

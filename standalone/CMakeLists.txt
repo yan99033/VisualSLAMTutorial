@@ -26,6 +26,13 @@ CPMAddPackage(
 
 CPMAddPackage(NAME VisualSlamLibraries SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 
+CPMAddPackage(
+  NAME nlohmann_json
+  VERSION 3.10.5
+  GITHUB_REPOSITORY nlohmann/json
+  OPTIONS "JSON_BuildTests OFF"
+)
+
 # ---- Create standalone executable ----
 
 file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
