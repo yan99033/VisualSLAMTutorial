@@ -45,6 +45,7 @@ auto main(int argc, char** argv) -> int {
     intrinsics.at("cx").get_to(cx);
     intrinsics.at("cy").get_to(cy);
     fmt::print("intrinsics: {} {} {} {}\n", fx, fy, cx, cy);
+    cv::Mat cam_mat = (cv::Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 
     // Get the image folder
     std::string image_folder = result["image_folder"].as<std::string>();
@@ -55,7 +56,7 @@ auto main(int argc, char** argv) -> int {
       cv::Mat image = loader.getNextFrame();
 
       vslam_libs::datastructure::FramePtr frame
-          = std::make_shared<vslam_libs::datastructure::Frame>(image);
+          = std::make_shared<vslam_libs::datastructure::Frame>(image, cam_mat);
 
       cv::imshow("image", image);
       cv::waitKey(1);
