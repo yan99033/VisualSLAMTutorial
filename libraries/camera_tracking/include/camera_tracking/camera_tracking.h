@@ -1,5 +1,5 @@
-#ifndef __LOAD_FROM_FOLDER_H__
-#define __LOAD_FROM_FOLDER_H__
+#ifndef __CAMERA_TRACKING_H__
+#define __CAMERA_TRACKING_H__
 
 namespace vslam_libs {
   namespace camera_tracking {
