@@ -1,8 +1,6 @@
 set(LIB_NAME image_loader)
 
 # ---- Add dependencies ----
-find_package(OpenCV REQUIRED)
-
 add_library(${LIB_NAME} SHARED source/load_from_folder.cpp)
 
 target_include_directories(
