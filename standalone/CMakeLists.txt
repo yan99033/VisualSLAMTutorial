@@ -43,6 +43,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "Vi
 
 target_link_libraries(
   ${PROJECT_NAME}
+  VisualSlamLibraries::feature_detector
   VisualSlamLibraries::datastructure
   VisualSlamLibraries::image_loader
   VisualSlamLibraries::camera_tracking

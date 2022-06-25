@@ -10,6 +10,7 @@
 #include <string>
 
 #include "datastructure/frame.h"
+#include "feature_detector/feature_detector.h"
 #include "image_loader/load_from_folder.h"
 
 void getCorrespondences(const std::vector<cv::KeyPoint>& keypoints1,
@@ -78,7 +79,8 @@ auto main(int argc, char** argv) -> int {
 
     // ORB feature detector and matcher
     int num_features = 1000;
-    auto detector = cv::ORB::create(num_features);
+    cv::Ptr<cv::ORB> detector2 = cv::ORB::create(num_features);
+    vslam_libs::feature_detector::OrbFeatureDetector detector(num_features);
     auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
 
     bool first_frame = true;
@@ -90,13 +92,13 @@ auto main(int argc, char** argv) -> int {
 
       if (first_frame) {
         first_frame = false;
-        detector->detectAndCompute(image, cv::noArray(), keypoints1, descriptors1);
+        detector2->detectAndCompute(image, cv::noArray(), keypoints1, descriptors1);
       }
 
       vslam_libs::datastructure::FramePtr frame
-          = std::make_shared<vslam_libs::datastructure::Frame>(image, cam_mat);
+          = std::make_shared<vslam_libs::datastructure::Frame>(image, cam_mat, &detector);
 
-      detector->detectAndCompute(image, cv::noArray(), keypoints2, descriptors2);
+      detector2->detectAndCompute(image, cv::noArray(), keypoints2, descriptors2);
 
       std::vector<cv::DMatch> matches;
       std::vector<char> matcher_mask;
