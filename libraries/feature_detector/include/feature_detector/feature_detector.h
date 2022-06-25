@@ -11,12 +11,10 @@ namespace vslam_libs {
       OrbFeatureDetector(int num_features);
 
     private:
-      cv::Ptr<cv::ORB> detector; 
+      cv::Ptr<cv::ORB> detector;
     };
 
+  }  // namespace feature_detector
+}  // namespace vslam_libs
 
-  } // namespace feature_detector
-} // namespace vslam_libs
-
-
-#endif // __FEATURE_DETECTOR_H__
+#endif  // __FEATURE_DETECTOR_H__

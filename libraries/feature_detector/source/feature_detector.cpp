@@ -6,6 +6,5 @@ namespace vslam_libs {
       detector = cv::ORB::create(num_features);
     }
 
-  } // namespace feature_detector
-} // namespace vslam_libs
-
+  }  // namespace feature_detector
+}  // namespace vslam_libs
