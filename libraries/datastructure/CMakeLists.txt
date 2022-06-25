@@ -8,7 +8,11 @@ target_include_directories(
          $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}> ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(${LIB_NAME} PUBLIC ${OpenCV_LIBRARIES})
+target_link_libraries(
+  ${LIB_NAME}
+  PUBLIC ${OpenCV_LIBRARIES}
+  PRIVATE feature_detector
+)
 
 packageProject(
   NAME ${LIB_NAME}
