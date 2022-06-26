@@ -1,6 +1,6 @@
-set(LIB_NAME mapping)
+set(LIB_NAME mapper)
 
-add_library(${LIB_NAME} SHARED source/mapping.cpp)
+add_library(${LIB_NAME} SHARED source/mapper.cpp)
 
 target_include_directories(
   ${LIB_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

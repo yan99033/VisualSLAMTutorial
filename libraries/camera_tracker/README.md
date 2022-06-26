@@ -1,3 +1,3 @@
-# Image loader
+# Camera tracker
 
-This library provides the functionality to load a set of images to the visual SLAM system.
+This library provides the functionality to track the camera motion the visual SLAM system.

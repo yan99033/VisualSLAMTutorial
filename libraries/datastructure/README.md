@@ -1,3 +1,3 @@
-# Image loader
+# Datastructure
 
-This library provides the functionality to load a set of images to the visual SLAM system.
+This library provides the data structures to the visual SLAM system.

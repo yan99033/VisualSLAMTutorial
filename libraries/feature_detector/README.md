@@ -1,3 +1,3 @@
-# Image loader
+# Feature detector
 
-This library provides the functionality to load a set of images to the visual SLAM system.
+This library provides the functionality to detect and compute feature descriptors in the images.
