@@ -14,10 +14,21 @@ namespace vslam_libs {
       Frame(const cv::Mat& image, const cv::Mat& cam_mat,
             feature_detector::OrbFeatureDetector* detector = nullptr);
 
+      // Getters
+      cv::Mat getDescriptors() const;
+      const std::vector<cv::KeyPoint>& getKeypoints() const;
+
     private:
+      // detect and compute feature descriptors
+      void detectAndComputeDescriptors();
+
       cv::Mat image;    //<! the image of the frame
       cv::Mat cam_mat;  //<! 3x3 camera matrix containing the camera intrinsics
       feature_detector::OrbFeatureDetector* detector;  //<! ORB feature detector
+
+      // Keypoints and their feature descciptors computed by OrbFeatureDescriptor
+      std::vector<cv::KeyPoint> keypoints;
+      cv::Mat descriptors;
     };
 
     using FramePtr = std::shared_ptr<Frame>;

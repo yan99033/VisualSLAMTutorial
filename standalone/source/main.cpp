@@ -79,31 +79,36 @@ auto main(int argc, char** argv) -> int {
 
     // ORB feature detector and matcher
     int num_features = 1000;
-    cv::Ptr<cv::ORB> detector2 = cv::ORB::create(num_features);
     vslam_libs::feature_detector::OrbFeatureDetector detector(num_features);
     auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
 
-    bool first_frame = true;
     std::vector<cv::KeyPoint> keypoints1, keypoints2;
     cv::Mat descriptors1, descriptors2;
+
+    std::vector<vslam_libs::datastructure::FramePtr> frames;
+    vslam_libs::datastructure::FramePtr prev_frame;
 
     while (true) {
       cv::Mat image = loader.getNextFrame();
 
-      if (first_frame) {
-        first_frame = false;
-        detector2->detectAndCompute(image, cv::noArray(), keypoints1, descriptors1);
-      }
-
       vslam_libs::datastructure::FramePtr frame
           = std::make_shared<vslam_libs::datastructure::Frame>(image, cam_mat, &detector);
 
-      detector2->detectAndCompute(image, cv::noArray(), keypoints2, descriptors2);
+      frames.push_back(frame);
 
+      if (frames.size() < 2) {
+        prev_frame = frame;
+        continue;
+      }
+
+      descriptors1 = prev_frame->getDescriptors();
+      descriptors2 = frame->getDescriptors();
       std::vector<cv::DMatch> matches;
       std::vector<char> matcher_mask;
       matcher->match(descriptors1, descriptors2, matches, matcher_mask);
 
+      keypoints1 = prev_frame->getKeypoints();
+      keypoints2 = frame->getKeypoints();
       std::vector<cv::Point2f> points1, points2;
       getCorrespondences(keypoints1, keypoints2, matches, matcher_mask, points1, points2);
 
@@ -118,8 +123,8 @@ auto main(int argc, char** argv) -> int {
       cv::imshow("image", image);
       cv::waitKey(1);
 
-      keypoints1 = keypoints2;
-      descriptors1 = descriptors2;
+      // Keep the pointer to the previous frame
+      prev_frame = frame;
     }
   } catch (const std::exception& e) {
     fmt::print("Error: {}\n", e.what());
