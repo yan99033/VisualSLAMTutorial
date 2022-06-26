@@ -46,7 +46,7 @@ target_link_libraries(
   VisualSlamLibraries::feature_detector
   VisualSlamLibraries::datastructure
   VisualSlamLibraries::image_loader
-  VisualSlamLibraries::camera_tracking
+  VisualSlamLibraries::camera_tracker
   cxxopts
   fmt::fmt
   nlohmann_json

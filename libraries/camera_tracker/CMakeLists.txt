@@ -1,6 +1,6 @@
-set(LIB_NAME camera_tracking)
+set(LIB_NAME camera_tracker)
 
-add_library(${LIB_NAME} SHARED source/camera_tracking.cpp)
+add_library(${LIB_NAME} SHARED source/camera_tracker.cpp)
 
 target_include_directories(
   ${LIB_NAME}
