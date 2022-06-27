@@ -14,29 +14,6 @@
 #include "feature_detector/feature_detector.h"
 #include "image_loader/load_from_folder.h"
 
-void getCorrespondences(const std::vector<cv::KeyPoint>& keypoints1,
-                        const std::vector<cv::KeyPoint>& keypoints2,
-                        const std::vector<cv::DMatch>& matches, const std::vector<char>& mask,
-                        std::vector<cv::Point2f>& points1, std::vector<cv::Point2f>& points2) {
-  // Get the matches
-  points1.clear();
-  points2.clear();
-
-  // Check if the length of matches is the same as that of mask!
-  for (size_t m = 0; m < matches.size(); m++) {
-    if (mask.empty() || mask[m]) {
-      int i1 = matches[m].queryIdx;
-      int i2 = matches[m].trainIdx;
-
-      cv::KeyPoint kp1 = keypoints1.at(i1);
-      cv::KeyPoint kp2 = keypoints2.at(i2);
-
-      points1.emplace_back(kp1.pt);
-      points2.emplace_back(kp2.pt);
-    }
-  }
-}
-
 auto main(int argc, char** argv) -> int {
   cxxopts::Options options(*argv, "Visual SLAM on a images in a folder");
 
@@ -86,9 +63,6 @@ auto main(int argc, char** argv) -> int {
     // Camera tracker
     vslam_libs::camera_tracker::CameraTracker cam_tracker(cam_mat, matcher.get());
 
-    // std::vector<cv::KeyPoint> keypoints1, keypoints2;
-    // cv::Mat descriptors1, descriptors2;
-
     std::vector<vslam_libs::datastructure::FramePtr> frames;
     vslam_libs::datastructure::FramePtr prev_frame;
 
@@ -105,22 +79,9 @@ auto main(int argc, char** argv) -> int {
         continue;
       }
 
-      // descriptors1 = prev_frame->getDescriptors();
-      // descriptors2 = frame->getDescriptors();
-      // std::vector<cv::DMatch> matches;
-      // std::vector<char> matcher_mask;
-      // matcher->match(descriptors1, descriptors2, matches, matcher_mask);
-
-      // keypoints1 = prev_frame->getKeypoints();
-      // keypoints2 = frame->getKeypoints();
-      // std::vector<cv::Point2f> points1, points2;
-      // getCorrespondences(keypoints1, keypoints2, matches, matcher_mask, points1, points2);
-
       // recovering the pose and the essential matrix
       cv::Mat R, t, mask;
       cam_tracker.recoverPose(prev_frame, frame, R, t, mask);
-      // E = cv::findEssentialMat(points2, points1, cam_mat, cv::RANSAC, 0.999, 1.0, mask);
-      // cv::recoverPose(E, points2, points1, cam_mat, R, t, mask);
 
       std::cout << "pose:\n";
       std::cout << R << "\n";
