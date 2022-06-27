@@ -76,6 +76,10 @@ auto main(int argc, char** argv) -> int {
 
       if (frames.size() < 2) {
         prev_frame = frame;
+        cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
+        cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
+        prev_frame->setPose(zero_R, zero_t);
+
         continue;
       }
 
@@ -83,9 +87,18 @@ auto main(int argc, char** argv) -> int {
       cv::Mat R, t, mask;
       cam_tracker.recoverPose(prev_frame, frame, R, t, mask);
 
-      std::cout << "pose:\n";
+      // Calculate the global pose
+      cv::Mat prev_R, prev_t;
+      prev_frame->getPose(prev_R, prev_t);
+      t = prev_t + prev_R * t;
+      R = R * prev_R;
+      frame->setPose(R, t);
+
+      std::cout << "global pose:"
+                << "\n";
       std::cout << R << "\n";
       std::cout << t << std::endl;
+
       cv::imshow("image", image);
       cv::waitKey(1);
 

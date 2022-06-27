@@ -17,6 +17,10 @@ namespace vslam_libs {
       // Getters
       cv::Mat getDescriptors() const;
       const std::vector<cv::KeyPoint>& getKeypoints() const;
+      cv::Mat getPose(cv::Mat& R, cv::Mat& t) const;
+
+      // Setter
+      void setPose(cv::Mat R, cv::Mat t);
 
     private:
       // detect and compute feature descriptors
@@ -29,6 +33,10 @@ namespace vslam_libs {
       // Keypoints and their feature descciptors computed by OrbFeatureDescriptor
       std::vector<cv::KeyPoint> keypoints;
       cv::Mat descriptors;
+
+      // Camera pose
+      cv::Mat R;
+      cv::Mat t;
     };
 
     using FramePtr = std::shared_ptr<Frame>;
