@@ -66,6 +66,11 @@ auto main(int argc, char** argv) -> int {
     std::vector<vslam_libs::datastructure::FramePtr> frames;
     vslam_libs::datastructure::FramePtr prev_frame;
 
+    cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
+    cv::Mat prev_R, prev_t;
+    cv::Mat R, t, mask;
+
     while (true) {
       cv::Mat image = loader.getNextFrame();
 
@@ -76,19 +81,16 @@ auto main(int argc, char** argv) -> int {
 
       if (frames.size() < 2) {
         prev_frame = frame;
-        cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
-        cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
+
         prev_frame->setPose(zero_R, zero_t);
 
         continue;
       }
 
       // recovering the pose and the essential matrix
-      cv::Mat R, t, mask;
       cam_tracker.recoverPose(prev_frame, frame, R, t, mask);
 
       // Calculate the global pose
-      cv::Mat prev_R, prev_t;
       prev_frame->getPose(prev_R, prev_t);
       t = prev_t + prev_R * t;
       R = R * prev_R;

@@ -14,15 +14,16 @@ namespace vslam_libs {
     // Getter (user has to check if the descriptors and keypoints are valid)
     cv::Mat Frame::getDescriptors() const { return descriptors; }
     const std::vector<cv::KeyPoint>& Frame::getKeypoints() const { return keypoints; }
-    cv::Mat Frame::getPose(cv::Mat& R, cv::Mat& t) const {
-      R = this->R;
-      t = this->t;
+
+    void Frame::getPose(cv::Mat& R, cv::Mat& t) const {
+      R = this->R.clone();
+      t = this->t.clone();
     }
 
     // Set the camera pose
-    void Frame::setPose(cv::Mat R, cv::Mat t) {
-      this->R = R;
-      this->t = t;
+    void Frame::setPose(const cv::Mat& R, const cv::Mat& t) {
+      this->R = R.clone();
+      this->t = t.clone();
     }
 
     void Frame::detectAndComputeDescriptors() {

@@ -17,10 +17,10 @@ namespace vslam_libs {
       // Getters
       cv::Mat getDescriptors() const;
       const std::vector<cv::KeyPoint>& getKeypoints() const;
-      cv::Mat getPose(cv::Mat& R, cv::Mat& t) const;
+      void getPose(cv::Mat& R, cv::Mat& t) const;
 
       // Setter
-      void setPose(cv::Mat R, cv::Mat t);
+      void setPose(const cv::Mat& R, const cv::Mat& t);
 
     private:
       // detect and compute feature descriptors

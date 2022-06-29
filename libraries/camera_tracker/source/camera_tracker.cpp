@@ -24,7 +24,7 @@ namespace vslam_libs {
 
       // recovering the essential matrix and the pose
       cv::Mat E = cv::findEssentialMat(points2, points1, cam_mat, cv::RANSAC, 0.999, 1.0, mask);
-      cv::recoverPose(E, points2, points1, cam_mat, R, t, mask);
+      return cv::recoverPose(E, points2, points1, cam_mat, R, t, mask);
     }
 
     void getCorrespondences(const std::vector<cv::KeyPoint>& keypoints1,
