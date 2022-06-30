@@ -11,7 +11,7 @@ target_include_directories(
 target_link_libraries(
   ${LIB_NAME}
   PUBLIC ${OpenCV_LIBRARIES}
-  PRIVATE datastructure feature_detector
+  PRIVATE fmt::fmt datastructure feature_detector
 )
 
 packageProject(

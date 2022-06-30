@@ -30,6 +30,10 @@ namespace vslam_libs {
                             const std::vector<cv::DMatch>& matches, const std::vector<char>& mask,
                             std::vector<cv::Point2f>& points1, std::vector<cv::Point2f>& points2);
 
+    class CameraTrackerError : public std::runtime_error {
+    public:
+      CameraTrackerError(const std::string msg) : runtime_error(msg) {}
+    };
   }  // namespace camera_tracker
 }  // namespace vslam_libs
 

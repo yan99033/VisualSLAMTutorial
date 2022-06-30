@@ -1,5 +1,7 @@
 #include "camera_tracker/camera_tracker.h"
 
+#include <fmt/core.h>
+
 namespace vslam_libs {
   namespace camera_tracker {
 
@@ -36,6 +38,11 @@ namespace vslam_libs {
       points2.clear();
 
       // Check if the length of matches is the same as that of mask!
+      if (!mask.empty() && (mask.size() != matches.size())) {
+        throw CameraTrackerError(fmt::format("Size mismatch between mask ({}) and matches({})",
+                                             mask.size(), matches.size()));
+      }
+
       for (size_t m = 0; m < matches.size(); m++) {
         if (mask.empty() || mask[m]) {
           int i1 = matches[m].queryIdx;
