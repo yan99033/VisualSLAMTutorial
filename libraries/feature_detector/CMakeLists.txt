@@ -1,7 +1,6 @@
-set(LIB_NAME image_loader)
+set(LIB_NAME feature_detector)
 
-# ---- Add dependencies ----
-add_library(${LIB_NAME} SHARED source/load_from_folder.cpp)
+add_library(${LIB_NAME} SHARED source/feature_detector.cpp)
 
 target_include_directories(
   ${LIB_NAME}
@@ -9,11 +8,7 @@ target_include_directories(
          $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}> ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(
-  ${LIB_NAME}
-  PRIVATE fmt::fmt stdc++fs
-  PUBLIC ${OpenCV_LIBRARIES}
-)
+target_link_libraries(${LIB_NAME} PUBLIC ${OpenCV_LIBRARIES})
 
 packageProject(
   NAME ${LIB_NAME}

@@ -1,7 +1,6 @@
-set(LIB_NAME image_loader)
+set(LIB_NAME camera_tracker)
 
-# ---- Add dependencies ----
-add_library(${LIB_NAME} SHARED source/load_from_folder.cpp)
+add_library(${LIB_NAME} SHARED source/camera_tracker.cpp)
 
 target_include_directories(
   ${LIB_NAME}
@@ -11,8 +10,8 @@ target_include_directories(
 
 target_link_libraries(
   ${LIB_NAME}
-  PRIVATE fmt::fmt stdc++fs
   PUBLIC ${OpenCV_LIBRARIES}
+  PRIVATE fmt::fmt datastructure feature_detector
 )
 
 packageProject(

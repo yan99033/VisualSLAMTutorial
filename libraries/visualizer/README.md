@@ -1,3 +1,3 @@
-# Mapping
+# Visualizer
 
-This library provides the functionality to map the environment.
+This library provides the functionality to visualize the camera poses and structure of the scene.

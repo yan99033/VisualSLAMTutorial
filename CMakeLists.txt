@@ -18,6 +18,10 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   )
 endif()
 
+# ---- Add dependencies ----
+
+find_package(OpenCV REQUIRED)
+
 # ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
 
@@ -34,9 +38,21 @@ CPMAddPackage(
           "CMAKE_POSITION_INDEPENDENT_CODE ON"
 )
 
+CPMAddPackage(
+  NAME GSL
+  GITHUB_REPOSITORY "Microsoft/GSL"
+  VERSION "4.0.0"
+  GIT_SHALLOW ON
+)
+
 # ---- Add source files ----
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
+add_subdirectory(libraries/feature_detector)
+add_subdirectory(libraries/datastructure)
 add_subdirectory(libraries/image_loader)
-add_subdirectory(libraries/camera_tracking)
-add_subdirectory(libraries/mapping)
+add_subdirectory(libraries/camera_tracker)
+add_subdirectory(libraries/mapper)
 add_subdirectory(libraries/visualizer)

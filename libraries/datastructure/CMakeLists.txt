@@ -1,10 +1,17 @@
-set(LIB_NAME camera_tracking)
+set(LIB_NAME datastructure)
 
-add_library(${LIB_NAME} SHARED source/camera_tracking.cpp)
+add_library(${LIB_NAME} SHARED source/frame.cpp)
 
 target_include_directories(
-  ${LIB_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                     $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+  ${LIB_NAME}
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}> ${OpenCV_INCLUDE_DIRS}
+)
+
+target_link_libraries(
+  ${LIB_NAME}
+  PUBLIC ${OpenCV_LIBRARIES}
+  PRIVATE feature_detector
 )
 
 packageProject(
