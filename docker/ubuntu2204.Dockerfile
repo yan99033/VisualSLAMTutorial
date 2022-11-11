@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
   cmake \
   git \
   vim \
-  python3-pip
+  python3-pip \
+  libopencv-dev
 
 RUN pip3 install cmake-format clang-format PyYAML
 
