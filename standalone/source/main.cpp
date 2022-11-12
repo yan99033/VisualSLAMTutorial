@@ -13,6 +13,7 @@
 #include "datastructure/frame.h"
 #include "feature_detector/feature_detector.h"
 #include "image_loader/load_from_folder.h"
+#include "visualizer/visualizer.h"
 
 auto main(int argc, char** argv) -> int {
   cxxopts::Options options(*argv, "Visual SLAM on a images in a folder");
@@ -35,6 +36,9 @@ auto main(int argc, char** argv) -> int {
     std::cout << options.help() << std::endl;
     return 0;
   }
+
+  // Visualizer
+  vslam_libs::visualizer::Visualizer visualizer;
 
   try {
     // Load camera intrinsics
@@ -112,6 +116,8 @@ auto main(int argc, char** argv) -> int {
   } catch (...) {
     fmt::print("Non std::exception error caught\n");
   }
+
+  visualizer.stop();
 
   fmt::print("Goodbye!\n");
 
