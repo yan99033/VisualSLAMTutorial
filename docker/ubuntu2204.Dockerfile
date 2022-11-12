@@ -8,9 +8,37 @@ RUN apt-get update && apt-get install -y \
   git \
   vim \
   python3-pip \
-  libopencv-dev
+  libopencv-dev \
+  ninja-build \
+  sudo
 
 RUN pip3 install cmake-format clang-format PyYAML
+
+# Dependencies for Pangolin viewer
+RUN apt-get update && apt-get install -y \
+  libgl1-mesa-dev \
+  libwayland-dev \
+  libxkbcommon-dev \
+  wayland-protocols \
+  libegl1-mesa-dev \
+  libc++-dev \
+  libglew-dev \
+  libeigen3-dev \
+  g++ 
+
+# Install Pangolin viewer
+WORKDIR /
+RUN git clone --recursive https://github.com/stevenlovegrove/Pangolin.git
+WORKDIR /Pangolin
+RUN git switch --detach v0.8
+RUN cmake -B build
+RUN cmake --build build
+WORKDIR /Pangolin/build
+RUN make install
+WORKDIR /
+RUN rm -rf Pangolin
+
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 # Create a non-root user
 ARG USER=user
