@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <opencv2/core.hpp>
+#include <sophus/se3.hpp>
 
 #include "feature_detector/feature_detector.h"
 
@@ -17,10 +18,10 @@ namespace vslam_libs {
       // Getters
       cv::Mat getDescriptors() const;
       const std::vector<cv::KeyPoint>& getKeypoints() const;
-      void getPose(cv::Mat& R, cv::Mat& t) const;
+      void getPose(Sophus::SE3d& T_c_w);
 
       // Setter
-      void setPose(const cv::Mat& R, const cv::Mat& t);
+      void setPose(const Sophus::SE3d& T_c_w);
 
     private:
       // detect and compute feature descriptors
@@ -35,8 +36,11 @@ namespace vslam_libs {
       cv::Mat descriptors;
 
       // Camera pose
-      cv::Mat R;
-      cv::Mat t;
+      Sophus::SE3d Tcw;
+      // cv::Mat R;
+      // cv::Mat t;
+
+      std::mutex mutex;
     };
 
     using FramePtr = std::shared_ptr<Frame>;

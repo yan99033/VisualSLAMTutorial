@@ -22,6 +22,12 @@ endif()
 
 find_package(OpenCV REQUIRED)
 
+find_package(Pangolin 0.8 REQUIRED)
+
+find_package(Sophus 22.4.1 REQUIRED)
+
+find_package(Eigen3 REQUIRED)
+
 # ---- Add dependencies via CPM ----
 # see https://github.com/TheLartians/CPM.cmake for more info
 

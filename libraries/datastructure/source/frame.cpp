@@ -15,15 +15,15 @@ namespace vslam_libs {
     cv::Mat Frame::getDescriptors() const { return descriptors; }
     const std::vector<cv::KeyPoint>& Frame::getKeypoints() const { return keypoints; }
 
-    void Frame::getPose(cv::Mat& R, cv::Mat& t) const {
-      R = this->R.clone();
-      t = this->t.clone();
+    void Frame::getPose(Sophus::SE3d& Tcw) {
+      std::lock_guard<std::mutex> lck(mutex);
+      Tcw = this->Tcw;
     }
 
     // Set the camera pose
-    void Frame::setPose(const cv::Mat& R, const cv::Mat& t) {
-      this->R = R.clone();
-      this->t = t.clone();
+    void Frame::setPose(const Sophus::SE3d& Tcw) {
+      std::lock_guard<std::mutex> lck(mutex);
+      this->Tcw = Tcw;
     }
 
     void Frame::detectAndComputeDescriptors() {
