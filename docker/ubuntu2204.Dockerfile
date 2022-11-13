@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
   libeigen3-dev \
   g++ 
 
-# Install Pangolin viewer
+# Pangolin viewer
 WORKDIR /
 RUN git clone --recursive https://github.com/stevenlovegrove/Pangolin.git
 WORKDIR /Pangolin
@@ -37,6 +37,17 @@ WORKDIR /Pangolin/build
 RUN make install
 WORKDIR /
 RUN rm -rf Pangolin
+
+# Sophus
+WORKDIR /
+RUN git clone https://github.com/strasdat/Sophus.git
+WORKDIR /Sophus
+RUN git switch --detach v22.10
+RUN mkdir build 
+WORKDIR /Sophus/build
+RUN cmake -DSOPHUS_USE_BASIC_LOGGING=ON .. && make && make install
+WORKDIR /
+RUN rm -rf Sophus
 
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
