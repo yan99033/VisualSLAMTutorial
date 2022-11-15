@@ -5,8 +5,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/highgui.hpp>
 #include <string>
 
 #include "camera_tracker/camera_tracker.h"
@@ -14,6 +12,11 @@
 #include "feature_detector/feature_detector.h"
 #include "image_loader/load_from_folder.h"
 #include "visualizer/visualizer.h"
+
+// Must come after the local library
+#include <opencv2/calib3d.hpp>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/highgui.hpp>
 
 auto main(int argc, char** argv) -> int {
   cxxopts::Options options(*argv, "Visual SLAM on a images in a folder");
@@ -70,10 +73,14 @@ auto main(int argc, char** argv) -> int {
     std::vector<vslam_libs::datastructure::FramePtr> frames;
     vslam_libs::datastructure::FramePtr prev_frame;
 
-    cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
-    cv::Mat prev_R, prev_t;
-    cv::Mat R, t, mask;
+    // cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
+    // cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
+    // Sophus::SE3d init_T_c_w;
+    Sophus::SE3d Twp;
+    // cv::Mat prev_R, prev_t;
+    cv::Mat Rpc_cv, tpc_cv, mask;
+    Eigen::Matrix3d Rpc_eigen;
+    Eigen::Vector3d tpc_eigen;
 
     while (true) {
       cv::Mat image = loader.getNextFrame();
@@ -85,28 +92,29 @@ auto main(int argc, char** argv) -> int {
 
       if (frames.size() < 2) {
         prev_frame = frame;
-
-        prev_frame->setPose(zero_R, zero_t);
-
         continue;
       }
 
       // recovering the pose and the essential matrix
-      cam_tracker.recoverPose(prev_frame, frame, R, t, mask);
+      cam_tracker.recoverPose(frame, prev_frame, Rpc_cv, tpc_cv, mask);
+      cv::cv2eigen(Rpc_cv, Rpc_eigen);
+      cv::cv2eigen(tpc_cv, tpc_eigen);
+      Sophus::SE3d Tpc(Rpc_eigen, tpc_eigen);
 
       // Calculate the global pose
-      prev_frame->getPose(prev_R, prev_t);
-      t = prev_t + prev_R * t;
-      R = R * prev_R;
-      frame->setPose(R, t);
+      prev_frame->getPose(Twp);
+      Sophus::SE3d Twc = Twp * Tpc;
+      frame->setPose(Twc);
 
       std::cout << "global pose:"
                 << "\n";
-      std::cout << R << "\n";
-      std::cout << t << std::endl;
+      std::cout << Twc.rotationMatrix() << "\n";
+      std::cout << Twc.translation() << std::endl;
 
       cv::imshow("image", image);
       cv::waitKey(1);
+
+      visualizer.addCurrentFrame(frame);
 
       // Keep the pointer to the previous frame
       prev_frame = frame;

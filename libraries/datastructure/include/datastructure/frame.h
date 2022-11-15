@@ -18,10 +18,10 @@ namespace vslam_libs {
       // Getters
       cv::Mat getDescriptors() const;
       const std::vector<cv::KeyPoint>& getKeypoints() const;
-      void getPose(Sophus::SE3d& T_c_w);
+      void getPose(Sophus::SE3d& Tcw);
 
       // Setter
-      void setPose(const Sophus::SE3d& T_c_w);
+      void setPose(const Sophus::SE3d& Tcw);
 
     private:
       // detect and compute feature descriptors
@@ -37,8 +37,6 @@ namespace vslam_libs {
 
       // Camera pose
       Sophus::SE3d Tcw;
-      // cv::Mat R;
-      // cv::Mat t;
 
       std::mutex mutex;
     };

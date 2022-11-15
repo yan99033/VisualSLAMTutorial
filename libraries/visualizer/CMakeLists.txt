@@ -1,8 +1,5 @@
 set(LIB_NAME visualizer)
 
-# pangolin
-find_package(Pangolin 0.8 REQUIRED)
-
 add_library(${LIB_NAME} SHARED source/visualizer.cpp)
 
 target_include_directories(
@@ -11,7 +8,11 @@ target_include_directories(
          $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}> ${Pangolin_INCLUDE_DIRS}
 )
 
-target_link_libraries(${LIB_NAME} PUBLIC ${Pangolin_LIBRARIES})
+target_link_libraries(
+  ${LIB_NAME}
+  PUBLIC ${Pangolin_LIBRARIES}
+  PRIVATE datastructure feature_detector fmt::fmt
+)
 
 packageProject(
   NAME ${LIB_NAME}
