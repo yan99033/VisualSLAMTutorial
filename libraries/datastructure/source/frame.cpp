@@ -26,6 +26,8 @@ namespace vslam_libs {
       this->Tcw = Tcw;
     }
 
+    cv::Mat Frame::getImage() const { return image; }
+
     void Frame::detectAndComputeDescriptors() {
       // NOTE: raise Exception if detector is not a valid pointer
       detector->detectAndCompute(image, cv::noArray(), keypoints, descriptors);

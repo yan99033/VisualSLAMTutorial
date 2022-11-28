@@ -19,6 +19,7 @@ namespace vslam_libs {
       cv::Mat getDescriptors() const;
       const std::vector<cv::KeyPoint>& getKeypoints() const;
       void getPose(Sophus::SE3d& Tcw);
+      cv::Mat getImage() const;
 
       // Setter
       void setPose(const Sophus::SE3d& Tcw);
