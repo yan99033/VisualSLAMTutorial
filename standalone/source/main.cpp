@@ -73,14 +73,10 @@ auto main(int argc, char** argv) -> int {
     std::vector<vslam_libs::datastructure::FramePtr> frames;
     vslam_libs::datastructure::FramePtr prev_frame;
 
-    // cv::Mat zero_R = cv::Mat::eye(3, 3, CV_64F);
-    // cv::Mat zero_t = cv::Mat::zeros(3, 1, CV_64F);
-    // Sophus::SE3d init_T_c_w;
-    Sophus::SE3d Twp;
-    // cv::Mat prev_R, prev_t;
-    cv::Mat Rpc_cv, tpc_cv, mask;
-    Eigen::Matrix3d Rpc_eigen;
-    Eigen::Vector3d tpc_eigen;
+    Sophus::SE3d Tpw;
+    cv::Mat Rcp_cv, tcp_cv, mask;
+    Eigen::Matrix3d Rcp_eigen;
+    Eigen::Vector3d tcp_eigen;
 
     while (true) {
       cv::Mat image = loader.getNextFrame();
@@ -96,20 +92,21 @@ auto main(int argc, char** argv) -> int {
       }
 
       // recovering the pose and the essential matrix
-      cam_tracker.recoverPose(frame, prev_frame, Rpc_cv, tpc_cv, mask);
-      cv::cv2eigen(Rpc_cv, Rpc_eigen);
-      cv::cv2eigen(tpc_cv, tpc_eigen);
-      Sophus::SE3d Tpc(Rpc_eigen, tpc_eigen);
+      cam_tracker.recoverPose(frame, prev_frame, Rcp_cv, tcp_cv, mask);
 
-      // Calculate the global pose
-      prev_frame->getPose(Twp);
-      Sophus::SE3d Twc = Twp * Tpc;
-      frame->setPose(Twc);
+      cv::cv2eigen(Rcp_cv, Rcp_eigen);
+      cv::cv2eigen(tcp_cv, tcp_eigen);
+      Sophus::SE3d Tcp(Rcp_eigen, tcp_eigen);
+
+      // // Calculate the global pose
+      prev_frame->getPose(Tpw);
+      Sophus::SE3d Tcw = Tcp * Tpw;
+      frame->setPose(Tcw);
 
       std::cout << "global pose:"
                 << "\n";
-      std::cout << Twc.rotationMatrix() << "\n";
-      std::cout << Twc.translation() << std::endl;
+      std::cout << Tcw.rotationMatrix() << "\n";
+      std::cout << Tcw.translation() << std::endl;
 
       cv::imshow("image", image);
       cv::waitKey(1);
