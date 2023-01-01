@@ -98,6 +98,12 @@ auto main(int argc, char** argv) -> int {
       cv::cv2eigen(tcp_cv, tcp_eigen);
       Sophus::SE3d Tcp(Rcp_eigen, tcp_eigen);
 
+      // Triangulate point
+
+      // Add global 3D points to the frame
+
+      // Visualize the 3D points of the current frame
+
       // // Calculate the global pose
       prev_frame->getPose(Tpw);
       Sophus::SE3d Tcw = Tcp * Tpw;
