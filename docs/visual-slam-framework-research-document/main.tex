@@ -1,0 +1,117 @@
+\documentclass[nobib]{MSword}
+% Class options:
+%-------------------------------
+% nobib         - skip bibliography code/ don't include bib
+% math          - include math packages and useful math commands
+% hidelinks     - hide hyperref colored link boxes
+% wordlinks     - link color scheme similar to word
+
+
+% Preamble code:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{xcolor, soul}
+\sethlcolor{gray}
+
+% % Uncomment using "Ctrl + /" (/ on numpad):
+% % Customizing headers and footers:
+% \fancypagestyle{custom}{%
+%     \fancyhf{}% clears the footer and header
+%     % Header:
+%     \fancyhead[L]{}
+%     \fancyhead[C]{}
+%     \fancyhead[R]{}
+%     % Footer:
+%     \fancyfoot[L]{}
+%     \fancyfoot[C]{}
+%     \fancyfoot[R]{}
+%         % Tips:
+%         % ----
+%         % L: left, C: center, R: right
+%         % O: odd pages, E: even pages
+%         % ----
+%         % Example: \fancyghead[LO,RE]{Text}
+%         % will produce "Text" left in the header
+%         % on odd pages and right in the header on even pages.
+%     % Rules/ lines:
+%     \renewcommand{\headrulewidth}{0.4pt}
+%     \renewcommand{\footrulewidth}{2pt}
+% }
+% % Changing the pagestyle:
+% \pagestyle{custom}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Preamble information:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Visual SLAM framework research document}
+\author{Author}
+\date{January 2023}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The document:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\maketitle
+\begin{center}
+    % Words: \quickwordcount{main}\\ % Word count 
+    Pages: \pageref{LastPage} % Page count
+\end{center}
+
+% Text files from txt folder:
+\input{txt/body.tex}
+
+
+\end{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Copyright Remarks:
+%--------------------
+
+% Copyright holder: Vebjørn S. Førde, copyright: CC BY 4.0
+% Note: The author of this template is also the copyright holder.
+
+% Below is an explanation of the CC BY 4.0. Additional statements/ 
+% clarifications made by the author/copyright holder are marked with *.
+
+% YOU ARE FREE TO:
+% Share — copy and redistribute the material in any medium or format
+% Adapt — remix, transform, and build upon the material
+% for any purpose, even commercially.
+
+% UNDER THE FOLLOWING TERMS:
+% Attribution* — You must give appropriate credit, provide a link to the license,
+% and indicate if changes were made. You may do so in any reasonable manner, but 
+% not in any way that suggests the licensor endorses you or your use.
+
+% *Note: 
+% Attribution NOT NEEDED for: 
+%       - PDF distibution (like sharing your PDF document)
+%       - Use of (dummy)text and images provided in the template (obviously)
+%       - Distributing parts of the template, and not the template as a whole
+% I am not really concerned with being given credit. As long as you do not 
+% claim to have made the template yourself in distributing it further, I have
+% no complaints.
+
+% No additional restrictions — You may not apply legal terms or technological 
+% measures that legally restrict others from doing anything the license permits.
+
+% NOTICES:
+% No warranties are given.
+
+% Disclaimer* (added by copyright holder):
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+% SOFTWARE.
+
+% Read more about CC BY 4.0:
+% https://creativecommons.org/licenses/by/4.0/
