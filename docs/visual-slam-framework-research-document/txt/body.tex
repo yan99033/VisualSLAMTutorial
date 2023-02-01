@@ -34,12 +34,17 @@ To promote flexibility, we can organize the visual SLAM components as individual
 Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with the components implemented as individual composable nodes. 
 The role of each node is described as follows:
 \begin{itemize}
-  \item \hl{data\_loader\_node} takes in a list of images from a folder and convert them into OpenCV format and publish them sequentially.
-  \item \hl{frame\_conversion\_node} 
-  \item The text in the entries may be of any length.
+  \item \hl{data\_loader\_node} takes in a list of images from a folder and convert them into OpenCV format and publish them with the camera information sequentially.
+  
+  \item \hl{frame\_conversion\_node} converts the image and camera information input to a frame instance.
+  
+  \item \hl{tracking\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
+
+  \item \hl{mapping\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
+
 \end{itemize}
 
-* Use octree/octomap for managing map points 
+* https://github.com/ZhenshengLee/ros2_shm_msgs/blob/humble/doc/Using_Zero_Copy_In_ROS2.pdf
 
 \section{Appendix}
 
