@@ -44,9 +44,36 @@ The role of each node is described as follows:
 
 \end{itemize}
 
-* https://github.com/ZhenshengLee/ros2_shm_msgs/blob/humble/doc/Using_Zero_Copy_In_ROS2.pdf
+\subsection{Interfaces}
+
+\hl{frame\_conversion\_node}
+
+Input: 
+- sensor\_msgs/Image
+- sensor\_msgs/CameraInfo
+
+Output:
+- vslam\_msgs/Frame
+
+% * https://github.com/ZhenshengLee/ros2_shm_msgs/blob/humble/doc/Using_Zero_Copy_In_ROS2.pdf
+% Octree to visualize millions of points? (https://github.com/heremaps/pptk)
 
 \section{Appendix}
+
+\subsection{Custom interfaces}
+
+vslam\_msgs/Frame
+
+\parbox{\textwidth}{
+  - float64[9]  K \\
+  - uint32 id \\
+  - sensor\_msgs/Image \\
+  - geometry\_msgs/Pose \\
+  - geometry\_msgs/Point [] \\}
+
+
+
+\subsection{ROS2 study}
 
 To ensure ROS2 is the right fit for the visual SLAM framework, we need to experiment with the modularity and the memory-sharing mechanism provided by it.
 \href{https://github.com/ros-planning/navigation2}{Nav2} provides examples of creating action servers (e.g., planner and controller), each of which could have several plugins to accomplish various tasks.
