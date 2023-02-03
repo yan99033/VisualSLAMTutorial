@@ -62,15 +62,45 @@ Output:
 
 \subsection{Custom interfaces}
 
-vslam\_msgs/Frame
+\textbf{vslam\_msgs/Frame}
+\begin{verbatim}
+  - float64[9]  K 
+  - uint32 id 
+  - sensor\_msgs/Image image
+  - geometry\_msgs/Pose pose
+  - vslam\_msgs/Point2D [] pts_2d
+  - vslam\_msgs/Point3D [] pts_3d
+\end{verbatim}
 
-\parbox{\textwidth}{
-  - float64[9]  K \\
-  - uint32 id \\
-  - sensor\_msgs/Image \\
-  - geometry\_msgs/Pose \\
-  - geometry\_msgs/Point [] \\}
+\textbf{vslam\_msgs/Corres3D2D}
+\begin{verbatim}
+  - vslam\_msgs/Point2D pt_2d
+  - vslam\_msgs/Point3D pt_3d
+\end{verbatim}
 
+\textbf{vslam\_msgs/Corres2D2D}
+\begin{verbatim}
+  - vslam\_msgs/Point2D pt_2d
+  - vslam\_msgs/Point2D pt_2d
+\end{verbatim}
+
+\textbf{vslam\_msgs/Point2D}
+\begin{verbatim}
+    - float64 x 
+    - float64 y 
+    - uint32 kf\_id 
+    - uint32 pt\_id 
+\end{verbatim}
+
+
+\textbf{vslam\_msgs/Point3D}
+\begin{verbatim}
+  - float64 x
+  - float64 y  
+  - float64 z 
+  - uint32 kf\_id 
+  - uint32 pt\_id 
+\end{verbatim}
 
 
 \subsection{ROS2 study}
