@@ -62,41 +62,64 @@ Output:
 
 \subsection{Custom interfaces}
 
+\subsubsection{Messages}
+
 \begin{itemize}
   \item \textbf{vslam\_msgs/Frame}
   \begin{verbatim}
+    # Header
+    std_msgs/Header header
+
+    # Camera intrinsics
+    # Assuming undistorted pinhole model
     float64[9]  K 
+
+    # Frame ID
     uint32 id 
+
+    # Image
     sensor_msgs/Image image
+    
+    # Camera pose
     geometry_msgs/Pose pose
+    
+    # List of points and their correspondences in another frame
+    vslam_msgs/Point [] pts
+    vslam_msgs/MatchedPoint [] matches
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/Corres3D2D}
+  \item \textbf{vslam\_msgs/MatchedPoint}
   \begin{verbatim}
-    vslam_msgs/Point2D pt_2d
-    vslam_msgs/Point3D pt_3d
+    vslam_msgs/Point pt1    
+    vslam_msgs/Point pt2
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/Corres2D2D}
-  \begin{verbatim}
-    vslam_msgs/Point2D pt_2d
-    vslam_msgs/Point2D pt_2d
-  \end{verbatim}
-
-  \item \textbf{vslam\_msgs/Point2D}
-  \begin{verbatim}
-    uint32 frame_id
-    float64 x 
-    float64 y 
-    vslam_msgs/Feature feature 
-  \end{verbatim}
-
-  \item \textbf{vslam\_msgs/Point3D}
+  \item \textbf{vslam\_msgs/Vector3d}
   \begin{verbatim}
     float64 x
     float64 y  
     float64 z 
-    vslam_msgs/Feature feature
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/Vector2d}
+  \begin{verbatim}
+    float64 x 
+    float64 y 
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/Point}
+  \begin{verbatim}
+    uint32 frame_id
+    
+    # Keypoint
+    vslam_msgs/Vector2d kp
+
+    # Map point
+    vslam_msgs/Vector3d mp
+    bool has_mp = false
+    
+    # Feature
+    vslam_msgs/Feature feature    
   \end{verbatim}
 
   \item \textbf{vslam\_msgs/Feature}
@@ -105,7 +128,36 @@ Output:
     uint32 len
     uint8 [] descriptor
   \end{verbatim}
-  
+
+  \item \textbf{vslam\_msgs/State}
+  \begin{verbatim}
+    uint8 INITIALIZATION = 0
+    uint8 TRACKING = 1
+    uint8 RELOCALIZATION = 2
+    
+    uint8 state = 0
+  \end{verbatim}
+
+\subsubsection{Services}
+
+\begin{itemize}
+  \item \textbf{vslam\_msgs/GetKeyFrame}
+  \begin{verbatim}
+    ---
+    vslam_msgs/Frame keyframe
+  \end{verbatim}
+\end{itemize}
+
+\begin{itemize}
+  \item \textbf{vslam\_msgs/SetKeyFrame}
+  \begin{verbatim}
+    vslam_msgs/Frame keyframe
+    ---
+    # Indicate if the keyframe is set
+    bool success
+  \end{verbatim}
+\end{itemize}
+
 \end{itemize}
 
 
