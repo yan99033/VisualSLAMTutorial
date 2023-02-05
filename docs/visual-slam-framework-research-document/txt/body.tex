@@ -34,26 +34,22 @@ To promote flexibility, we can organize the visual SLAM components as individual
 Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with the components implemented as individual composable nodes. 
 The role of each node is described as follows:
 \begin{itemize}
-  \item \hl{data\_loader\_node} takes in a list of images from a folder and convert them into OpenCV format and publish them with the camera information sequentially.
+  \item \textbf{data\_loader\_node} takes in a list of images from a folder and convert them into the Frame message, which contains the image and the camera information.
   
-  \item \hl{frame\_conversion\_node} converts the image and camera information input to a frame instance.
+  \item \textbf{feature\_extraction\_node} calculates the features (e.g., corners or high-gradient image regions) in the image.
   
-  \item \hl{tracking\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
+  \item \textbf{feature\_matching\_node} finds feature correspondences between the current frame and the nearest keyframe in the back-end.
+  If the system is in the initialization state, the current frame will be set as the tentative keyframe.  
+  If the system is in the relocalization mode, the current keyframe 
 
-  \item \hl{mapping\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
+  \item \textbf{tracking\_node}  
+
+  \item \textbf{mapping\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
 
 \end{itemize}
 
 \subsection{Interfaces}
 
-\hl{frame\_conversion\_node}
-
-Input: 
-- sensor\_msgs/Image
-- sensor\_msgs/CameraInfo
-
-Output:
-- vslam\_msgs/Frame
 
 % * https://github.com/ZhenshengLee/ros2_shm_msgs/blob/humble/doc/Using_Zero_Copy_In_ROS2.pdf
 % Octree to visualize millions of points? (https://github.com/heremaps/pptk)
@@ -70,9 +66,8 @@ Output:
     # Header
     std_msgs/Header header
 
-    # Camera intrinsics
-    # Assuming undistorted pinhole model
-    float64[9]  K 
+    # Camera information
+    sensor_msgs/CameraInfo cam_info
 
     # Frame ID
     uint32 id 
@@ -124,7 +119,8 @@ Output:
 
   \item \textbf{vslam\_msgs/Feature}
   \begin{verbatim}
-    # The length and data structure of the descriptor to be defined in the code
+    # The length and data structure of the descriptor to be 
+    #   defined in the code
     uint32 len
     uint8 [] descriptor
   \end{verbatim}
@@ -132,23 +128,34 @@ Output:
   \item \textbf{vslam\_msgs/State}
   \begin{verbatim}
     uint8 INITIALIZATION = 0
-    uint8 TRACKING = 1
-    uint8 RELOCALIZATION = 2
+    uint8 ATTEMPT_INITIALIZATION = 1
+    uint8 TRACKING = 2
+    uint8 RELOCALIZATION = 3
     
     uint8 state = 0
   \end{verbatim}
+\end{itemize}
 
 \subsubsection{Services}
 
 \begin{itemize}
   \item \textbf{vslam\_msgs/GetKeyFrame}
   \begin{verbatim}
+    # Get the keyframe with the provided frame id
+    # Default to -1, which returns the current keyframe
+    # In relocalization mode, place recognition node may 
+    #   returns the frame id which can be used retrieve 
+    #   the candidate keyframe for relocalization
+    int64 frame_id = -1
     ---
     vslam_msgs/Frame keyframe
+    
+    # Return true if a keyframe is found
+    # Could be false if the tracking is lost and there is no 
+    #   similar-looking image found
+    bool has_keyframe
   \end{verbatim}
-\end{itemize}
 
-\begin{itemize}
   \item \textbf{vslam\_msgs/SetKeyFrame}
   \begin{verbatim}
     vslam_msgs/Frame keyframe
@@ -156,8 +163,25 @@ Output:
     # Indicate if the keyframe is set
     bool success
   \end{verbatim}
-\end{itemize}
 
+  \item \textbf{vslam\_msgs/GetState}
+  \begin{verbatim}
+    ---
+    # Get the state of the system 
+    #   (e.g., initialization, tracking or relocalization)
+    vslam_msgs/State state
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/SetState}
+  \begin{verbatim}
+    # Set the state of the system 
+    #   (e.g., initialization, tracking or relocalization)
+    vslam_msgs/State state
+    ---
+    # Indicate if the state is set
+    bool success
+    
+  \end{verbatim}
 \end{itemize}
 
 
