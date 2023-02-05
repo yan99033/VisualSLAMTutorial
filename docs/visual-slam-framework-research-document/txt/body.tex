@@ -15,7 +15,7 @@ Specifically, each component in the framework can be defined as a module, which 
 A good visual SLAM framework allows for integrating the camera tracking, mapping, loop closing and visualization components and the intercommunication between them.
 A good starting point is to study the self-driving car or autopilot projects on GitHub, notably \href{https://github.com/ApolloAuto/apollo}{Apollo by Baidu} and \href{https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto}{Autoware.Auto}\footnote{New versions of Autoware are under development, which can be found \href{https://github.com/autowarefoundation/autoware}{here}}.
 They use their own middleware (\href{https://cyber-rt.readthedocs.io/en/latest/index.html}{Cyber RT}) and \href{https://docs.ros.org/en/humble/}{ROS2}. 
-Wu et al.~\ref{wu2021oops} show that ROS2 is better than Cyber RT in terms of latency and CPU usage and recommend the use of shared memory (specifically intra-process (IAP) in ROS2) over data serialization/deserialization for the best latency and reliability.
+Wu et al.~\cite{wu2021oops} show that ROS2 is better than Cyber RT in terms of latency and CPU usage and recommend the use of shared memory (specifically intra-process (IAP) in ROS2) over data serialization/deserialization for the best latency and reliability.
 Additionally, ROS2 is commonly adopted in robotics projects, with the support of new sensor integration. 
 
 Among the existing visual SLAM systems, ORB-SLAM3 is one of the most practical and open-source visual SLAM system.
@@ -34,18 +34,27 @@ To promote flexibility, we can organize the visual SLAM components as individual
 Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with the components implemented as individual composable nodes. 
 The role of each node is described as follows:
 \begin{itemize}
-  \item \textbf{data\_loader\_node} takes in a list of images from a folder and convert them into the Frame message, which contains the image and the camera information.
+  \item \textbf{data\_loader\_node} takes in a list of images from a folder and converts them into the Frame message, which contains the image and the camera information.
   
   \item \textbf{feature\_extraction\_node} calculates the features (e.g., corners or high-gradient image regions) in the image.
   
-  \item \textbf{feature\_matching\_node} finds feature correspondences between the current frame and the nearest keyframe in the back-end.
-  If the system is in the initialization state, the current frame will be set as the tentative keyframe.  
-  If the system is in the relocalization mode, the current keyframe 
+  \item \textbf{feature\_matching\_node} finds feature correspondences between the current frame and the nearest keyframe in the back-end during the tracking state.
+  If the system is in the initialization state, the current frame will be set as the tentative keyframe and the node sets the mode to attempt initialization.
+  In the attempt initialization state, any failure that occurs in tracking and mapping will reset the state back to initialization.
+  If the system is in the relocalization mode, the current keyframe image is published to the place recognition node to find a candidate keyframe index, which is used to request the keyframe in the back-end to perform feature matching.
+  In the event of failure to find correspondences, the node will set the state to relocalization.
 
-  \item \textbf{tracking\_node}  
+  \item \textbf{tracking\_node} calculates the relative pose between the current frame and the current keyframe. 
+  If the calculation fails to converge, then the node will set the state to relocalization. 
 
-  \item \textbf{mapping\_node} calculates the current camera pose relative to the current keyframe. If there is no keyframe, it initiates the initialization step, which performs 2D-2D camera tracking and request for a new map. 
+  \item \textbf{mapping\_node} triangulates a set of new map points based on the relative pose and the feature correspondences that don't have a 3D point. 
 
+  \item \textbf{place\_recognition\_node} is used in two cases. 
+  In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
+  When a new keyframe is created, it attempts to find a similar-looking image in the database and informs \textbf{feature\_matching\_node} to try to find new correspondences.
+
+  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{feature\_matching\_node} and \textbf{tracking\_node}.
+   
 \end{itemize}
 
 \subsection{Interfaces}
@@ -78,9 +87,32 @@ The role of each node is described as follows:
     # Camera pose
     geometry_msgs/Pose pose
     
-    # List of points and their correspondences in another frame
+    # List of points
     vslam_msgs/Point [] pts
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/FramePair}
+  \begin{verbatim}
+    # Constraint types
+    uint8 FOR_INIT = 0
+    uint8 FOR_TRACKING = 1
+    uint8 FOR_LOOP_CLOSURE = 2
+    uint8 FOR_RELOCALIZATION = 3
+
+    # Constraints to be established in the feature matching and tracking 
+
+    # The frame pair
+    # frame1 is the existing/reference frame
+    vslam_msgs/Frame frame1
+    vslam_msgs/Frame frame2
+
+    # Relative transformation
+    geometry_msgs/Pose pose12
+
+    # The matched points
     vslam_msgs/MatchedPoint [] matches
+
+    uint8 constraint_type = 0
   \end{verbatim}
 
   \item \textbf{vslam\_msgs/MatchedPoint}
@@ -91,6 +123,9 @@ The role of each node is described as follows:
 
   \item \textbf{vslam\_msgs/Vector3d}
   \begin{verbatim}
+    # unique point id for establishing correspondence
+    uint64 id
+
     float64 x
     float64 y  
     float64 z 
@@ -98,6 +133,9 @@ The role of each node is described as follows:
 
   \item \textbf{vslam\_msgs/Vector2d}
   \begin{verbatim}
+    # unique point id for establishing correspondence
+    uint64 id
+
     float64 x 
     float64 y 
   \end{verbatim}
@@ -114,7 +152,7 @@ The role of each node is described as follows:
     bool has_mp = false
     
     # Feature
-    vslam_msgs/Feature feature    
+    vslam_msgs/Feature descriptor    
   \end{verbatim}
 
   \item \textbf{vslam\_msgs/Feature}
@@ -151,16 +189,35 @@ The role of each node is described as follows:
     vslam_msgs/Frame keyframe
     
     # Return true if a keyframe is found
-    # Could be false if the tracking is lost and there is no 
-    #   similar-looking image found
     bool has_keyframe
   \end{verbatim}
 
   \item \textbf{vslam\_msgs/SetKeyFrame}
   \begin{verbatim}
+    # Assume nodes' good faith, i.e.,
+    # nodes are not going to sabotage the system
     vslam_msgs/Frame keyframe
     ---
     # Indicate if the keyframe is set
+    bool success
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/FindKeyFrame}
+  \begin{verbatim}
+    # Attempt to find a similar-looking keyframe
+    vslam_msgs/Frame frame
+    ---
+    # Indicate if a similar-looking frame is found
+    # Default to -1, which means no similar-looking frame is found
+    int64 frame_id = -1
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/AddKeyFrameToPlaceRecognitionDb}
+  \begin{verbatim}
+    # Add the frame to the database for loop closure detection
+    vslam_msgs/Frame frame
+    ---
+    # Indicate if the frame is successfully added
     bool success
   \end{verbatim}
 
@@ -176,6 +233,8 @@ The role of each node is described as follows:
   \begin{verbatim}
     # Set the state of the system 
     #   (e.g., initialization, tracking or relocalization)
+    # Assume nodes' good faith, i.e.,
+    # nodes are not going to sabotage the system
     vslam_msgs/State state
     ---
     # Indicate if the state is set
@@ -184,8 +243,194 @@ The role of each node is described as follows:
   \end{verbatim}
 \end{itemize}
 
+\subsubsection{Nodes}
+
+\begin{itemize}
+  \item \textbf{data\_loader\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  # Publish the frame containing the image and camera information
+  #   to @\textbf{frame\_callback}@
+  @\textbf{publish\_frame}@() $\rightarrow$ vslam_msgs/Frame
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+  # a folder containing the images
+  @\textbf{path\_to\_images}@ 
+    
+  # A cam_info data structure containing the camera information 
+  #   (e.g., intrinsics, distortion parameters, camera model, etc.)
+  @\textbf{cam\_info}@
+\end{lstlisting}
+  \end{itemize}  
+  
+  \item \textbf{feature\_extraction\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  # Calculate the 2D features in the image
+  # Algorithm:
+  # image $\leftarrow$ get the image from the frame
+  # Calculate the 2D feature points and optionally descriptors
+  #   and save them in vslam_msgs/Point []
+  @\textbf{frame\_callback}@(vslam_msgs/Frame) $\rightarrow$ vslam_msgs/Frame
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+  # A config data structure containing the feature extraction 
+  #   settings (e.g., number of features)
+  @\textbf{config}@
+\end{lstlisting}
+  \end{itemize}  
 
 
+  \item \textbf{feature\_matching\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  # Attempt to establish 3D-2D and\or 2D-2D correspondences
+  # Algorithm:
+  # state $\leftarrow$ Get the state from the back-end
+  # if the state is initialization
+  #   set the current frame as the keyframe
+  #   set the state as attempt_initialization
+  #   return
+  # elif the state is attempt_initialization or tracking
+  #   curr_kf $\leftarrow$ Get the current keyframe
+  #   matches $\leftarrow$ Find feature correspondences 
+  #   if len(matches) < num_matches_thresh
+  #     Set the state to relocalization
+  #     return
+  #   else
+  #     frame_pair $\leftarrow$ Create a vslam_msgs/FramePair 
+  #     populate the frame_pair attributes 
+  #     if state is attempt_initialization
+  #       set constraint type in frame_pair to FOR_INIT
+  #     else
+  #       set constraint type in frame_pair to FOR_TRACKING
+  #     publish frame_pair to @\textbf{track\_pose12}@
+  # else # the state is relocalization
+  #   candidate_frame_id $\leftarrow$ Find a candidate keyframe
+  #   candidate_keyframe $\leftarrow$ Get the candidate keyframe using the id
+  #   matches $\leftarrow$ Find feature correspondences
+  #   if len(matches) > num_matches_thresh:
+  #     frame_pair $\leftarrow$ Create a vslam_msgs/FramePair 
+  #     populate the frame_pair attributes 
+  #     set constraint type in frame_pair to FOR_RELOCALIZATION
+  #     publish frame_pair to @\textbf{track\_pose12}@
+  @\textbf{frame\_callback}@(vslam_msgs/Frame) $\rightarrow$ vslam_msgs/FramePair
+
+  # Attempt to establish 3D-2D correspondences
+  #   when a new keyframe is created and a candidate loop is found
+  # Algorithm:
+  # frame_id $\leftarrow$ Get frame1's id (the candidate keyframe)
+  # frame1 $\leftarrow$ Get the frame using the frame_id from back-end
+  # matches $\leftarrow$ Find feature correspondences
+  # if len(matches) > num_matches_thresh:
+  #   publish frame_pair
+  @\textbf{place\_recognition\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
+    vslam_msgs/FramePair to @\textbf{place\_recognition\_callback}@
+
+  # Private function
+  # Calculate 3D-2D camera pose
+  @\textbf{track\_camera\_3d2d}@
+
+  # Private function
+  # Calculate 2D-2D camera pose
+  @\textbf{track\_camera\_2d2d}@
+
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+  # Minimum number of matches
+  @\textbf{num\_matches\_thresh}@
+\end{lstlisting}
+  \end{itemize}  
+
+  \item \textbf{tracking\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  # Calculate the relative transformation between the frame pair
+  # Algorithm:
+  # if constraint_type is FOR_INIT
+  #   tracking_quality, pose12 $\rightarrow$ calculate the relative pose 
+  #     from 2D-2D correspondences
+  #   if tracking_quality is good
+  #     publish frame_pair to @\textbf{mapping\_callback}@
+  #   else
+  #     set the state to RELOCALIZATION
+  # elif constraint_type is FOR_TRACKING
+  #   tracking_quality, pose12 $\rightarrow$ calculate the relative pose 
+  #     from 3D-2D correspondences
+  #   if tracking_quality is good
+  #     Attempt to find a closed loop to establish another constraint
+  #     frame_id $\rightarrow$ find a candidate keyframe
+  #     if frame_id != -1:
+  #       candidate_keyframe $\rightarrow$ get the candidate keyframe
+  #       frame_pair $\rightarrow$ create a FramePair instance
+  #       populate frame_pair with relevant information 
+  #         (e.g., frame1=candidate_keyframe, frame2=current_frame)
+  #       publish the frame_pair to @\textbf{place\_recognition\_callback}@
+  #     
+  #     if pose12 satisfies the new keyframe criteria
+  #       add the current keyframe to the place_recognition_node  
+  #         database for loop closure detection 
+  #       publish the frame_pair to @\textbf{mapping\_callback}@
+  #   else
+  #     set the state to RELOCALIZATION
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+
+\end{lstlisting}
+  \end{itemize} 
+
+  \item \textbf{mapping\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  @\textbf{mapping\_callback}@
+  
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+
+\end{lstlisting}
+  \end{itemize} 
+
+  \item \textbf{place\_recognition\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  # Find the candidate 
+  @\textbf{place\_recognition\_callback}@
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+
+\end{lstlisting} 
+  \end{itemize} 
+  \item \textbf{back\_end\_node}
+  \begin{itemize}
+    \item Member functions:
+\begin{lstlisting}
+  
+\end{lstlisting}
+
+    \item Member attributes:
+\begin{lstlisting}
+
+\end{lstlisting}
+  \end{itemize} 
+\end{itemize}
 
 
 
