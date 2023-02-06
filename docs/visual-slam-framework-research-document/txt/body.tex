@@ -212,15 +212,6 @@ The role of each node is described as follows:
     int64 frame_id = -1
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/AddKeyFrameToDB}
-  \begin{verbatim}
-    # Add the frame to the database for loop closure detection
-    vslam_msgs/Frame frame
-    ---
-    # Indicate if the frame is successfully added
-    bool success
-  \end{verbatim}
-
   \item \textbf{vslam\_msgs/GetState}
   \begin{verbatim}
     ---
@@ -239,7 +230,15 @@ The role of each node is described as follows:
     ---
     # Indicate if the state is set
     bool success
-    
+  \end{verbatim}
+
+  \item \textbf{vslam\_msgs/AddKeyFrameToDB}
+  \begin{verbatim}
+    # Add the frame to the database for loop closure detection
+    vslam_msgs/Frame frame
+    ---
+    # Indicate if the frame is successfully added
+    bool success
   \end{verbatim}
 \end{itemize}
 
@@ -275,7 +274,8 @@ The role of each node is described as follows:
   # image $\leftarrow$ get the image from the frame
   # Calculate the 2D feature points and optionally descriptors
   #   and save them in vslam_msgs/Point []
-  @\textbf{frame\_callback}@(vslam_msgs/Frame) $\rightarrow$ vslam_msgs/Frame
+  # Publish vslam_msgs to feature_matching_node's @\textbf{frame\_callback}@
+  @\textbf{frame\_callback}@(vslam_msgs/Frame) 
 \end{lstlisting}
 
     \item Member attributes:
@@ -294,26 +294,30 @@ The role of each node is described as follows:
   # Attempt to establish 3D-2D and\or 2D-2D correspondences
   # Algorithm:
   # state $\leftarrow$ Get the state from the back-end
-  # if the state is initialization
-  #   set the current frame as the keyframe
-  #   set the state as attempt_initialization
-  #   return
-  # elif the state is attempt_initialization or tracking
+  # if the state is INITIALIZATION
+  #   set the current frame as the keyframe using 
+  #     vslam_msgs/SetKeyFrame
+  #   set the state as ATTEMPT_INITIALIZATION using 
+  #     vslam_msgs/SetState
+  # elif the state is ATTEMPT_INITIALIZATION or tracking
   #   curr_kf $\leftarrow$ Get the current keyframe
   #   matches $\leftarrow$ Find feature correspondences 
   #   if len(matches) < num_matches_thresh
-  #     Set the state to relocalization
+  #     if state is ATTEMPT_INITIALIZATION
+  #       Set the state to INITIALIZATION
+  #     else
+  #       Set the state to RELOCALIZATION
   #     return
   #   else
   #     frame_pair $\leftarrow$ Create a vslam_msgs/FramePair 
   #     populate the frame_pair attributes 
-  #     if state is attempt_initialization
+  #     if state is ATTEMPT_INITIALIZATION
   #       set constraint type in frame_pair to FOR_INIT
   #     else
   #       set constraint type in frame_pair to FOR_TRACKING
   #     publish frame_pair to @\textbf{track\_pose12}@
-  # else # the state is relocalization
-  #   candidate_frame_id $\leftarrow$ Find a candidate keyframe
+  # else # the state is RELOCALIZATION
+  #   candidate_frame_id $\leftarrow$ Find a candidate keyframe using
   #   candidate_keyframe $\leftarrow$ Get the candidate keyframe using the id
   #   matches $\leftarrow$ Find feature correspondences
   #   if len(matches) > num_matches_thresh:
@@ -321,7 +325,7 @@ The role of each node is described as follows:
   #     populate the frame_pair attributes 
   #     set constraint type in frame_pair to FOR_RELOCALIZATION
   #     publish frame_pair to @\textbf{track\_pose12}@
-  @\textbf{frame\_callback}@(vslam_msgs/Frame) $\rightarrow$ vslam_msgs/FramePair
+  @\textbf{frame\_callback}@(vslam_msgs/Frame) 
 
   # Attempt to establish 3D-2D correspondences
   #   when a new keyframe is created and a candidate loop is found
@@ -371,7 +375,7 @@ The role of each node is described as follows:
   #     
   #     if pose12 satisfies the new keyframe criteria
   #       add the current keyframe to the place_recognition_node  
-  #         database for loop closure detection 
+  #         database using 
   #       publish the frame_pair to @\textbf{mapping\_callback}@
   #   else
   #     set the state to RELOCALIZATION
@@ -422,8 +426,14 @@ The role of each node is described as follows:
   \begin{itemize}
     \item Member functions:
 \begin{lstlisting}
-  # Find the candidate 
-  @\textbf{place\_recognition\_callback}@
+  # Find the candidate keyframe
+  @\textbf{place\_recognition\_callback}@(vslam_msgs/Frame)
+  
+  # Find keyframe service callback
+  @\textbf{find\_keyframe\_srv\_callback}@(vslam_msgs/FindKeyFrame)
+
+  # Add keyframe to database service callback
+  @\textbf{add\_keyframe\_srv\_callback}@(vslam_msgs/AddKeyFrameToDB)
 \end{lstlisting}
 
     \item Member attributes:
@@ -445,8 +455,17 @@ The role of each node is described as follows:
   # push the loop constraint to the constraints queue
   @\textbf{loop\_constraint\_callback}@(vslam_msgs/FramePair)
 
-  # TODO:
-  # Add the service callback functions
+  # Get keyframe service callback
+  @\textbf{get\_keyframe\_srv\_callback}@(vslam_msgs/GetKeyFrame)
+
+  # Set keyframe service callback
+  @\textbf{set\_keyframe\_srv\_callback}@(vslam_msgs/SetKeyFrame)
+
+  # Get state service callback
+  @\textbf{get\_state\_srv\_callback}@(vslam_msgs/GetState)
+
+  # Set state service callback
+  @\textbf{set\_state\_srv\_callback}@(vslam_msgs/SetState)
 
   # Private function
   # Algorithm:
@@ -465,6 +484,12 @@ The role of each node is described as follows:
 
   # An ordered map for quick look-up
   map<int64, vslam_msgs/Frame> frames
+
+  # State
+  vslam_msgs/State state
+  
+  # Current keyframe
+  vslam_msgs/Frame current_kf
 
   # Internally managed graph
   # To be modified by the provided constraints in the constraints 
