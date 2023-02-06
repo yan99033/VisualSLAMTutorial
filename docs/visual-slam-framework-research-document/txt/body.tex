@@ -212,7 +212,7 @@ The role of each node is described as follows:
     int64 frame_id = -1
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/AddKeyFrameToPlaceRecognitionDb}
+  \item \textbf{vslam\_msgs/AddKeyFrameToDB}
   \begin{verbatim}
     # Add the frame to the database for loop closure detection
     vslam_msgs/Frame frame
@@ -331,16 +331,8 @@ The role of each node is described as follows:
   # matches $\leftarrow$ Find feature correspondences
   # if len(matches) > num_matches_thresh:
   #   publish frame_pair
-  @\textbf{place\_recognition\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
+  @\textbf{loop\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
     vslam_msgs/FramePair to @\textbf{place\_recognition\_callback}@
-
-  # Private function
-  # Calculate 3D-2D camera pose
-  @\textbf{track\_camera\_3d2d}@
-
-  # Private function
-  # Calculate 2D-2D camera pose
-  @\textbf{track\_camera\_2d2d}@
 
 \end{lstlisting}
 
@@ -383,6 +375,27 @@ The role of each node is described as follows:
   #       publish the frame_pair to @\textbf{mapping\_callback}@
   #   else
   #     set the state to RELOCALIZATION
+
+  # Calculate the relative transformation of a potential loop 
+  #   constraint
+  # Algorithm:
+  # get frame1 and frame 2 from frame_pair
+  # tracking_quality1, pose12 $\rightarrow$ calculate the 3D-2D camera pose from 
+  #   frame1 to frame2
+  # tracking_quality2, pose21 $\rightarrow$ calculate the 3D-2D camera pose from 
+  #   frame2 to frame1
+  # if both tracking_quality1 and tracking_quality2 are good
+  #   if pose12 * pose21 is small
+  #     set pose12 in frame_FramePair
+  #     publish frame_pair to @\textbf{loop\_constraint\_callback}@
+
+  # Private function
+  # Calculate 3D-2D camera pose
+  @\textbf{track\_camera\_3d2d}@
+
+  # Private function
+  # Calculate 2D-2D camera pose
+  @\textbf{track\_camera\_2d2d}@
 \end{lstlisting}
 
     \item Member attributes:
@@ -422,12 +435,42 @@ The role of each node is described as follows:
   \begin{itemize}
     \item Member functions:
 \begin{lstlisting}
-  
+  # Is used when a new keyframe is inserted
+  # Algorithm:
+  # push the frame constraint to the constraints queue
+  @\textbf{frame\_constraint\_callback}@(vslam_msgs/FramePair)
+
+  # Is used when a loop constraint is found
+  # Algorithm:
+  # push the loop constraint to the constraints queue
+  @\textbf{loop\_constraint\_callback}@(vslam_msgs/FramePair)
+
+  # TODO:
+  # Add the service callback functions
+
+  # Private function
+  # Algorithm:
+  # constraint $\leftarrow$ pop one constraint from the constraints queue
+  # if constraint type is FOR_TRACKING
+  #   run local bundle adjustment
+  # elif constraint type is FOR_LOOP_CLOSURE
+  #   run graph optimization
+  @\textbf{optimization\_loop}@()
 \end{lstlisting}
 
     \item Member attributes:
 \begin{lstlisting}
+  # Queue for adding frame and loop constraints
+  queue<vslam_msgs/FramePair> constraints
 
+  # An ordered map for quick look-up
+  map<int64, vslam_msgs/Frame> frames
+
+  # Internally managed graph
+  # To be modified by the provided constraints in the constraints 
+  #   queue
+  map<vslam_msgs/Frame, vector<Constraint3D2D>> constraints_3d2d 
+  map<vslam_msgs/Frame, vector<ConstraintPose>> constraints_pose
 \end{lstlisting}
   \end{itemize} 
 \end{itemize}
