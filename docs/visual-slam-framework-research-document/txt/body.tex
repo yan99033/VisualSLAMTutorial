@@ -195,7 +195,7 @@ The role of each node is described as follows:
   \item \textbf{vslam\_msgs/SetKeyFrame}
   \begin{verbatim}
     # Assume nodes' good faith, i.e.,
-    # nodes are not going to sabotage the system
+    # nodes will not sabotage the system
     vslam_msgs/Frame keyframe
     ---
     # Indicate if the keyframe is set
@@ -225,7 +225,7 @@ The role of each node is described as follows:
     # Set the state of the system 
     #   (e.g., initialization, tracking or relocalization)
     # Assume nodes' good faith, i.e.,
-    # nodes are not going to sabotage the system
+    # nodes will not sabotage the system
     vslam_msgs/State state
     ---
     # Indicate if the state is set
@@ -251,17 +251,17 @@ The role of each node is described as follows:
 \begin{lstlisting}
   # Publish the frame containing the image and camera information
   #   to @\textbf{frame\_callback}@
-  @\textbf{publish\_frame}@() $\rightarrow$ vslam_msgs/Frame
+  @\textbf{publish\_frame}@()
 \end{lstlisting}
 
     \item Member attributes:
 \begin{lstlisting}
   # a folder containing the images
-  @\textbf{path\_to\_images}@ 
+  Path @\textbf{path\_to\_images}@ 
     
   # A cam_info data structure containing the camera information 
   #   (e.g., intrinsics, distortion parameters, camera model, etc.)
-  @\textbf{cam\_info}@
+  CamInfo @\textbf{cam\_info}@
 \end{lstlisting}
   \end{itemize}  
   
@@ -276,13 +276,19 @@ The role of each node is described as follows:
   #   and save them in vslam_msgs/Point []
   # Publish vslam_msgs to feature_matching_node's @\textbf{frame\_callback}@
   @\textbf{frame\_callback}@(vslam_msgs/Frame) 
+
+  # Private function:
+  # Algorithm: 
+  # Calculate and return a list of feature descriptors and their 
+  #   keypoint location
+  @\textbf{feature\_extractor}@(sensor_msgs/Image) $\rightarrow$ vector<vslam_msgs/Feature>
 \end{lstlisting}
 
     \item Member attributes:
 \begin{lstlisting}
   # A config data structure containing the feature extraction 
   #   settings (e.g., number of features)
-  @\textbf{config}@
+  Config @\textbf{config}@
 \end{lstlisting}
   \end{itemize}  
 
@@ -499,13 +505,6 @@ The role of each node is described as follows:
 \end{lstlisting}
   \end{itemize} 
 \end{itemize}
-
-
-
-
-
-
-
 
 \subsection{ROS2 study}
 
