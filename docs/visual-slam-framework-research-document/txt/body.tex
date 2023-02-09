@@ -321,7 +321,7 @@ The role of each node is described as follows:
   #       set constraint type in frame_pair to FOR_INIT
   #     else
   #       set constraint type in frame_pair to FOR_TRACKING
-  #     publish frame_pair to @\textbf{track\_pose12}@
+  #     publish frame_pair to @\textbf{frame\_tracking\_callback}@
   # else # the state is RELOCALIZATION
   #   candidate_frame_id $\leftarrow$ Find a candidate keyframe using
   #   candidate_keyframe $\leftarrow$ Get the candidate keyframe using the id
@@ -330,8 +330,8 @@ The role of each node is described as follows:
   #     frame_pair $\leftarrow$ Create a vslam_msgs/FramePair 
   #     populate the frame_pair attributes 
   #     set constraint type in frame_pair to FOR_RELOCALIZATION
-  #     publish frame_pair to @\textbf{track\_pose12}@
-  @\textbf{frame\_callback}@(vslam_msgs/Frame) 
+  #     publish frame_pair to @\textbf{frame\_tracking\_callback}@
+  @\textbf{frame\_matching\_callback}@(vslam_msgs/Frame) 
 
   # Attempt to establish 3D-2D correspondences
   #   when a new keyframe is created and a candidate loop is found
@@ -341,10 +341,13 @@ The role of each node is described as follows:
   # matches $\leftarrow$ Find feature correspondences
   # if len(matches) > num_matches_thresh:
   #   publish frame_pair
-  @\textbf{loop\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
-    vslam_msgs/FramePair to @\textbf{place\_recognition\_callback}@
+  @\textbf{loop\_matching\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
+    vslam_msgs/FramePair to @\textbf{loop\_tracking\_callback}@
 
 \end{lstlisting}
+
+TODO:
+change frame\_callback and loop\_callback to frame\_matching\_callback and loop\_matching\_callback 
 
     \item Member attributes:
 \begin{lstlisting}
@@ -385,10 +388,12 @@ The role of each node is described as follows:
   #       publish the frame_pair to @\textbf{mapping\_callback}@
   #   else
   #     set the state to RELOCALIZATION
+  @\textbf{frame\_tracking\_callback}@
 
   # Calculate the relative transformation of a potential loop 
   #   constraint
   # Algorithm:
+  # # Mutual consistency check 
   # get frame1 and frame 2 from frame_pair
   # tracking_quality1, pose12 $\rightarrow$ calculate the 3D-2D camera pose from 
   #   frame1 to frame2
@@ -398,6 +403,7 @@ The role of each node is described as follows:
   #   if pose12 * pose21 is small
   #     set pose12 in frame_FramePair
   #     publish frame_pair to @\textbf{loop\_constraint\_callback}@
+  @\textbf{loop\_tracking\_callback}@(vslam_msgs/FramePair)
 
   # Private function
   # Calculate 3D-2D camera pose
@@ -418,7 +424,16 @@ The role of each node is described as follows:
   \begin{itemize}
     \item Member functions:
 \begin{lstlisting}
-  @\textbf{mapping\_callback}@
+  # Triangulate new map points based on the matched 2D-2D 
+  #   correspondences
+  # Algorithm:
+  # frame_pair $\rightarrow$ FramePair msg
+  # Iterate through the matched points:
+  #   if there is no 3D point:
+  #     pt_3d $\rightarrow$ Triangulate the point based on the pose and match
+  #     pt->mp = pt_3d
+  # publish the frame_pair to @\textbf{frame\_constraint\_callback}@
+  @\textbf{mapping\_callback}@(vslam_msgs/FramePair)
   
 \end{lstlisting}
 
@@ -433,6 +448,14 @@ The role of each node is described as follows:
     \item Member functions:
 \begin{lstlisting}
   # Find the candidate keyframe
+  # Algorithm:
+  # Calculate the similarity score of the frame against the database
+  # if a similar frame is found
+  #   frame_pair <- Create a frame_pair object
+  #   set frame1's ID in the frame_pair as the frame found in 
+  #     database
+  #   set frame2 as the incoming frame
+  #   publish frame_pair to @\textbf{loop\_matching\_callback}@
   @\textbf{place\_recognition\_callback}@(vslam_msgs/Frame)
   
   # Find keyframe service callback
