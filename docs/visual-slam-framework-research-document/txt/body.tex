@@ -57,6 +57,12 @@ The role of each node is described as follows:
    
 \end{itemize}
 
+Note: after initialization, the current frame is added to the database in place\_recognition\_node for loop closure detection.
+
+Things to consider:
+https://design.ros2.org/articles/realtime_background.html
+https://arxiv.org/pdf/2101.02074.pdf
+
 \subsection{Interfaces}
 
 
@@ -272,9 +278,9 @@ The role of each node is described as follows:
   # Calculate the 2D features in the image
   # Algorithm:
   # image $\leftarrow$ get the image from the frame
-  # Calculate the 2D feature points and optionally descriptors
+  # Calculate the 2D feature points and, optionally, descriptors
   #   and save them in vslam_msgs/Point []
-  # Publish vslam_msgs to feature_matching_node's @\textbf{frame\_callback}@
+  # Publish vslam_msgs to @\textbf{frame\_matching\_callback}@
   @\textbf{frame\_callback}@(vslam_msgs/Frame) 
 
   # Private function:
@@ -297,7 +303,7 @@ The role of each node is described as follows:
   \begin{itemize}
     \item Member functions:
 \begin{lstlisting}
-  # Attempt to establish 3D-2D and\or 2D-2D correspondences
+  # Attempt to establish 3D-2D and/or 2D-2D correspondences
   # Algorithm:
   # state $\leftarrow$ Get the state from the back-end
   # if the state is INITIALIZATION
@@ -340,14 +346,9 @@ The role of each node is described as follows:
   # frame1 $\leftarrow$ Get the frame using the frame_id from back-end
   # matches $\leftarrow$ Find feature correspondences
   # if len(matches) > num_matches_thresh:
-  #   publish frame_pair
-  @\textbf{loop\_matching\_callback}@(vslam_msgs/FramePair) $\rightarrow$ 
-    vslam_msgs/FramePair to @\textbf{loop\_tracking\_callback}@
-
+  #   publish frame_pair to @\textbf{loop\_tracking\_callback}@
+  @\textbf{loop\_matching\_callback}@(vslam_msgs/FramePair)
 \end{lstlisting}
-
-TODO:
-change frame\_callback and loop\_callback to frame\_matching\_callback and loop\_matching\_callback 
 
     \item Member attributes:
 \begin{lstlisting}
