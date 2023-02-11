@@ -21,12 +21,10 @@ docker run \
 -e "QT_X11_NO_MITSHM=1" \
 --name=$CONT_NAME \
 --entrypoint /bin/bash \
---mount type=bind,source=$PROJECT_ROOT,target=/home/user/${PROJECT_ROOT##*/} \
--v /home/bryan/icl_nuim_lr_kt2:/home/user/${PROJECT_ROOT##*/}/datasets:ro \
--u $(id -u ${USER}):$(id -g ${USER}) \
+--mount type=bind,source=$PROJECT_ROOT,target=/${PROJECT_ROOT##*/} \
+-v /home/bryan/icl_nuim_lr_kt2:/datasets:ro \
 --volume=$XSOCK:$XSOCK:rw \
 --volume=$XAUTH:$XAUTH:rw \
 --env="XAUTHORITY=${XAUTH}" \
---env="DISPLAY" \
--w /home/user/${PROJECT_ROOT##*/} \
+-w /${PROJECT_ROOT##*/} \
 ubuntu/2204:vslamtutorial
