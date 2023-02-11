@@ -53,7 +53,7 @@ The role of each node is described as follows:
   In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
   When a new keyframe is created, it attempts to find a similar-looking image in the database and informs \textbf{feature\_matching\_node} to try to find new correspondences.
 
-  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{feature\_matching\_node} and \textbf{tracking\_node}.
+  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{tracking\_node}.
    
 \end{itemize}
 
