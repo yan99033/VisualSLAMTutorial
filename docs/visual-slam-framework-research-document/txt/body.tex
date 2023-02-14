@@ -53,7 +53,7 @@ The role of each node is described as follows:
   In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
   When a new keyframe is created, it attempts to find a similar-looking image in the database and informs \textbf{feature\_matching\_node} to try to find new correspondences.
 
-  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{feature\_matching\_node} and \textbf{tracking\_node}.
+  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{tracking\_node}.
    
 \end{itemize}
 
@@ -311,7 +311,7 @@ Note: after initialization, the current frame is added to the database in place\
   #     vslam_msgs/SetKeyFrame
   #   set the state as ATTEMPT_INITIALIZATION using 
   #     vslam_msgs/SetState
-  # elif the state is ATTEMPT_INITIALIZATION or tracking
+  # elif the state is ATTEMPT_INITIALIZATION or TRACKING
   #   curr_kf $\leftarrow$ Get the current keyframe
   #   matches $\leftarrow$ Find feature correspondences 
   #   if len(matches) < num_matches_thresh
@@ -374,21 +374,28 @@ Note: after initialization, the current frame is added to the database in place\
   #   tracking_quality, pose12 $\rightarrow$ calculate the relative pose 
   #     from 3D-2D correspondences
   #   if tracking_quality is good
-  #     Attempt to find a closed loop to establish another constraint
-  #     frame_id $\rightarrow$ find a candidate keyframe
-  #     if frame_id != -1:
-  #       candidate_keyframe $\rightarrow$ get the candidate keyframe
-  #       frame_pair $\rightarrow$ create a FramePair instance
-  #       populate frame_pair with relevant information 
-  #         (e.g., frame1=candidate_keyframe, frame2=current_frame)
-  #       publish the frame_pair to @\textbf{place\_recognition\_callback}@
-  #     
   #     if pose12 satisfies the new keyframe criteria
   #       add the current keyframe to the place_recognition_node  
-  #         database using 
-  #       publish the frame_pair to @\textbf{mapping\_callback}@
+  #         database 
+  #       # Attempt to find a closed loop to establish another 
+  #         constraint
+  #       frame_id $\rightarrow$ find a candidate keyframe
+  #       if frame_id != -1:
+  #         candidate_keyframe $\rightarrow$ get the candidate keyframe
+  #         frame_pair $\rightarrow$ create a FramePair instance
+  #         populate frame_pair with relevant information 
+  #           (e.g., frame1=candidate_keyframe, frame2=current_frame)
+  #         publish the frame_pair to @\textbf{place\_recognition\_callback}@
+  #     
+  #     publish the frame_pair to @\textbf{mapping\_callback}@
   #   else
   #     set the state to RELOCALIZATION
+  # else # contraint_type is FOR_RELOCALIZATION
+  #   tracking_quality, pose12 $\rightarrow$ calculate the relative pose 
+  #     from 3D-2D correspondences
+  #   if tracking_quality is good
+  #     set frame1 as the keyframe in the backend
+  #     set the state to tracking
   @\textbf{frame\_tracking\_callback}@
 
   # Calculate the relative transformation of a potential loop 
