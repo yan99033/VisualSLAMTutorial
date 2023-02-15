@@ -17,8 +17,13 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 set(msg_files
+  "msg/Feature.msg"
   "msg/Frame.msg"
   "msg/FramePair.msg"
+  "msg/Point.msg"
+  "msg/PointPair.msg"
+  "msg/Vector2d.msg"
+  "msg/Vector3d.msg"
 )
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
