@@ -15,32 +15,31 @@
 #ifndef VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
 #define VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
 
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
-#include <string>
-
 namespace vslam_components {
 
-namespace data_loader_nodes {
+  namespace data_loader_nodes {
 
-class LoadFromFolder : public rclcpp::Node
-{
-public:
-  explicit LoadFromFolder(const rclcpp::NodeOptions & options);
+    class LoadFromFolder : public rclcpp::Node {
+    public:
+      explicit LoadFromFolder(const rclcpp::NodeOptions& options);
 
-protected:
-  void on_timer();
+    protected:
+      void on_timer();
 
-private:
-  size_t count_;
+    private:
+      size_t count_;
 
-  std::vector<std::string> files_;  //!< Files in a folder
-  rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr pub_;
-  rclcpp::TimerBase::SharedPtr timer_;
-};
+      std::vector<std::string> files_;  //!< Files in a folder
+      rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr pub_;
+      rclcpp::TimerBase::SharedPtr timer_;
+    };
 
-}  // namespace data_loader_nodes
+  }  // namespace data_loader_nodes
 
 }  // namespace vslam_components
 

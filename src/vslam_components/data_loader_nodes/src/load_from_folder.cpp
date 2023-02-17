@@ -14,14 +14,15 @@
 
 #include "data_loader_nodes/load_from_folder.hpp"
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
+#include <fmt/format.h>
+
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <utility>
-#include <filesystem>
-#include <fmt/format.h>
 #undef NDEBUG
 #include <cassert>
 
@@ -42,7 +43,7 @@ namespace {
 
     for (const auto& f : std::filesystem::directory_iterator(folder)) {
       if (f.path().extension() == ext) {
-          files.push_back(f.path());
+        files.push_back(f.path());
       }
     }
 
@@ -67,53 +68,55 @@ namespace {
         throw std::runtime_error("Unsupported encoding type");
     }
   }
-}
+}  // namespace
 
 namespace vslam_components {
 
-namespace data_loader_nodes {
+  namespace data_loader_nodes {
 
-LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions & options)
-: Node("load_from_folder", options), count_(0), files_{load_files("/Users/sy/kitti/00/image_2")}
-{
-  // Create a publisher of "vslam_msgs/Frame" messages on the "chatter" topic.
-  pub_ = create_publisher<vslam_msgs::msg::Frame>("camera_node", 10);
+    LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions& options)
+        : Node("load_from_folder", options),
+          count_(0),
+          files_{load_files("/Users/sy/kitti/00/image_2")} {
+      // Create a publisher of "vslam_msgs/Frame" messages on the "chatter" topic.
+      pub_ = create_publisher<vslam_msgs::msg::Frame>("camera_node", 10);
 
-  // Use a timer to schedule periodic message publishing.
-  auto frame_rate_hz = declare_parameter("frame_rate_hz", 10);
-  assert(frame_rate_hz > 0);
-  timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz), std::bind(&LoadFromFolder::on_timer, this));
-  
-  RCLCPP_INFO(this->get_logger(), "Going to publish the frames at '%lu' hz \n", frame_rate_hz);
-  RCLCPP_INFO(this->get_logger(), "Loaded '%lu' files\n", files_.size());
-}
+      // Use a timer to schedule periodic message publishing.
+      auto frame_rate_hz = declare_parameter("frame_rate_hz", 10);
+      assert(frame_rate_hz > 0);
+      timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz),
+                                 std::bind(&LoadFromFolder::on_timer, this));
 
-void LoadFromFolder::on_timer()
-{
-  // Load image
-  cv::Mat image = cv::imread(files_.at(count_ % files_.size()),  cv::IMREAD_COLOR);
-  sensor_msgs::msg::Image im_msg;
-  im_msg.height = image.rows;
-  im_msg.width = image.cols;
-  im_msg.encoding = mat_type2encoding(image.type());
-  im_msg.is_bigendian = false;
-  im_msg.step = static_cast<sensor_msgs::msg::Image::_step_type>(image.step);
-  im_msg.data.assign(image.datastart, image.dataend);  
+      RCLCPP_INFO(this->get_logger(), "Going to publish the frames at '%lu' hz \n", frame_rate_hz);
+      RCLCPP_INFO(this->get_logger(), "Loaded '%lu' files\n", files_.size());
+    }
 
-  // Create a frame
-  auto msg = std::make_unique<vslam_msgs::msg::Frame>();
-  msg->id = ++count_;
-  RCLCPP_INFO(this->get_logger(), fmt::format("Publishing frame: {} / {}", msg->id, files_.size()).c_str());
-  msg->image = im_msg;
+    void LoadFromFolder::on_timer() {
+      // Load image
+      cv::Mat image = cv::imread(files_.at(count_ % files_.size()), cv::IMREAD_COLOR);
+      sensor_msgs::msg::Image im_msg;
+      im_msg.height = image.rows;
+      im_msg.width = image.cols;
+      im_msg.encoding = mat_type2encoding(image.type());
+      im_msg.is_bigendian = false;
+      im_msg.step = static_cast<sensor_msgs::msg::Image::_step_type>(image.step);
+      im_msg.data.assign(image.datastart, image.dataend);
 
-  // Put the message into a queue to be processed by the middleware.
-  // This call is non-blocking.
-  pub_->publish(std::move(msg));
-}
+      // Create a frame
+      auto msg = std::make_unique<vslam_msgs::msg::Frame>();
+      msg->id = ++count_;
+      RCLCPP_INFO(this->get_logger(),
+                  fmt::format("Publishing frame: {} / {}", msg->id, files_.size()).c_str());
+      msg->image = im_msg;
 
-}  // namespace data_loader_nodes
+      // Put the message into a queue to be processed by the middleware.
+      // This call is non-blocking.
+      pub_->publish(std::move(msg));
+    }
 
-}  // namespace composition
+  }  // namespace data_loader_nodes
+
+}  // namespace vslam_components
 
 #include "rclcpp_components/register_node_macro.hpp"
 
