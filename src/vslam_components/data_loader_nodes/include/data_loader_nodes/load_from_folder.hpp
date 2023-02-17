@@ -15,7 +15,6 @@
 #ifndef VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
 #define VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
 
-#include "data_loader_nodes/visibility_control.h"
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
@@ -28,7 +27,6 @@ namespace data_loader_nodes {
 class LoadFromFolder : public rclcpp::Node
 {
 public:
-  COMPOSITION_PUBLIC
   explicit LoadFromFolder(const rclcpp::NodeOptions & options);
 
 protected:
@@ -44,6 +42,6 @@ private:
 
 }  // namespace data_loader_nodes
 
-}  // namespace composition
+}  // namespace vslam_components
 
 #endif  // VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
