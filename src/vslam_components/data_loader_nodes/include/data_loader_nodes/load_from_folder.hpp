@@ -19,6 +19,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
+#include <string>
+
 namespace vslam_components {
 
 namespace data_loader_nodes {
@@ -34,6 +36,8 @@ protected:
 
 private:
   size_t count_;
+
+  std::vector<std::string> files_;  //!< Files in a folder
   rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
