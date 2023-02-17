@@ -15,11 +15,19 @@
 """Launch a talker and a listener in a component container."""
 
 import launch
+import os
+from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
+    config = os.path.join(
+        get_package_share_directory('vslam_demos'),
+        'params_file',
+        'test_kitti.yaml'
+        )
+
     """Generate launch description with multiple components."""
     container = ComposableNodeContainer(
             name='vslam_container',
@@ -31,6 +39,7 @@ def generate_launch_description():
                     package='data_loader_nodes',
                     plugin='vslam_components::data_loader_nodes::LoadFromFolder',
                     name='camera_node', 
+                    parameters = [config],
                     extra_arguments=[{'use_intra_process_comms': True}],),
             ],
             output='screen',

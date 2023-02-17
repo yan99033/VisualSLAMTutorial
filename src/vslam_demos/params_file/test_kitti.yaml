@@ -1,0 +1,9 @@
+camera_node:
+  ros__parameters:
+    frame_rate_hz: 10
+    image_folder: "/Users/sy/kitti/00/image_2"
+    camera_params:
+      fx: 718.856
+      fy: 718.856
+      cx: 607.1928
+      cy: 185.2157
