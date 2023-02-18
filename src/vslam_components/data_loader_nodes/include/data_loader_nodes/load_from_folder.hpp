@@ -5,7 +5,6 @@
 
 #include <string>
 
-// #include "data_loader_nodes/common.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "vslam_msgs/msg/frame.hpp"
