@@ -24,7 +24,7 @@ from launch_ros.descriptions import ComposableNode
 def generate_launch_description():
     config = os.path.join(
         get_package_share_directory('vslam_demos'),
-        'params_file',
+        'config',
         'test_kitti.yaml'
         )
 

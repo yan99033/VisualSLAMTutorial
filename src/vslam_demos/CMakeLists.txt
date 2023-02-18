@@ -29,7 +29,7 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 install(DIRECTORY 
-  params_file DESTINATION share/${PROJECT_NAME}/
+  config DESTINATION share/${PROJECT_NAME}/
 )
 
 ament_package()
