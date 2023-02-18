@@ -1,48 +1,44 @@
-# Copyright 2019 Open Source Robotics Foundation, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# TODO: licence
 
-"""Launch a talker and a listener in a component container."""
+"""Launch the vslam components on images in a folder"""
 
 import launch
 import os
 from ament_index_python.packages import get_package_share_directory
+from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    config = os.path.join(
-        get_package_share_directory('vslam_demos'),
-        'config',
-        'test_kitti.yaml'
-        )
+  # args that can be set from the command line or a default will be used
+  default_config = os.path.join(
+    get_package_share_directory('vslam_demos'),
+    'config',
+    'test_kitti.yaml'
+  )
+  declare_config_file_cmd = DeclareLaunchArgument(
+    'config', default_value=default_config,
+    description='Full path to the ROS2 parameters file to use for all launched nodes'
+  )
+  config = LaunchConfiguration('config')
 
-    """Generate launch description with multiple components."""
-    container = ComposableNodeContainer(
-            name='vslam_container',
-            namespace='',
-            package='rclcpp_components',
-            executable='component_container',
-            composable_node_descriptions=[
-                ComposableNode(
-                    package='data_loader_nodes',
-                    plugin='vslam_components::data_loader_nodes::LoadFromFolder',
-                    name='camera_node', 
-                    parameters = [config],
-                    extra_arguments=[{'use_intra_process_comms': True}],),
-            ],
-            output='screen',
-    )
+  """Generate launch description with multiple components."""
+  container = ComposableNodeContainer(
+    name='vslam_container',
+    namespace='',
+    package='rclcpp_components',
+    executable='component_container',
+    composable_node_descriptions=[
+            ComposableNode(
+                package='data_loader_nodes',
+                plugin='vslam_components::data_loader_nodes::LoadFromFolder',
+                name='camera_node',
+                parameters=[config],
+                extra_arguments=[{'use_intra_process_comms': True}],),
+    ],
+    output='screen',
+  )
 
-    return launch.LaunchDescription([container])
+  return launch.LaunchDescription([declare_config_file_cmd, container])
