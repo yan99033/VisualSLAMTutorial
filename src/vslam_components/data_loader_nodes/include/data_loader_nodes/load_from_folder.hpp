@@ -1,7 +1,7 @@
 // TODO: Licence
 
-#ifndef VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
-#define VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
+#ifndef DATA_LOADER_NODES__LOAD_FROM_FOLDER_HPP_
+#define DATA_LOADER_NODES__LOAD_FROM_FOLDER_HPP_
 
 #include <string>
 
@@ -36,4 +36,4 @@ namespace vslam_components {
 
 }  // namespace vslam_components
 
-#endif  // VSLAM_COMPONENTS__LOAD_FROM_FOLDER_HPP_
+#endif  // DATA_LOADER_NODES__LOAD_FROM_FOLDER_HPP_
