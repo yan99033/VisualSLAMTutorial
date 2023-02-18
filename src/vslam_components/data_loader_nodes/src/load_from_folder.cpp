@@ -1,16 +1,4 @@
-// Copyright 2016 Open Source Robotics Foundation, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// TODO: licence
 
 #include "data_loader_nodes/load_from_folder.hpp"
 
@@ -70,11 +58,11 @@ namespace vslam_components {
   namespace data_loader_nodes {
 
     LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions& options)
-        : Node("load_from_folder", options),
+        : Node("load_from_folder_node", options),
           count_(0),
           cam_info_msg_{load_camera_info()},
           files_{load_files(declare_parameter("image_folder", ""))} {
-      pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
+      frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
 
       RCLCPP_INFO(this->get_logger(), "Cam info: %f %f %f %f\n", cam_info_msg_.k[0],
                   cam_info_msg_.k[2], cam_info_msg_.k[4], cam_info_msg_.k[5]);
@@ -114,7 +102,7 @@ namespace vslam_components {
 
       // Put the message into a queue to be processed by the middleware.
       // This call is non-blocking.
-      pub_->publish(std::move(msg));
+      frame_pub_->publish(std::move(msg));
     }
 
     CamInfoMsg LoadFromFolder::load_camera_info() {
