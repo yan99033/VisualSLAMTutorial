@@ -11,19 +11,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# ---- Add dependencies via CPM ----
-# see https://github.com/TheLartians/CPM.cmake for more info
-
-include(cmake/CPM.cmake)
-
-CPMAddPackage(
-  NAME fmt
-  GIT_TAG 9.1.0
-  GITHUB_REPOSITORY fmtlib/fmt
-  OPTIONS "FMT_INSTALL YES" # create an installable target
-          "CMAKE_POSITION_INDEPENDENT_CODE ON"
-)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -40,7 +27,7 @@ set(LIB_NAME data_loader_nodes)
 add_library(${LIB_NAME} SHARED
   src/load_from_folder.cpp)
 target_link_libraries(
-  ${LIB_NAME} fmt::fmt ${OpenCV_LIBRARIES}
+  ${LIB_NAME} ${OpenCV_LIBRARIES}
 )
 target_compile_definitions(${LIB_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")

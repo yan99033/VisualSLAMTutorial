@@ -14,8 +14,6 @@
 
 #include "data_loader_nodes/load_from_folder.hpp"
 
-#include <fmt/format.h>
-
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -74,15 +72,12 @@ namespace vslam_components {
     LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions& options)
         : Node("load_from_folder", options),
           count_(0),
-          cam_info_msg_(load_camera_info()),
+          cam_info_msg_{load_camera_info()},
           files_{load_files(declare_parameter("image_folder", ""))} {
-      // Create a publisher of "vslam_msgs/Frame" messages on the "chatter" topic.
-      pub_ = create_publisher<vslam_msgs::msg::Frame>("frame", 10);
+      pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
 
-      RCLCPP_INFO(this->get_logger(),
-                  fmt::format("Cam info: {} {} {} {}\n", cam_info_msg_.k[0], cam_info_msg_.k[2],
-                              cam_info_msg_.k[4], cam_info_msg_.k[5])
-                      .c_str());
+      RCLCPP_INFO(this->get_logger(), "Cam info: %f %f %f %f\n", cam_info_msg_.k[0],
+                  cam_info_msg_.k[2], cam_info_msg_.k[4], cam_info_msg_.k[5]);
 
       // Use a timer to schedule periodic message publishing.
       auto frame_rate_hz = declare_parameter("frame_rate_hz", 10);
@@ -90,7 +85,7 @@ namespace vslam_components {
       timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz),
                                  std::bind(&LoadFromFolder::on_timer, this));
 
-      RCLCPP_INFO(this->get_logger(), "Going to publish the frames at %lu hz \n", frame_rate_hz);
+      RCLCPP_INFO(this->get_logger(), "Going to publish the frames at %llu hz \n", frame_rate_hz);
       RCLCPP_INFO(this->get_logger(), "Loaded '%lu' files\n", files_.size());
     }
 
@@ -112,8 +107,7 @@ namespace vslam_components {
       // Create a frame
       auto msg = std::make_unique<vslam_msgs::msg::Frame>();
       msg->id = ++count_;
-      RCLCPP_INFO(this->get_logger(),
-                  fmt::format("Publishing frame: {} / {}", msg->id, files_.size()).c_str());
+      RCLCPP_INFO(this->get_logger(), "Publishing frame: %u / %lu", msg->id, files_.size());
       msg->image = im_msg;
       msg->cam_info = cam_info_msg_;
       msg->header.stamp = now();
