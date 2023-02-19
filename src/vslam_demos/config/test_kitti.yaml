@@ -7,3 +7,7 @@ camera_node:
       fy: 718.856
       cx: 607.1928
       cy: 185.2157
+
+feature_extraction_node:
+  ros__parameters:
+    num_features: 2000
