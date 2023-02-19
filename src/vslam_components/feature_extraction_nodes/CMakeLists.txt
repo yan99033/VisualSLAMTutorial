@@ -16,7 +16,7 @@ include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
 set(node_plugins "")
-set(LIB_NAME data_loader_nodes)
+set(LIB_NAME feature_extraction_nodes)
 add_library(${LIB_NAME} SHARED
   src/fast_feature_extraction_node.cpp)
 target_link_libraries(
@@ -29,8 +29,8 @@ ament_target_dependencies(${LIB_NAME}
   "rclcpp_components"
   "vslam_msgs")
 
-rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::LoadFromFolder")
-set(node_plugins "${node_plugins}vslam_components::data_loader_nodes::LoadFromFolder;$<TARGET_FILE:data_loader_nodes>\n")
+rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_extraction_nodes::FastFeatureExtractionNode")
+set(node_plugins "${node_plugins}vslam_components::feature_extraction_nodes::FastFeatureExtractionNode;$<TARGET_FILE:feature_extraction_nodes>\n")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -43,5 +43,11 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+install(TARGETS
+  feature_extraction_nodes
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 ament_package()
