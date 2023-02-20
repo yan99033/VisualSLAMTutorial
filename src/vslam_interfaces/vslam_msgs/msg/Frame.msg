@@ -14,3 +14,6 @@ sensor_msgs/Image image
 
 # Camera pose
 geometry_msgs/Pose pose
+
+# Points
+Point[] points

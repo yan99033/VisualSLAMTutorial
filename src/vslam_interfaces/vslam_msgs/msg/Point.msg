@@ -7,5 +7,5 @@ Vector2d kp
 Vector3d mp
 bool has_mp
 
-# Feature
-Feature descriptor
+# The data structure of the feature to be defined in the code
+uint8[] feature_data

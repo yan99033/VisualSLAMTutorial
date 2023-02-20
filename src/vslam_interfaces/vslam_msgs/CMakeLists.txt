@@ -17,7 +17,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 set(msg_files
-  "msg/Feature.msg"
   "msg/Frame.msg"
   "msg/FramePair.msg"
   "msg/Point.msg"
