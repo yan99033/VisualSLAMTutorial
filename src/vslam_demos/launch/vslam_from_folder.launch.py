@@ -50,6 +50,16 @@ def generate_launch_description():
                     ('/out_frame', '/frame_w_features'),
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
+            ComposableNode(
+                package='feature_matching_nodes',
+                plugin='vslam_components::feature_matching_nodes::OrbMatcherNode',
+                name='orb_matcher_node',
+                parameters=[config],
+                remappings=[
+                    ('/in_frame', '/frame_w_features'),
+                    ('/out_frame', '/frame_matched'),
+                ],
+                extra_arguments=[{'use_intra_process_comms': True}],),
         ],
         output='screen',
     )
