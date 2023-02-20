@@ -1,0 +1,5 @@
+# Get the state of the system
+# (e.g., initialization, tracking or relocalization)
+---
+# State of the system
+vslam_msgs/State state

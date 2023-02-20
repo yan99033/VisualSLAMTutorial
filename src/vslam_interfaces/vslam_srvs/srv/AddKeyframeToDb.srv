@@ -1,0 +1,5 @@
+# Add the frame to the database for loop closure detection
+vslam_msgs/Frame frame
+---
+# Indicate if the frame is successfully added
+bool success

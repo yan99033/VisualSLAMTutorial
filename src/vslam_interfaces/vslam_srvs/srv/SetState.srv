@@ -1,0 +1,8 @@
+# Set the state of the system
+# (e.g., initialization, tracking or relocalization)
+# Assume nodes’ good faith, i.e.,
+# nodes will not sabotage the system
+vslam_msgs/State state
+---
+# Indicate if the state is set
+bool success
