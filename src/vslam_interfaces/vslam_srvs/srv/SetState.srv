@@ -2,7 +2,7 @@
 # (e.g., initialization, tracking or relocalization)
 # Assume nodes’ good faith, i.e.,
 # nodes will not sabotage the system
-vslam_msgs/State state
+vslam_msgs/State system_state
 ---
 # Indicate if the state is set
 bool success

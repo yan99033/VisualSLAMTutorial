@@ -2,4 +2,4 @@
 # (e.g., initialization, tracking or relocalization)
 ---
 # State of the system
-vslam_msgs/State state
+vslam_msgs/State system_state
