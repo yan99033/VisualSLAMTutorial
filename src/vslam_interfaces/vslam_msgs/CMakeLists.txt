@@ -23,6 +23,7 @@ set(msg_files
   "msg/PointPair.msg"
   "msg/Vector2d.msg"
   "msg/Vector3d.msg"
+  "msg/State.msg"
 )
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
