@@ -17,10 +17,18 @@ namespace vslam_components {
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
           "in_frame", 10, std::bind(&FastFeatureExtractionNode::frame_callback, this, _1));
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
+      captured_frame_pub_ = frame_pub_;
     }
 
     void FastFeatureExtractionNode::frame_callback(
-        const vslam_msgs::msg::Frame::SharedPtr frame_msg) const {
+        vslam_msgs::msg::Frame::UniquePtr frame_msg) const {
+      auto pub_ptr = captured_frame_pub_.lock();
+      if (!pub_ptr) {
+        RCLCPP_WARN(this->get_logger(),
+                    "FastFeatureExtractionNode: unable to lock the publisher\n");
+        return;
+      }
+
       RCLCPP_INFO(this->get_logger(), "FastFeatureExtractionNode: Getting frame %u\n",
                   frame_msg->id);
 
@@ -33,11 +41,23 @@ namespace vslam_components {
       cv::Mat descriptors;
       fast_feature_detector_->detectAndCompute(cv_ptr->image, cv::noArray(), keypoints,
                                                descriptors);
+
+      // Create points and descriptors
+      frame_msg->points.resize(keypoints.size());
       for (size_t i = 0; i < keypoints.size(); i++) {
         datastructure::OrbFeature orb_feature;
         orb_feature.keypoint = keypoints[i];
         descriptors.row(i).copyTo(orb_feature.descriptor);
+        auto orb_feature_p = reinterpret_cast<uint8_t *>(&orb_feature);
+
+        frame_msg->points[i].feature_data.resize(sizeof(datastructure::OrbFeature));
+        std::copy(frame_msg->points[i].feature_data.begin(),
+                  frame_msg->points[i].feature_data.end(), orb_feature_p);
+
+        frame_msg->points[i].has_mp = false;
       }
+
+      pub_ptr->publish(std::move(frame_msg));
     }
   }  // namespace feature_extraction_nodes
 }  // namespace vslam_components

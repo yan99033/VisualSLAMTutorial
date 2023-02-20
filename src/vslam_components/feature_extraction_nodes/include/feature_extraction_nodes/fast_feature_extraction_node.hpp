@@ -24,10 +24,13 @@ namespace vslam_components {
       explicit FastFeatureExtractionNode(const rclcpp::NodeOptions &options);
 
     private:
-      void frame_callback(const vslam_msgs::msg::Frame::SharedPtr frame_msg) const;
+      void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const;
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
+
+      // for re-publishing the frame message without creating a copy
+      std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
       cv::Ptr<cv::ORB> fast_feature_detector_;
     };
