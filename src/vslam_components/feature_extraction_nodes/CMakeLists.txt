@@ -10,7 +10,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(vslam_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 
 include_directories(include)
@@ -28,8 +27,7 @@ target_compile_definitions(${LIB_NAME}
 ament_target_dependencies(${LIB_NAME}
   "rclcpp"
   "rclcpp_components"
-  "vslam_msgs"
-  "cv_bridge")
+  "vslam_msgs")
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_extraction_nodes::FastFeatureExtractionNode")
 set(node_plugins "${node_plugins}vslam_components::feature_extraction_nodes::FastFeatureExtractionNode;$<TARGET_FILE:feature_extraction_nodes>\n")

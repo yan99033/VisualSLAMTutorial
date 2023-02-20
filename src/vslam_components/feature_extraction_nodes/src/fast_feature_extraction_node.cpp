@@ -1,8 +1,21 @@
 #include "feature_extraction_nodes/fast_feature_extraction_node.hpp"
 
-#include <cv_bridge/cv_bridge.h>
-
 using std::placeholders::_1;
+
+namespace {
+  int encoding2mat_type(const std::string &encoding) {
+    if (encoding == "mono8") {
+      return CV_8UC1;
+    } else if (encoding == "bgr8") {
+      return CV_8UC3;
+    } else if (encoding == "mono16") {
+      return CV_16SC1;
+    } else if (encoding == "rgba8") {
+      return CV_8UC4;
+    }
+    throw std::runtime_error("Unsupported mat type");
+  }
+}  // namespace
 
 namespace vslam_components {
 
@@ -32,15 +45,14 @@ namespace vslam_components {
       RCLCPP_INFO(this->get_logger(), "FastFeatureExtractionNode: Getting frame %u\n",
                   frame_msg->id);
 
-      // Get the image in the frame
-      cv_bridge::CvImagePtr cv_ptr
-          = cv_bridge::toCvCopy(frame_msg->image, frame_msg->image.encoding);
+      // Create a cv::Mat from the image message (without copying).
+      cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
+                     encoding2mat_type(frame_msg->image.encoding), frame_msg->image.data.data());
 
       // Extract features in the image
       std::vector<cv::KeyPoint> keypoints;
       cv::Mat descriptors;
-      fast_feature_detector_->detectAndCompute(cv_ptr->image, cv::noArray(), keypoints,
-                                               descriptors);
+      fast_feature_detector_->detectAndCompute(cv_mat, cv::noArray(), keypoints, descriptors);
 
       // Create points and descriptors
       frame_msg->points.resize(keypoints.size());
