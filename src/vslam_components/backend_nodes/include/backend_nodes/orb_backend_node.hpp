@@ -9,9 +9,9 @@
 
 namespace vslam_components {
   namespace backend_nodes {
-    class OrbBackend : public rclcpp::Node {
+    class OrbBackendNode : public rclcpp::Node {
     public:
-      explicit OrbBackend(const rclcpp::NodeOptions& options);
+      explicit OrbBackendNode(const rclcpp::NodeOptions& options);
 
     private:
       void get_state_callback(const std::shared_ptr<vslam_srvs::srv::GetState::Request> request,
