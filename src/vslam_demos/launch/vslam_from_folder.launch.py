@@ -25,11 +25,11 @@ def generate_launch_description():
     config = LaunchConfiguration('config')
 
     """Generate launch description with multiple components."""
-    container = ComposableNodeContainer(
-        name='vslam_container',
+    vslam_preprocessing_container = ComposableNodeContainer(
+        name='vslam_preprocessing_container',
         namespace='',
         package='rclcpp_components',
-        executable='component_container',
+        executable='component_container_mt',
         composable_node_descriptions=[
             ComposableNode(
                 package='data_loader_nodes',
@@ -50,6 +50,17 @@ def generate_launch_description():
                     ('/out_frame', '/frame_w_features'),
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
+        ],
+        output='screen',
+    )
+
+    """Generate launch description with multiple components."""
+    vslam_frontend_container = ComposableNodeContainer(
+        name='vslam_frontend_container',
+        namespace='',
+        package='rclcpp_components',
+        executable='component_container_mt',
+        composable_node_descriptions=[
             ComposableNode(
                 package='feature_matching_nodes',
                 plugin='vslam_components::feature_matching_nodes::OrbMatcherNode',
@@ -64,4 +75,21 @@ def generate_launch_description():
         output='screen',
     )
 
-    return launch.LaunchDescription([declare_config_file_cmd, container])
+    """Generate launch description with multiple components."""
+    vslam_backend_container = ComposableNodeContainer(
+        name='vslam_backend_container',
+        namespace='',
+        package='rclcpp_components',
+        executable='component_container_mt',
+        composable_node_descriptions=[
+            ComposableNode(
+                package='backend_nodes',
+                plugin='vslam_components::backend_nodes::OrbBackendNode',
+                name='orb_backend_node',
+                parameters=[config],
+                extra_arguments=[{'use_intra_process_comms': True}],),
+        ],
+        output='screen',
+    )
+
+    return launch.LaunchDescription([declare_config_file_cmd, vslam_preprocessing_container, vslam_frontend_container, vslam_backend_container])
