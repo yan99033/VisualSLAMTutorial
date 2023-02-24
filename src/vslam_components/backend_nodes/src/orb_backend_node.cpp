@@ -9,14 +9,25 @@ namespace vslam_components {
         : Node("orb_backend_node", options) {
       get_state_srv_ = create_service<vslam_srvs::srv::GetState>(
           "get_state", std::bind(&OrbBackendNode::get_state_callback, this, _1, _2));
+      set_state_srv_ = create_service<vslam_srvs::srv::SetState>(
+          "set_state", std::bind(&OrbBackendNode::set_state_callback, this, _1, _2));
     }
 
     void OrbBackendNode::get_state_callback(
         const std::shared_ptr<vslam_srvs::srv::GetState::Request> request,
         const std::shared_ptr<vslam_srvs::srv::GetState::Response> response) {
       (void)request;
-      RCLCPP_INFO(this->get_logger(), "OrbBackend: requested a GetState service");
+      RCLCPP_INFO(this->get_logger(), "Requested a GetState service");
       response->system_state.state = state_;
+    }
+
+    void OrbBackendNode::set_state_callback(
+        const std::shared_ptr<vslam_srvs::srv::SetState::Request> request,
+        const std::shared_ptr<vslam_srvs::srv::SetState::Response> response) {
+      state_ = request->system_state.state;
+
+      RCLCPP_INFO(this->get_logger(), "Requested a SetState service");
+      response->success = true;
     }
 
   }  // namespace backend_nodes
