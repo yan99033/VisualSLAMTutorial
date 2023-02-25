@@ -17,7 +17,7 @@ include_directories(include)
 # create ament index resource which references the libraries in the binary dir
 set(LIB_NAME feature_extraction_nodes)
 add_library(${LIB_NAME} SHARED
-  src/fast_feature_extraction_node.cpp)
+  src/orb_feature_extraction_node.cpp)
 target_link_libraries(
   ${LIB_NAME} ${OpenCV_LIBRARIES}
 )
@@ -28,7 +28,7 @@ ament_target_dependencies(${LIB_NAME}
   "rclcpp_components"
   "vslam_msgs")
 
-rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_extraction_nodes::FastFeatureExtractionNode")
+rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_extraction_nodes::OrbFeatureExtractionNode")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

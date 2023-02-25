@@ -19,9 +19,9 @@ namespace vslam_components {
   }  // namespace datastructure
 
   namespace feature_extraction_nodes {
-    class FastFeatureExtractionNode : public rclcpp::Node {
+    class OrbFeatureExtractionNode : public rclcpp::Node {
     public:
-      explicit FastFeatureExtractionNode(const rclcpp::NodeOptions &options);
+      explicit OrbFeatureExtractionNode(const rclcpp::NodeOptions &options);
 
     private:
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const;
@@ -32,7 +32,7 @@ namespace vslam_components {
       // for re-publishing the frame message without creating a copy
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
-      cv::Ptr<cv::ORB> fast_feature_detector_;
+      cv::Ptr<cv::ORB> orb_feature_detector_;
     };
   }  // namespace feature_extraction_nodes
 }  // namespace vslam_components
