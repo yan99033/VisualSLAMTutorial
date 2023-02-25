@@ -21,7 +21,6 @@ find_package(vslam_srvs REQUIRED)
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
-set(node_plugins "")
 set(LIB_NAME backend_nodes)
 add_library(${LIB_NAME} SHARED
   src/orb_backend_node.cpp)
@@ -37,7 +36,6 @@ ament_target_dependencies(${LIB_NAME}
   "vslam_srvs")
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::backend_nodes::OrbBackendNode")
-set(node_plugins "${node_plugins}vslam_components::backend_nodes::OrbBackendNode;$<TARGET_FILE:backend_nodes>\n")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

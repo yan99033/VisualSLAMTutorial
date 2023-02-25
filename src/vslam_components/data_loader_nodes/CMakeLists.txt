@@ -22,7 +22,6 @@ find_package(OpenCV REQUIRED)
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
-set(node_plugins "")
 set(LIB_NAME data_loader_nodes)
 add_library(${LIB_NAME} SHARED
   src/load_from_folder.cpp)
@@ -37,7 +36,6 @@ ament_target_dependencies(${LIB_NAME}
   "vslam_msgs")
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::LoadFromFolder")
-set(node_plugins "${node_plugins}vslam_components::data_loader_nodes::LoadFromFolder;$<TARGET_FILE:data_loader_nodes>\n")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

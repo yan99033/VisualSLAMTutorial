@@ -21,7 +21,6 @@ find_package(vslam_srvs REQUIRED)
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
-set(node_plugins "")
 set(LIB_NAME feature_matching_nodes)
 add_library(${LIB_NAME} SHARED
   src/orb_matcher_node.cpp)
@@ -37,8 +36,6 @@ ament_target_dependencies(${LIB_NAME}
   "vslam_srvs")
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_matching_nodes::OrbMatcherNode")
-set(node_plugins "${node_plugins}vslam_components::feature_matching_nodes::OrbMatcherNode;$<TARGET_FILE:data_loader_nodes>\n")
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
