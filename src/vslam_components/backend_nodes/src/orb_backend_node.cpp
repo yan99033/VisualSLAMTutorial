@@ -17,16 +17,18 @@ namespace vslam_components {
         const std::shared_ptr<vslam_srvs::srv::GetState::Request> request,
         const std::shared_ptr<vslam_srvs::srv::GetState::Response> response) {
       (void)request;
-      RCLCPP_INFO(this->get_logger(), "Requested a GetState service");
+      RCLCPP_INFO(this->get_logger(), "Requested a GetState service: (%d)", state_);
       response->system_state.state = state_;
     }
 
     void OrbBackendNode::set_state_callback(
         const std::shared_ptr<vslam_srvs::srv::SetState::Request> request,
         const std::shared_ptr<vslam_srvs::srv::SetState::Response> response) {
+      RCLCPP_INFO(this->get_logger(), "Requested a SetState service, (%d -> %d)", state_,
+                  request->system_state.state);
+
       state_ = request->system_state.state;
 
-      RCLCPP_INFO(this->get_logger(), "Requested a SetState service");
       response->success = true;
     }
 
