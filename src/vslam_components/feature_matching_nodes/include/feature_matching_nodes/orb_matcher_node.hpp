@@ -1,10 +1,10 @@
 #ifndef FEATURE_MATCHING_NODES__ORB_MATCHING_NODE_HPP_
 #define FEATURE_MATCHING_NODES__ORB_MATCHING_NODE_HPP_
 
-#include "rclcpp/executor.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_srvs/srv/get_state.hpp"
+#include "vslam_srvs/srv/set_state.hpp"
 
 namespace vslam_components {
   namespace feature_matching_nodes {
@@ -15,8 +15,13 @@ namespace vslam_components {
     private:
       void frame_matching_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
-      vslam_srvs::srv::GetState::Request::SharedPtr get_state_request_;
+      // vslam_srvs::srv::GetState::Request::SharedPtr get_state_request_;
       rclcpp::Client<vslam_srvs::srv::GetState>::SharedPtr get_state_client_;
+
+      // vslam_srvs::srv::SetState::Request::SharedPtr set_state_request_;
+      rclcpp::Client<vslam_srvs::srv::SetState>::SharedPtr set_state_client_;
+
+      vslam_msgs::msg::State system_state_;
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;

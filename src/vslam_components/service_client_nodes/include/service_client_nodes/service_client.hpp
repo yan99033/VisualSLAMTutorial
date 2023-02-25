@@ -1,0 +1,173 @@
+#ifndef VSLAM_UTILS__SERVICE_CLIENT_HPP__
+#define VSLAM_UTILS__SERVICE_CLIENT_HPP__
+
+#include "rclcpp/rclcpp.hpp"
+
+namespace vslam_components {
+  namespace vslam_service_client_nodes {
+
+    template <class ServiceType> class ServiceClientNode : public rclcpp::Node {
+    public:
+      explicit ServiceClientNode(const rclcpp::NodeOptions& options);
+
+      using RequestType = typename ServiceType::Request;
+      using ResponseType = typename ServiceType::Response;
+
+      /**
+       * @brief Invoke the service and block until completed or timed out
+       * @param request The request object to call the service using
+       * @param timeout Maximum timeout to wait for, default infinite
+       * @return Response A pointer to the service response from the request
+       */
+      typename ResponseType::SharedPtr invoke(typename RequestType::SharedPtr& request,
+                                              const std::chrono::nanoseconds timeout
+                                              = std::chrono::nanoseconds(-1)) {
+        while (!client_->wait_for_service(std::chrono::seconds(1))) {
+          if (!rclcpp::ok()) {
+            throw std::runtime_error(service_name_
+                                     + " service client: interrupted while waiting for service");
+          }
+          RCLCPP_INFO(get_logger(), "%s service client: waiting for service to appear...",
+                      service_name_.c_str());
+        }
+
+        RCLCPP_DEBUG(get_logger(), "%s service client: send async request", service_name_.c_str());
+        auto future_result = client_->async_send_request(request);
+
+        if (callback_group_executor_.spin_until_future_complete(future_result, timeout)
+            != rclcpp::FutureReturnCode::SUCCESS) {
+          throw std::runtime_error(service_name_ + " service client: async_send_request failed");
+        }
+
+        return future_result.get();
+      }
+
+      /**
+       * @brief Block until a service is available or timeout
+       * @param timeout Maximum timeout to wait for, default infinite
+       * @return bool true if service is available
+       */
+      bool wait_for_service(const std::chrono::nanoseconds timeout
+                            = std::chrono::nanoseconds::max()) {
+        return client_->wait_for_service(timeout);
+      }
+
+    protected:
+      std::string service_name_;
+      rclcpp::CallbackGroup::SharedPtr callback_group_;
+      rclcpp::executors::SingleThreadedExecutor callback_group_executor_;
+      typename rclcpp::Client<ServiceType>::SharedPtr client_;
+    };
+  }  // namespace vslam_service_client_nodes
+}  // namespace vslam_components
+
+/**
+//  * @class nav2_util::ServiceClient
+//  * @brief A simple wrapper on ROS2 services for invoke() and block-style calling
+//  */
+// template <class ServiceT> class ServiceClient {
+// public:
+//   /**
+//    * @brief A constructor
+//    * @param service_name name of the service to call
+//    * @param provided_node Node to create the service client off of
+//    */
+//   explicit ServiceClient(const std::string& service_name,
+//                          const rclcpp::Node::SharedPtr& provided_node)
+//       : service_name_(service_name), node_(provided_node) {
+//     callback_group_
+//         = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
+//     callback_group_executor_.add_callback_group(callback_group_,
+//     get_node_base_interface()); client_ = create_client<ServiceT>(service_name,
+//     rclcpp::SystemDefaultsQoS(),
+//                                              callback_group_);
+//   }
+
+//   using RequestType = typename ServiceT::Request;
+//   using ResponseType = typename ServiceT::Response;
+
+// /**
+//  * @brief Invoke the service and block until completed or timed out
+//  * @param request The request object to call the service using
+//  * @param timeout Maximum timeout to wait for, default infinite
+//  * @return Response A pointer to the service response from the request
+//  */
+// typename ResponseType::SharedPtr invoke(typename RequestType::SharedPtr& request,
+//                                         const std::chrono::nanoseconds timeout
+//                                         = std::chrono::nanoseconds(-1)) {
+//   while (!client_->wait_for_service(std::chrono::seconds(1))) {
+//     if (!rclcpp::ok()) {
+//       throw std::runtime_error(service_name_
+//                                + " service client: interrupted while waiting for service");
+//     }
+//     RCLCPP_INFO(get_logger(), "%s service client: waiting for service to appear...",
+//                 service_name_.c_str());
+//   }
+
+//   RCLCPP_DEBUG(get_logger(), "%s service client: send async request",
+//                service_name_.c_str());
+//   auto future_result = client_->async_send_request(request);
+
+//   if (callback_group_executor_.spin_until_future_complete(future_result, timeout)
+//       != rclcpp::FutureReturnCode::SUCCESS) {
+//     throw std::runtime_error(service_name_ + " service client: async_send_request failed");
+//   }
+
+//   return future_result.get();
+// }
+
+// /**
+//  * @brief Invoke the service and block until completed
+//  * @param request The request object to call the service using
+//  * @param Response A pointer to the service response from the request
+//  * @return bool Whether it was successfully called
+//  */
+// bool invoke(typename RequestType::SharedPtr& request,
+//             typename ResponseType::SharedPtr& response) {
+//   while (!client_->wait_for_service(std::chrono::seconds(1))) {
+//     if (!rclcpp::ok()) {
+//       throw std::runtime_error(service_name_
+//                                + " service client: interrupted while waiting for service");
+//     }
+//     RCLCPP_INFO(get_logger(), "%s service client: waiting for service to appear...",
+//                 service_name_.c_str());
+//   }
+
+//   RCLCPP_DEBUG(get_logger(), "%s service client: send async request",
+//                service_name_.c_str());
+//   auto future_result = client_->async_send_request(request);
+
+//   if (callback_group_executor_.spin_until_future_complete(future_result)
+//       != rclcpp::FutureReturnCode::SUCCESS) {
+//     return false;
+//   }
+
+//   response = future_result.get();
+//   return response.get();
+// }
+
+//   /**
+//    * @brief Block until a service is available or timeout
+//    * @param timeout Maximum timeout to wait for, default infinite
+//    * @return bool true if service is available
+//    */
+//   bool wait_for_service(const std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max())
+//   {
+//     return client_->wait_for_service(timeout);
+//   }
+
+//   /**
+//    * @brief Gets the service name
+//    * @return string Service name
+//    */
+//   std::string getServiceName() { return service_name_; }
+
+// protected:
+//   std::string service_name_;
+//   rclcpp::Node::SharedPtr node_;
+//   rclcpp::CallbackGroup::SharedPtr callback_group_;
+//   rclcpp::executors::SingleThreadedExecutor callback_group_executor_;
+//   typename rclcpp::Client<ServiceT>::SharedPtr client_;
+// };
+
+#endif  // VSLAM_UTILS__SERVICE_CLIENT_HPP__
