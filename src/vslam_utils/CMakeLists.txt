@@ -17,12 +17,16 @@ find_package(rclcpp REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(vslam_srvs REQUIRED)
 
-include_directories(include)
+set(dependencies
+  rclcpp
+  vslam_msgs
+  vslam_srvs
+)
 
+include_directories(include)
 add_library(${PROJECT_NAME} SHARED
   src/service_client.cpp)
-ament_target_dependencies(${PROJECT_NAME}
-  "rclcpp")
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -36,10 +40,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+install(DIRECTORY include/ DESTINATION include/)
 install(TARGETS
-${PROJECT_NAME}
-ARCHIVE DESTINATION lib
-LIBRARY DESTINATION lib
-RUNTIME DESTINATION bin)
+  ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
 
 ament_package()
