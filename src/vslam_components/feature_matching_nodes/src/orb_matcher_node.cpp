@@ -6,8 +6,6 @@
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
-using GetStateResponseFuture = rclcpp::Client<vslam_srvs::srv::GetState>::SharedFuture;
-using SetStateResponseFuture = rclcpp::Client<vslam_srvs::srv::SetState>::SharedFuture;
 
 namespace vslam_components {
   namespace feature_matching_nodes {
@@ -26,9 +24,17 @@ namespace vslam_components {
 
     void OrbMatcherNode::set_service_clients(
         const vslam_utils::ServiceClient<vslam_srvs::srv::GetState>::SharedPtr get_state_client,
-        const vslam_utils::ServiceClient<vslam_srvs::srv::SetState>::SharedPtr set_state_client) {
+        const vslam_utils::ServiceClient<vslam_srvs::srv::SetState>::SharedPtr set_state_client,
+        const vslam_utils::ServiceClient<vslam_srvs::srv::GetKeyframe>::SharedPtr
+            get_keyframe_client,
+        const vslam_utils::ServiceClient<vslam_srvs::srv::SetKeyframe>::SharedPtr
+            set_keyframe_client) {
       get_state_client_ = get_state_client;
       set_state_client_ = set_state_client;
+
+      get_keyframe_client_ = get_keyframe_client;
+      set_keyframe_client_ = set_keyframe_client;
+
       service_clients_ready = true;
     }
 
@@ -52,6 +58,13 @@ namespace vslam_components {
       RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "State: %u ",
                   get_state_response->system_state.state);
 
+      // if the state is tracking
+      //   get the keyframe from backend
+      //   match features between the current frame and the keyframe
+      //   set the current frame as the keyframe
+      // else
+      //   Set the current frame as the keyframe
+      //   set the state to tracking
       if (get_state_response->system_state.state == vslam_msgs::msg::State::INITIALIZATION) {
         set_state_request_->system_state.state = vslam_msgs::msg::State::ATTEMPT_INITIALIZATION;
       } else {

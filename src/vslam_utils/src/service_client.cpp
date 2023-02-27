@@ -1,6 +1,8 @@
 #include "vslam_utils/service_client.hpp"
 
+#include "vslam_srvs/srv/get_keyframe.hpp"
 #include "vslam_srvs/srv/get_state.hpp"
+#include "vslam_srvs/srv/set_keyframe.hpp"
 #include "vslam_srvs/srv/set_state.hpp"
 
 namespace vslam_utils {
@@ -49,5 +51,7 @@ namespace vslam_utils {
   // Declare template types
   template class ServiceClient<vslam_srvs::srv::GetState>;
   template class ServiceClient<vslam_srvs::srv::SetState>;
+  template class ServiceClient<vslam_srvs::srv::GetKeyframe>;
+  template class ServiceClient<vslam_srvs::srv::SetKeyframe>;
 
 }  // namespace vslam_utils
