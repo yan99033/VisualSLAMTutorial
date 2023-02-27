@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
   // Create service clients
   std::string get_state_service_name = "get_state";
   std::string set_state_service_name = "set_state";
-  std::string get_keyframe_service_name = "get_keframe";
+  std::string get_keyframe_service_name = "get_keyframe";
   std::string set_keyframe_service_name = "set_keyframe";
   auto get_state_client = std::make_shared<vslam_utils::ServiceClient<vslam_srvs::srv::GetState>>(
       get_state_service_name, orb_matcher_node);

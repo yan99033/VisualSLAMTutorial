@@ -14,7 +14,7 @@ namespace vslam_components {
       get_keyframe_srv_ = create_service<vslam_srvs::srv::GetKeyframe>(
           "get_keyframe", std::bind(&OrbBackendNode::get_keyframe_callback, this, _1, _2));
       set_keyframe_srv_ = create_service<vslam_srvs::srv::SetKeyframe>(
-          "set_keyfrmae", std::bind(&OrbBackendNode::set_keyframe_callback, this, _1, _2));
+          "set_keyframe", std::bind(&OrbBackendNode::set_keyframe_callback, this, _1, _2));
     }
 
     void OrbBackendNode::get_state_callback(
