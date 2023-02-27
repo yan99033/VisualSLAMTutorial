@@ -17,6 +17,15 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(vslam_srvs REQUIRED)
+find_package(vslam_utils REQUIRED)
+
+set(dependencies
+  rclcpp
+  rclcpp_components
+  vslam_msgs
+  vslam_srvs
+  vslam_utils
+)
 
 include_directories(include)
 
@@ -29,13 +38,20 @@ target_link_libraries(
 )
 target_compile_definitions(${LIB_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
-ament_target_dependencies(${LIB_NAME}
-  "rclcpp"
-  "rclcpp_components"
-  "vslam_msgs"
-  "vslam_srvs")
-
+ament_target_dependencies(${LIB_NAME} 
+  ${dependencies}
+)
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_matching_nodes::OrbMatcherNode")
+
+add_executable(${PROJECT_NAME}_exe
+  src/main.cpp
+)
+target_link_libraries(${PROJECT_NAME}_exe
+  ${LIB_NAME}
+)
+ament_target_dependencies(${PROJECT_NAME}_exe
+  ${dependencies}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -50,9 +66,15 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS
-feature_matching_nodes
-ARCHIVE DESTINATION lib
-LIBRARY DESTINATION lib
-RUNTIME DESTINATION bin)
+  feature_matching_nodes
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(TARGETS
+  ${PROJECT_NAME}_exe
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()

@@ -5,23 +5,29 @@
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_srvs/srv/get_state.hpp"
 #include "vslam_srvs/srv/set_state.hpp"
+#include "vslam_utils/service_client.hpp"
 
 namespace vslam_components {
   namespace feature_matching_nodes {
     class OrbMatcherNode : public rclcpp::Node {
     public:
-      explicit OrbMatcherNode(const rclcpp::NodeOptions& options);
+      explicit OrbMatcherNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+
+      void set_service_clients(
+          const vslam_utils::ServiceClient<vslam_srvs::srv::GetState>::SharedPtr get_state_client,
+          const vslam_utils::ServiceClient<vslam_srvs::srv::SetState>::SharedPtr set_state_client);
 
     private:
       void frame_matching_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
-      // vslam_srvs::srv::GetState::Request::SharedPtr get_state_request_;
-      rclcpp::Client<vslam_srvs::srv::GetState>::SharedPtr get_state_client_;
+      vslam_srvs::srv::GetState::Request::SharedPtr get_state_request_;
+      vslam_srvs::srv::SetState::Request::SharedPtr set_state_request_;
 
-      // vslam_srvs::srv::SetState::Request::SharedPtr set_state_request_;
-      rclcpp::Client<vslam_srvs::srv::SetState>::SharedPtr set_state_client_;
+      bool service_clients_ready{false};
 
-      vslam_msgs::msg::State system_state_;
+      // Service clients
+      vslam_utils::ServiceClient<vslam_srvs::srv::GetState>::SharedPtr get_state_client_;
+      vslam_utils::ServiceClient<vslam_srvs::srv::SetState>::SharedPtr set_state_client_;
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
