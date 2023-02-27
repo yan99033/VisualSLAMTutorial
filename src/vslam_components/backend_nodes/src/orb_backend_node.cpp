@@ -11,6 +11,10 @@ namespace vslam_components {
           "get_state", std::bind(&OrbBackendNode::get_state_callback, this, _1, _2));
       set_state_srv_ = create_service<vslam_srvs::srv::SetState>(
           "set_state", std::bind(&OrbBackendNode::set_state_callback, this, _1, _2));
+      get_keyframe_srv_ = create_service<vslam_srvs::srv::GetKeyframe>(
+          "get_keyframe", std::bind(&OrbBackendNode::get_keyframe_callback, this, _1, _2));
+      set_keyframe_srv_ = create_service<vslam_srvs::srv::SetKeyframe>(
+          "set_keyfrmae", std::bind(&OrbBackendNode::set_keyframe_callback, this, _1, _2));
     }
 
     void OrbBackendNode::get_state_callback(
@@ -32,6 +36,38 @@ namespace vslam_components {
       response->success = true;
     }
 
+    void OrbBackendNode::get_keyframe_callback(
+        const std::shared_ptr<vslam_srvs::srv::GetKeyframe::Request> request,
+        const std::shared_ptr<vslam_srvs::srv::GetKeyframe::Response> response) {
+      RCLCPP_INFO(this->get_logger(), "Requested a GetKeyframe service: (%lld)", request->frame_id);
+
+      if (state_ == vslam_msgs::msg::State::INITIALIZATION) {
+        throw std::runtime_error(std::string(get_keyframe_srv_->get_service_name())
+                                 + " service client: no keyframe is available to get");
+      }
+
+      if (request->frame_id == -1) {
+        response->keyframe = *current_keyframe_;
+        response->has_keyframe = true;
+      } else if (auto search = keyframes_.find(request->frame_id); search != keyframes_.end()) {
+        response->keyframe = *(search->second);
+        response->has_keyframe = true;
+      } else {
+        throw std::runtime_error(std::string(get_keyframe_srv_->get_service_name())
+                                 + " service client: cannot find keyframe "
+                                 + std::to_string(request->frame_id));
+      }
+    }
+
+    void OrbBackendNode::set_keyframe_callback(
+        const std::shared_ptr<vslam_srvs::srv::SetKeyframe::Request> request,
+        const std::shared_ptr<vslam_srvs::srv::SetKeyframe::Response> response) {
+      current_keyframe_ = std::make_shared<vslam_msgs::msg::Frame>(request->keyframe);
+      keyframes_[request->keyframe.id]
+          = std::make_shared<vslam_msgs::msg::Frame>(request->keyframe);
+
+      response->success = true;
+    }
   }  // namespace backend_nodes
 }  // namespace vslam_components
 
