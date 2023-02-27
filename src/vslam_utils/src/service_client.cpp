@@ -1,5 +1,8 @@
 #include "vslam_utils/service_client.hpp"
 
+#include "vslam_srvs/srv/get_state.hpp"
+#include "vslam_srvs/srv/set_state.hpp"
+
 namespace vslam_utils {
 
   template <class ServiceType>
@@ -9,8 +12,8 @@ namespace vslam_utils {
     callback_group_
         = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
     callback_group_executor_.add_callback_group(callback_group_, node_->get_node_base_interface());
-    client_ = node_->create_client<ServiceType>(service_name, rclcpp::SystemDefaultsQoS(),
-                                                callback_group_);
+    client_ = node_->create_client<ServiceType>(
+        service_name, rclcpp::SystemDefaultsQoS().get_rmw_qos_profile(), callback_group_);
   }
 
   template <class ServiceType>
@@ -42,5 +45,9 @@ namespace vslam_utils {
   bool ServiceClient<ServiceType>::wait_for_service(const std::chrono::nanoseconds timeout) {
     return client_->wait_for_service(timeout);
   }
+
+  // Declare template types
+  template class ServiceClient<vslam_srvs::srv::GetState>;
+  template class ServiceClient<vslam_srvs::srv::SetState>;
 
 }  // namespace vslam_utils

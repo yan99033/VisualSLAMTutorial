@@ -17,6 +17,8 @@ namespace vslam_utils {
     using RequestType = typename ServiceType::Request;
     using ResponseType = typename ServiceType::Response;
 
+    using SharedPtr = std::shared_ptr<ServiceClient<ServiceType>>;
+
     /**
      * @brief Invoke the service and block until completed or timed out
      * @param request The request object to call the service using
