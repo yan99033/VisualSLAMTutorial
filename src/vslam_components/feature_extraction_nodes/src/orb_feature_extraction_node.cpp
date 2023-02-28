@@ -61,8 +61,8 @@ namespace vslam_components {
         auto orb_feature_p = reinterpret_cast<uint8_t *>(&orb_feature);
 
         frame_msg->points[i].feature_data.resize(sizeof(datastructure::OrbFeature));
-        std::copy(frame_msg->points[i].feature_data.begin(),
-                  frame_msg->points[i].feature_data.end(), orb_feature_p);
+        std::memcpy(frame_msg->points[i].feature_data.data(), orb_feature_p,
+                    sizeof(datastructure::OrbFeature));
 
         frame_msg->points[i].has_mp = false;
       }
