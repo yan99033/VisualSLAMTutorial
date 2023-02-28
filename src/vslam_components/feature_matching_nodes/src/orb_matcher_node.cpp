@@ -14,6 +14,8 @@ namespace vslam_components {
         : Node("orb_matcher_node", options) {
       get_state_request_ = std::make_shared<vslam_srvs::srv::GetState::Request>();
       set_state_request_ = std::make_shared<vslam_srvs::srv::SetState::Request>();
+      get_keyframe_request_ = std::make_shared<vslam_srvs::srv::GetKeyframe::Request>();
+      set_keyframe_request_ = std::make_shared<vslam_srvs::srv::SetKeyframe::Request>();
 
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
@@ -55,8 +57,7 @@ namespace vslam_components {
       auto get_state_response
           = get_state_client_->invoke(get_state_request_, std::chrono::milliseconds(10));
 
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "State: %u ",
-                  get_state_response->system_state.state);
+      RCLCPP_INFO(this->get_logger(), "State: %u ", get_state_response->system_state.state);
 
       // if the state is tracking
       //   get the keyframe from backend
@@ -65,12 +66,31 @@ namespace vslam_components {
       // else
       //   Set the current frame as the keyframe
       //   set the state to tracking
-      if (get_state_response->system_state.state == vslam_msgs::msg::State::INITIALIZATION) {
-        set_state_request_->system_state.state = vslam_msgs::msg::State::ATTEMPT_INITIALIZATION;
+      if (get_state_response->system_state.state == vslam_msgs::msg::State::TRACKING) {
+        get_keyframe_request_->frame_id = -1;
+
+        auto get_keyframe_response
+            = get_keyframe_client_->invoke(get_keyframe_request_, std::chrono::milliseconds(10));
+
+        auto keyframe = get_keyframe_response->keyframe;
+
+        RCLCPP_INFO(this->get_logger(), "Tracking between frame %d <-> %d", keyframe.id,
+                    frame_msg->id);
+
       } else {
-        set_state_request_->system_state.state = vslam_msgs::msg::State::INITIALIZATION;
+        set_state_request_->system_state.state = vslam_msgs::msg::State::TRACKING;
+        set_state_client_->invoke(set_state_request_, std::chrono::milliseconds(10));
       }
-      set_state_client_->invoke(set_state_request_, std::chrono::milliseconds(10));
+
+      set_keyframe_request_->keyframe = *frame_msg;
+
+      auto set_keyframe_response
+          = set_keyframe_client_->invoke(set_keyframe_request_, std::chrono::milliseconds(10));
+      if (!set_keyframe_response->success) {
+        throw std::runtime_error("OrbMatcherNode: failed to set the frame as keyframe");
+      }
+
+      RCLCPP_INFO(this->get_logger(), "Set frame %d as keyframe", frame_msg->id);
     }
 
   }  // namespace feature_matching_nodes
