@@ -15,20 +15,19 @@ find_package(OpenCV REQUIRED)
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
-set(LIB_NAME feature_extraction_nodes)
-add_library(${LIB_NAME} SHARED
+add_library(${PROJECT_NAME} SHARED
   src/orb_feature_extraction_node.cpp)
 target_link_libraries(
-  ${LIB_NAME} ${OpenCV_LIBRARIES}
+  ${PROJECT_NAME} ${OpenCV_LIBRARIES}
 )
-target_compile_definitions(${LIB_NAME}
+target_compile_definitions(${PROJECT_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
-ament_target_dependencies(${LIB_NAME}
+ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
   "rclcpp_components"
   "vslam_msgs")
 
-rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::feature_extraction_nodes::OrbFeatureExtractionNode")
+rclcpp_components_register_nodes(${PROJECT_NAME} "vslam_components::feature_extraction_nodes::OrbFeatureExtractionNode")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -42,10 +41,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+install(DIRECTORY include/ DESTINATION include/)
 install(TARGETS
-  feature_extraction_nodes
+  ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(${dependencies})
 
 ament_package()
