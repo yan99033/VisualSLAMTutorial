@@ -1,11 +1,14 @@
 #include "feature_matching_nodes/orb_matcher_node.hpp"
 
 #include <chrono>
+#include <iostream>
 
+#include "feature_extraction_nodes/orb_feature_extraction_node.hpp"
 #include "vslam_msgs/msg/state.hpp"
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
+using vslam_components::datastructure::OrbFeature;
 
 namespace vslam_components {
   namespace feature_matching_nodes {
@@ -40,15 +43,9 @@ namespace vslam_components {
       service_clients_ready = true;
     }
 
-    void OrbMatcherNode::frame_matching_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
+    void OrbMatcherNode::frame_matching_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
       if (!service_clients_ready) {
         RCLCPP_INFO(this->get_logger(), "Service clients are not ready!\n");
-        return;
-      }
-
-      auto pub_ptr = captured_frame_pub_.lock();
-      if (!pub_ptr) {
-        RCLCPP_WARN(this->get_logger(), "Unable to lock the publisher\n");
         return;
       }
 
@@ -74,6 +71,56 @@ namespace vslam_components {
 
         auto keyframe = get_keyframe_response->keyframe;
 
+        // Consolidate descriptors and keypoints
+        std::vector<cv::Mat> descriptors1;
+        std::vector<cv::Mat> descriptors2;
+        std::vector<cv::KeyPoint> keypoints1;
+        std::vector<cv::KeyPoint> keypoints2;
+
+        for (auto& pt : frame_msg->points) {
+          if (pt.feature_data.size() * sizeof(uint8_t) != sizeof(OrbFeature)) {
+            RCLCPP_INFO(
+                this->get_logger(),
+                "Something is wrong, the size of raw bytes (%lu) does not match the expected "
+                "datastructure size (%lu)",
+                pt.feature_data.size() * sizeof(uint8_t), sizeof(OrbFeature));
+            return;
+          }
+
+          auto orb_feature_ptr = reinterpret_cast<OrbFeature*>(pt.feature_data.data());
+          keypoints1.push_back(orb_feature_ptr->keypoint);
+
+          cv::Mat descriptor(1, 32, CV_8U);
+          std::memcpy(descriptor.data, orb_feature_ptr->descriptor, 32 * sizeof(uint8_t));
+          descriptors1.push_back(descriptor);
+        }
+        cv::Mat descriptors1_mat;
+        cv::vconcat(descriptors1.data(), descriptors1.size(), descriptors1_mat);
+
+        for (auto& pt : keyframe.points) {
+          if (pt.feature_data.size() * sizeof(uint8_t) != sizeof(OrbFeature)) {
+            RCLCPP_INFO(
+                this->get_logger(),
+                "Something is wrong, the size of raw bytes (%lu) does not match the expected "
+                "datastructure size (%lu)",
+                pt.feature_data.size() * sizeof(uint8_t), sizeof(OrbFeature));
+            return;
+          }
+
+          auto orb_feature_ptr = reinterpret_cast<OrbFeature*>(pt.feature_data.data());
+          keypoints2.push_back(orb_feature_ptr->keypoint);
+
+          cv::Mat descriptor(1, orb_feature_ptr->desc_len, CV_8U);
+          std::memcpy(descriptor.data, orb_feature_ptr->descriptor,
+                      orb_feature_ptr->desc_len * sizeof(uint8_t));
+          descriptors2.push_back(descriptor);
+        }
+        cv::Mat descriptors2_mat;
+        cv::vconcat(descriptors2.data(), descriptors2.size(), descriptors2_mat);
+
+        RCLCPP_INFO(this->get_logger(), "Descriptors shape: (%d %d) (%d %d)", descriptors1_mat.rows,
+                    descriptors1_mat.cols, descriptors2_mat.rows, descriptors2_mat.cols);
+
         RCLCPP_INFO(this->get_logger(), "Tracking between frame %d <-> %d", keyframe.id,
                     frame_msg->id);
 
@@ -86,6 +133,7 @@ namespace vslam_components {
 
       auto set_keyframe_response
           = set_keyframe_client_->invoke(set_keyframe_request_, std::chrono::milliseconds(10));
+
       if (!set_keyframe_response->success) {
         throw std::runtime_error("OrbMatcherNode: failed to set the frame as keyframe");
       }
