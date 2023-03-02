@@ -18,6 +18,8 @@ find_package(rclcpp_components REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(vslam_srvs REQUIRED)
 find_package(vslam_utils REQUIRED)
+find_package(feature_extraction_nodes REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(dependencies
   rclcpp
@@ -25,6 +27,7 @@ set(dependencies
   vslam_msgs
   vslam_srvs
   vslam_utils
+  feature_extraction_nodes
 )
 
 include_directories(include)

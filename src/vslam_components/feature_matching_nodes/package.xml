@@ -12,6 +12,7 @@
   <depend>vslam_msgs</depend>
   <depend>vslam_srvs</depend>
   <depend>vslam_utils</depend>
+  <depend>feature_extraction_nodes</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
