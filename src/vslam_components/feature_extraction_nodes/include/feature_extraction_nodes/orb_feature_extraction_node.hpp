@@ -13,8 +13,10 @@
 namespace vslam_components {
   namespace datastructure {
     struct OrbFeature {
+      static constexpr int desc_len = 32;
+
       cv::KeyPoint keypoint;
-      cv::Mat descriptor;
+      uint8_t descriptor[desc_len];
     };
   }  // namespace datastructure
 

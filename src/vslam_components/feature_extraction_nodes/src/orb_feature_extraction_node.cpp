@@ -57,7 +57,9 @@ namespace vslam_components {
       for (size_t i = 0; i < keypoints.size(); i++) {
         datastructure::OrbFeature orb_feature;
         orb_feature.keypoint = keypoints[i];
-        descriptors.row(i).copyTo(orb_feature.descriptor);
+
+        std::copy(descriptors.row(i).data, descriptors.row(i).data + orb_feature.desc_len,
+                  orb_feature.descriptor);
         auto orb_feature_p = reinterpret_cast<uint8_t *>(&orb_feature);
 
         frame_msg->points[i].feature_data.resize(sizeof(datastructure::OrbFeature));
