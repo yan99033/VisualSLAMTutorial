@@ -24,7 +24,7 @@ namespace vslam_components {
               set_keyframe_clien);
 
     private:
-      void frame_matching_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
+      void frame_matching_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg);
 
       vslam_srvs::srv::GetState::Request::SharedPtr get_state_request_;
       vslam_srvs::srv::SetState::Request::SharedPtr set_state_request_;
