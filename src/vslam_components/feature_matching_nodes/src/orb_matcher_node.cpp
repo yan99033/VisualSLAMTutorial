@@ -21,8 +21,16 @@ namespace vslam_components {
       set_keyframe_request_ = std::make_shared<vslam_srvs::srv::SetKeyframe::Request>();
 
       // Frame subscriber and publisher
+      frame_subscriber_cb_group_
+          = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+      // Each of these callback groups is basically a thread
+      // Everything assigned to one of them gets bundled into the same thread
+      auto frame_sub_opt = rclcpp::SubscriptionOptions();
+      frame_sub_opt.callback_group = frame_subscriber_cb_group_;
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
-          "in_frame", 10, std::bind(&OrbMatcherNode::frame_matching_callback, this, _1));
+          "in_frame", 10, std::bind(&OrbMatcherNode::frame_matching_callback, this, _1),
+          frame_sub_opt);
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
       captured_frame_pub_ = frame_pub_;
     }
