@@ -22,7 +22,9 @@ Among the existing visual SLAM systems, ORB-SLAM3 is one of the most practical a
 The practicality comes from the well-engineered algorithms designed to handle edge cases like improved camera tracking through multi-map merging and robust loop closure detection.
 
 \section{Discussion}
-To promote flexibility, we can organize the visual SLAM components as individual modules/libraries so that we can test them in isolation before integrating into the framework. As
+To promote flexibility, we can organize the visual SLAM components as individual modules/libraries so that we can test them in isolation before integrating into the framework. 
+We create the modules as composable nodes to enable intra-process communication between the nodes. 
+In addition, we use plugins to dynamically load classes into the node.
 
 \begin{figure}[h]
     \centering
@@ -31,33 +33,33 @@ To promote flexibility, we can organize the visual SLAM components as individual
     \label{fig:vslam_pipeline}
 \end{figure}
 
-Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with the components implemented as individual composable nodes. 
+Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with four composable nodes. 
 The role of each node is described as follows:
 \begin{itemize}
   \item \textbf{data\_loader\_node} takes in a list of images from a folder and converts them into the Frame message, which contains the image and the camera information.
   
-  \item \textbf{feature\_extraction\_node} calculates the features (e.g., corners or high-gradient image regions) in the image.
+  \item \textbf{camera\_node} acts similarly as the \textbf{data\_loader\_node} except the image data comes from a camera.
   
-  \item \textbf{feature\_matching\_node} finds feature correspondences between the current frame and the nearest keyframe in the back-end during the tracking state.
-  If the system is in the initialization state, the current frame will be set as the tentative keyframe and the node sets the mode to attempt initialization.
-  In the attempt initialization state, any failure that occurs in tracking and mapping will reset the state back to initialization.
-  If the system is in the relocalization mode, the current keyframe image is published to the place recognition node to find a candidate keyframe index, which is used to request the keyframe in the back-end to perform feature matching.
-  In the event of failure to find correspondences, the node will set the state to relocalization.
+  \item \textbf{vslam\_node} processes the incoming Frame messages to recover the camera motion and structure of the scene. It consists of six plugins: 
+    \begin{itemize}
+      \item \textbf{feature\_extraction\_plugin} calculates the features (e.g., corners or high-gradient image regions) in the image.
+      \item \textbf{feature\_matching\_plugin} finds feature correspondences between the current frame and the nearest keyframe in the back-end during the tracking state.
+        If the system is in the initialization state, the current frame will be set as the tentative keyframe and the node sets the mode to attempt initialization.
+        In the attempt initialization state, any failure that occurs in tracking and mapping will reset the state back to initialization.
+        If the system is in the relocalization mode, the current keyframe image is published to the place recognition node to find a candidate keyframe index, which is used to request the keyframe in the back-end to perform feature matching.
+        In the event of failure to find correspondences, the node will set the state to relocalization.
+      \item \textbf{tracking\_plugin} calculates the relative pose between the current frame and the current keyframe. 
+        If the calculation fails to converge, then the node will set the state to relocalization. 
+      \item \textbf{mapping\_plugin} triangulates a set of new map points based on the relative pose and the feature correspondences that don't have a 3D point. 
+      \item \textbf{place\_recognition\_plugin} is used in two cases. 
+        When a new keyframe is created, it attempts to find a similar-looking image in the database to create loop constraints.
+        In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
+      \item \textbf{back\_end\_node} optimizes the tracking constraints and loop constraints.
+    \end{itemize}
 
-  \item \textbf{tracking\_node} calculates the relative pose between the current frame and the current keyframe. 
-  If the calculation fails to converge, then the node will set the state to relocalization. 
-
-  \item \textbf{mapping\_node} triangulates a set of new map points based on the relative pose and the feature correspondences that don't have a 3D point. 
-
-  \item \textbf{place\_recognition\_node} is used in two cases. 
-  In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
-  When a new keyframe is created, it attempts to find a similar-looking image in the database and informs \textbf{feature\_matching\_node} to try to find new correspondences.
-
-  \item \textbf{back\_end\_node} has two main responsibility: provide the current keyframe and optimize the graph based on the constraints given by the \textbf{tracking\_node}.
-   
+  \item \textbf{visualization\_node} subscribes to live tracking frames and the back-end constraints and updates the visualizer accordingly.
 \end{itemize}
 
-Note: after initialization, the current frame is added to the database in place\_recognition\_node for loop closure detection.
 
 % Things to consider:
 % https://design.ros2.org/articles/realtime_background.html
