@@ -73,6 +73,104 @@ The role of each node is described as follows:
 
 \section{Appendix}
 
+\subsection{Nodes}
+
+\begin{itemize}
+  \item{\textbf{vslam\_node}}
+\end{itemize}
+
+\subsection{Data structure}
+
+\begin{itemize}
+  \item \textbf{Frame}
+  \begin{verbatim}
+    # Header
+    double timestamp
+
+    # Camera matrix
+    #  Assuming the images have been undistorted
+    cv::Mat K
+
+    # Frame ID
+    uint32 id 
+
+    # Image
+    cv::Mat image
+    
+    # Camera pose
+    Sophus::SE3 pose
+    
+    # List of points
+    vector<Point> [] pts
+  \end{verbatim}
+
+  \item \textbf{Point}
+  \begin{verbatim}
+    uint32 frame_id
+    
+    # Keypoint
+    cv::Point2d kp
+
+    # Map point
+    shared_ptr<cv::Point3d> mp
+    
+    # Feature
+    Feature feature    
+  \end{verbatim}
+
+  \item \textbf{Feature}
+  \begin{verbatim}
+    # Name of the feature (for validation)
+    string name
+  \end{verbatim}
+  
+  \begin{itemize}
+    \item \textbf{OrbFeature : Feature} 
+    \begin{verbatim}
+      cv::Mat descriptor
+
+      string name = "ORB"
+    \end{verbatim}
+  \end{itemize}
+\end{itemize}
+
+\subsection{VSLAM plugins}
+
+We use plugins primarily in the VSLAM node for flexibility in the implementation in their derived classes.
+That said, each plugin has a base class that defines the interface to communicate with other plugins.
+We define the plugins as follows.
+
+\begin{itemize}
+  \item \textbf{feature\_extractor\_plugin}
+  
+  \begin{verbatim}
+    # Name of the feature (for validation)
+    string name
+  \end{verbatim}
+
+  \begin{itemize}
+    \item {\textbf{OrbFeatureExtractor} : \textbf{FeatureExtractor}}
+    \begin{lstlisting}
+      # Calculate 2D features in the image
+      # Algorithm:
+      # image $\leftarrow$ get the image from the frame
+      # Calculate the 2D feature points and, optionally, descriptors
+      #   and save them in vector<Point>
+      @\textbf{extract\_feature}@(Frame) override
+    
+      # Private function:
+      # Algorithm: 
+      # Calculate and return a list of feature descriptors and their 
+      #   keypoint location
+      @\textbf{feature\_extractor}@(cv::Mat) $\rightarrow$ vector<Feature>
+
+      # Private attributes:
+      int num_features
+    \end{lstlisting}
+    
+  \end{itemize}
+\end{itemize}
+
 \subsection{Custom interfaces}
 
 \subsubsection{Messages}
@@ -148,28 +246,7 @@ The role of each node is described as follows:
     float64 y 
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/Point}
-  \begin{verbatim}
-    uint32 frame_id
-    
-    # Keypoint
-    vslam_msgs/Vector2d kp
-
-    # Map point
-    vslam_msgs/Vector3d mp
-    bool has_mp = false
-    
-    # Feature
-    vslam_msgs/Feature descriptor    
-  \end{verbatim}
-
-  \item \textbf{vslam\_msgs/Feature}
-  \begin{verbatim}
-    # The length and data structure of the descriptor to be 
-    #   defined in the code
-    uint32 len
-    uint8 [] descriptor
-  \end{verbatim}
+  
 
   \item \textbf{vslam\_msgs/State}
   \begin{verbatim}
