@@ -76,7 +76,58 @@ The role of each node is described as follows:
 \subsection{Nodes}
 
 \begin{itemize}
-  \item{\textbf{vslam\_node}}
+  \item{\textbf{vslam\_node}} 
+  \begin{verbatim}
+    # Public functions
+    # Frame callback function:
+    # Algorithm:
+    # calculate keypoint descriptors (feature_extractor)
+    # If state is Initialization
+    #   set the current frame as the keyframe
+    #   set the state to ATTEMPT_INIT
+    # elif state is ATTEMPT_INIT or TRACKING:
+    #   matches = feature_matcher(curr_kf, frame)
+    #   if len(matches) < num_matches_thresh:
+    #     if state is ATTEMPT_INIT:
+    #       set the state to INIT
+    #     else
+    #       set the state to RELOCALIZATION
+    #   else 
+    #     frame_pair = FramePair(curr_kf, frame, matches, state)
+    #     set the state to TRACKING
+    # else # the state is RELOCALIZATION
+    #   # Attempt to relocalize with the newest keyframe
+    #   matches = feature_matcher(curr_kf, frame)
+    #   if len(matches) > num_matches_thresh:
+    #     set the state to TRACKING
+    #     frame_pair = FramePair(curr_kf, frame, matches, state)
+    
+
+    # Private functions
+    # tracking_mapping_loop()
+    # Algorithm:
+    # while not exit:
+    #   Use notify one to to process a frame_pair
+    #   
+    #   if frame_pair.constraint_type is INIT
+    #     tracking_quality, pose12 = tracking(frame_pair) # plugin
+
+
+    # Private attributes
+    # Current keyframe (for establishing feature correspondences and tracking)
+    FramePtr current keyframe
+    
+    # Keep all keyframes
+    std::map<int, FramePtr> all_keyframes
+    
+    # Tracking state
+    State state = INIT
+
+    # Constraints
+    FramePair[] frame_pairs
+
+  \end{verbatim}
+  
 \end{itemize}
 
 \subsection{Data structure}
@@ -102,6 +153,36 @@ The role of each node is described as follows:
     
     # List of points
     vector<Point> [] pts
+  \end{verbatim}
+
+  \item \textbf{FramePair}
+  \begin{verbatim}
+    # Constraint types
+    uint8 FOR_INIT = 0
+    uint8 FOR_TRACKING = 1
+    uint8 FOR_LOOP_CLOSURE = 2
+    uint8 FOR_RELOCALIZATION = 3
+
+    # Constraints to be established in the feature matching and tracking 
+
+    # The frame pair
+    # frame1 is the existing/reference frame
+    Frame frame1
+    Frame frame2
+
+    # Relative transformation
+    geometry_msgs/Pose pose12
+
+    # The matched points
+    MatchedPoint [] matches
+
+    uint8 constraint_type = 0
+  \end{verbatim}
+
+  \item \textbf{MatchedPoint}
+  \begin{verbatim}
+    Point pt1    
+    Point pt2
   \end{verbatim}
 
   \item \textbf{Point}
@@ -154,15 +235,10 @@ We define the plugins as follows.
       # Calculate 2D features in the image
       # Algorithm:
       # image $\leftarrow$ get the image from the frame
-      # Calculate the 2D feature points and, optionally, descriptors
-      #   and save them in vector<Point>
+      # Calculate the 2D feature points and and their descriptors 
+      # using opencv's function
+      # 
       @\textbf{extract\_feature}@(Frame) override
-    
-      # Private function:
-      # Algorithm: 
-      # Calculate and return a list of feature descriptors and their 
-      #   keypoint location
-      @\textbf{feature\_extractor}@(cv::Mat) $\rightarrow$ vector<Feature>
 
       # Private attributes:
       int num_features
@@ -197,29 +273,6 @@ We define the plugins as follows.
     vslam_msgs/Point [] pts
   \end{verbatim}
 
-  \item \textbf{vslam\_msgs/FramePair}
-  \begin{verbatim}
-    # Constraint types
-    uint8 FOR_INIT = 0
-    uint8 FOR_TRACKING = 1
-    uint8 FOR_LOOP_CLOSURE = 2
-    uint8 FOR_RELOCALIZATION = 3
-
-    # Constraints to be established in the feature matching and tracking 
-
-    # The frame pair
-    # frame1 is the existing/reference frame
-    vslam_msgs/Frame frame1
-    vslam_msgs/Frame frame2
-
-    # Relative transformation
-    geometry_msgs/Pose pose12
-
-    # The matched points
-    vslam_msgs/MatchedPoint [] matches
-
-    uint8 constraint_type = 0
-  \end{verbatim}
 
   \item \textbf{vslam\_msgs/MatchedPoint}
   \begin{verbatim}
