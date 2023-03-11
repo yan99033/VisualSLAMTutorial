@@ -249,7 +249,18 @@ The role of each node is described as follows:
     # A data structure to keep all the map points
 
     # Add a new map point
-    # *map_point $\leftarrow$ addMapPoint(x, y, z, kf_id)
+    # Algorithm:
+    # shared_ptr<MapPoint> $\leftarrow$ create a new map point
+    # Insert the map point to the map_points set
+    # add the map point to the observations
+    # return the map point pointer (const)
+    # map_point $\leftarrow$ addMapPoint(x, y, z, frame_id)
+
+    # add a new observation to an existing map point
+
+    # private 
+    set<shared_ptr<MapPoint>> map_points
+    map<*MapPoint, std::vector<int>> observations;
 
     # 
     # Calculate 2D features in the image
