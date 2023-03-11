@@ -81,19 +81,41 @@ The role of each node is described as follows:
     # Public functions
     # Frame callback function:
     # Algorithm:
-    # calculate keypoint descriptors (feature_extractor)
-    # If state is Initialization
+    # calculate keypoint descriptors (feature_extractor plugin)
+    # declare the matches variable
+    # If state is INIT
     #   set the current frame as the keyframe
     #   set the state to ATTEMPT_INIT
+    #   return
+    # matches = feature_matcher(curr_kf, frame)
+    # if len(matches) < num_matches_thresh
+    #   if state is ATTEMPT_INIT
+    #     set the current frame as the keyframe
+    #     set the state to INIT
+    #   else
+    #     set the state to RELOCALIZATION
+    # frame_pair = FramePair(curr_kf, frame, matches)
+    # tracking_quality, pose12 = tracking(frame_pair) # plugin
+    # if tracking_quality is bad:
+    #   set the state to RELOCALIZATION
+    #   return
+    # if state is ATTEMPT_INIT:
+    #   map = mapping(frame_pair)
+    #   Map.add_map(map) # 
+    #   curr_kf.set_map(map)
+
+
     # elif state is ATTEMPT_INIT or TRACKING:
     #   matches = feature_matcher(curr_kf, frame)
     #   if len(matches) < num_matches_thresh:
     #     if state is ATTEMPT_INIT:
+    #       set the current frame as the keyframe
     #       set the state to INIT
     #     else
     #       set the state to RELOCALIZATION
+    #     return
     #   else 
-    #     frame_pair = FramePair(curr_kf, frame, matches, state)
+    #     
     #     set the state to TRACKING
     # else # the state is RELOCALIZATION
     #   # Attempt to relocalize with the newest keyframe
@@ -107,10 +129,25 @@ The role of each node is described as follows:
     # tracking_mapping_loop()
     # Algorithm:
     # while not exit:
-    #   Use notify one to to process a frame_pair
+    #   Use notify one to unblock to process a frame_pair
     #   
+    #   tracking_quality, pose12 = tracking(frame_pair) # plugin
+    #   if tracking_quality is good:
+    #     # Add new 3D points to frame1 in frame_pair
+    #     map(frame_pair) # plugin
+    #     if frame_pair.constraint_type is INIT:
+    #       set frame_pair.frame1 as current_keyframe
+    #     elif frame_pair.contraint_type is TRACKING:
+    #       if frame_pair.pose12 satisfies new keyframe criteria
+    #         add the current keyframe to place recognition
+
     #   if frame_pair.constraint_type is INIT
+    #     # 2D-2D tracking 
     #     tracking_quality, pose12 = tracking(frame_pair) # plugin
+    #     if tracking_quality is good:
+    #       # Add new 3D points to frame1 in frame_pair
+    #       map(frame_pair) # plugin
+    #     
 
 
     # Private attributes
@@ -192,12 +229,41 @@ The role of each node is described as follows:
     # Keypoint
     cv::Point2d kp
 
-    # Map point
-    shared_ptr<cv::Point3d> mp
+    # Map point (non-owning)
+    cv::Point3d* mp
     
     # Feature
     Feature feature    
   \end{verbatim}
+
+  \item \textbf{MapPoint}
+  \begin{verbatim}
+    cv::Point3d mp
+
+    # private
+    vector<pair<kd_id, mp_id> references
+  \end{verbatim}
+
+  \item \textbf{Map}
+  \begin{lstlisting}
+    # A data structure to keep all the map points
+
+    # Add a new map point
+    # *map_point $\leftarrow$ addMapPoint(x, y, z, kf_id)
+
+    # 
+    # Calculate 2D features in the image
+    # Algorithm:
+    # image $\leftarrow$ get the image from the frame
+    # Calculate the 2D feature points and and their descriptors 
+    # using opencv's function
+    # 
+    @\textbf{extract\_feature}@(Frame) override
+
+    # Private attributes:
+    int num_features
+  \end{lstlisting}
+
 
   \item \textbf{Feature}
   \begin{verbatim}
