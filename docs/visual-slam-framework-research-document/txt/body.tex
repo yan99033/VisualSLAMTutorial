@@ -99,30 +99,12 @@ The role of each node is described as follows:
     # if tracking_quality is bad:
     #   set the state to RELOCALIZATION
     #   return
-    # if state is ATTEMPT_INIT:
-    #   map = mapping(frame_pair)
-    #   Map.add_map(map) # 
+    # if state is ATTEMPT_INIT or (state is TRACKING and 
+    #     it satisfies new keyframe criteria):
+    #   mps1 = mapping(frame_pair)
+    #   Map.add_map(map) 
     #   curr_kf.set_map(map)
 
-
-    # elif state is ATTEMPT_INIT or TRACKING:
-    #   matches = feature_matcher(curr_kf, frame)
-    #   if len(matches) < num_matches_thresh:
-    #     if state is ATTEMPT_INIT:
-    #       set the current frame as the keyframe
-    #       set the state to INIT
-    #     else
-    #       set the state to RELOCALIZATION
-    #     return
-    #   else 
-    #     
-    #     set the state to TRACKING
-    # else # the state is RELOCALIZATION
-    #   # Attempt to relocalize with the newest keyframe
-    #   matches = feature_matcher(curr_kf, frame)
-    #   if len(matches) > num_matches_thresh:
-    #     set the state to TRACKING
-    #     frame_pair = FramePair(curr_kf, frame, matches, state)
     
 
     # Private functions
@@ -224,13 +206,14 @@ The role of each node is described as follows:
 
   \item \textbf{Point}
   \begin{verbatim}
-    uint32 frame_id
+    # Frame (not owning)
+    Frame* frame
     
     # Keypoint
-    cv::Point2d kp
+    cv::KeyPoint kp
 
     # Map point (non-owning)
-    cv::Point3d* mp
+    MapPoint* mp
     
     # Feature
     Feature feature    
@@ -238,41 +221,77 @@ The role of each node is described as follows:
 
   \item \textbf{MapPoint}
   \begin{verbatim}
+    # Each map point has a unique ID
+    long unsigned id
+
     cv::Point3d mp
 
     # private
-    vector<pair<kd_id, mp_id> references
+    vector<Point> projections
   \end{verbatim}
+
+  \item \textbf{FramePoseConstraint}
+  \begin{lstlisting}
+    # Relative pose contraint between two frames
+    
+    # The two non-owning frame pointers
+    Frame* frame1 
+    Frame* frame2
+
+    # Pose constraint
+    SE3 pose12
+
+  \end{lstlisting}
 
   \item \textbf{Map}
   \begin{lstlisting}
-    # A data structure to keep all the map points
+    # A data structure to keep all the map points and frames
 
-    # Add a new map point
+    # Create new map points and add new observations to existing
+    #   map points
+    # FramePair contains the pointers to the keyframes on which 
+    # the points are projected
+    # The vector of 3D points contains the triangulated map points
     # Algorithm:
-    # shared_ptr<MapPoint> $\leftarrow$ create a new map point
-    # Insert the map point to the map_points set
-    # add the map point to the observations
-    # return the map point pointer (const)
-    # map_point $\leftarrow$ addMapPoint(x, y, z, frame_id)
+    # Make sure the lengths of FramePair.matches and vector<cv::Point3d>
+    #   are the same
+    # Iterate through the matches in FramePair and pt_3d in 
+    #   vector<cv::Point3d>:
+    #   # Newly triangulated points
+    #   if pt1.mp is a nullptr
+    #     Ensure the two frame pointers are not nullptrs
+    #     map_point $\leftarrow$ create a new map point shared_ptr 
+    #       and add it to the set
+    #     add the map_point pointer to pt1 and pt2 in the match
+    #     add pt1 and pt2 to map_point->projections
+    #   # Matched point but not associated with a map point
+    #   elif pt2.mp is a nullptr 
+    #     pt2.mp = pt1.mp 
+    #     add pt2 to pt1.mp->projections
+    addMapPointProjection(FramePair, vector<cv::Point3d>)
 
-    # add a new observation to an existing map point
-
-    # private 
-    set<shared_ptr<MapPoint>> map_points
-    map<*MapPoint, std::vector<int>> observations;
-
-    # 
-    # Calculate 2D features in the image
+    # Add a new Keyframe
     # Algorithm:
-    # image $\leftarrow$ get the image from the frame
-    # Calculate the 2D feature points and and their descriptors 
-    # using opencv's function
-    # 
-    @\textbf{extract\_feature}@(Frame) override
+    # shared_ptr<Frame> $\leftarrow$ create a new keyframe
+    # Insert the frame to the keyframes set
+    # Return the frame shared_ptr (const)
+    keyframe $\leftarrow$ addKeyframe(Frame)
 
-    # Private attributes:
-    int num_features
+    # Add a pair of constraint
+    # Algorithm:
+    # Given the tracked relative pose, create a FramePoseConstraint
+    # - Use the frame ids to find the keyframe pointers 
+    addKeyframePairConstraint(FramePair)
+
+    # --- private --- 
+    # MapPoint-to-Frame constraints
+    map<long unsigned, shared_ptr<MapPoint>> map_points
+    
+    # Frame-to-Frame constraints
+    map<long unsigned, shared_ptr<Frame>> keyframes
+    set<FramePoseConstraint> keyframe_pairs;
+
+    # --- private --- 
   \end{lstlisting}
 
 
