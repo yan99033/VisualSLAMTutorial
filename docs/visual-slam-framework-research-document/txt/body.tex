@@ -77,75 +77,73 @@ The role of each node is described as follows:
 
 \begin{itemize}
   \item{\textbf{vslam\_node}} 
-  \begin{verbatim}
+  \begin{lstlisting}
     # Public functions
     # Frame callback function:
     # Algorithm:
-    # calculate keypoint descriptors (feature_extractor plugin)
+    # frame_msg $\leftarrow$ received from the callback function
+    # frame $\leftarrow$ addFrame(frame_msg)
+    # calcFeatureDescriptor(frame) (feature_extractor plugin)
     # declare the matches variable
     # If state is INIT
-    #   set the current frame as the keyframe
+    #   map.setCurrentKeyframe(frame)
     #   set the state to ATTEMPT_INIT
     #   return
+    # curr_kf $\leftarrow$ map.getCurrentKeyframe()
     # matches = feature_matcher(curr_kf, frame)
     # if len(matches) < num_matches_thresh
     #   if state is ATTEMPT_INIT
-    #     set the current frame as the keyframe
+    #     map.setCurrentKeyframe(frame)
+    #     map.removeFrame(curr_kf)
     #     set the state to INIT
     #   else
     #     set the state to RELOCALIZATION
-    # frame_pair = FramePair(curr_kf, frame, matches)
+    #     map.removeFrame(frame)
+    #     return
+    # TODO: if state is tracking, use localConstraintSearch to establish correspondences?
+    # constraint_type = stateToConstraintType(state)
+    # frame_pair = FramePair(curr_kf, frame, matches, constraint_type)
     # tracking_quality, pose12 = tracking(frame_pair) # plugin
     # if tracking_quality is bad:
     #   set the state to RELOCALIZATION
+    #   map.removeFrame(frame)
     #   return
-    # if state is ATTEMPT_INIT or (state is TRACKING and 
-    #     it satisfies new keyframe criteria):
-    #   mps1 = mapping(frame_pair)
-    #   Map.add_map(map) 
-    #   curr_kf.set_map(map)
+    # # mps is a vector containing cv::Point3d points of 
+    #     the same length as frame_pair.matches
+    # mps = mapping(frame_pair) # plugin
+    # map.addMapPointProjection(frame_pair, mps)
+    # Emit signal to unblock localConstraintSearch loop
+    # Emit signal to unblock loopClosureSearch loop
 
-    
 
-    # Private functions
-    # tracking_mapping_loop()
+    # Private function
+    # localConstraintSearch function:
     # Algorithm:
-    # while not exit:
-    #   Use notify one to unblock to process a frame_pair
-    #   
-    #   tracking_quality, pose12 = tracking(frame_pair) # plugin
-    #   if tracking_quality is good:
-    #     # Add new 3D points to frame1 in frame_pair
-    #     map(frame_pair) # plugin
-    #     if frame_pair.constraint_type is INIT:
-    #       set frame_pair.frame1 as current_keyframe
-    #     elif frame_pair.contraint_type is TRACKING:
-    #       if frame_pair.pose12 satisfies new keyframe criteria
-    #         add the current keyframe to place recognition
+    # while (running):
+    #   wait for the signal to unblock and run subsequent commands
+    #   curr_kf $\leftarrow$ map.getCurrentKeyframe()
+    #   frames $\leftarrow$ map.getCloseKeyframes()
+    #   for frame in framesL
+    #     matches = feature_matcher(curr_kf, frame)
+    #     frame_pair = FramePair(curr_kf, )
+    localConstraintSearch()
 
-    #   if frame_pair.constraint_type is INIT
-    #     # 2D-2D tracking 
-    #     tracking_quality, pose12 = tracking(frame_pair) # plugin
-    #     if tracking_quality is good:
-    #       # Add new 3D points to frame1 in frame_pair
-    #       map(frame_pair) # plugin
-    #     
+    # Private function
+    # loopClosureSearch
+    # Algorithm:
+    # while (running):
+    #   wait for the signal to unblock and run subsequent commands
+    loopClosureSearch()
 
+    # --- private ---
+    # Map contains the keyframes and map points and their constraints 
+    #  pose-to-pose edges and map-point-projection edges
+    Map map
 
-    # Private attributes
-    # Current keyframe (for establishing feature correspondences and tracking)
-    FramePtr current keyframe
-    
-    # Keep all keyframes
-    std::map<int, FramePtr> all_keyframes
-    
-    # Tracking state
-    State state = INIT
+    # State state
 
-    # Constraints
-    FramePair[] frame_pairs
-
-  \end{verbatim}
+    # --- private ---
+  \end{lstlisting}
   
 \end{itemize}
 
@@ -170,8 +168,8 @@ The role of each node is described as follows:
     # Camera pose
     Sophus::SE3 pose
     
-    # List of points
-    vector<Point> [] pts
+    # List of points (not owning)
+    vector<MapPoint*> [] pts
   \end{verbatim}
 
   \item \textbf{FramePair}
@@ -184,10 +182,10 @@ The role of each node is described as follows:
 
     # Constraints to be established in the feature matching and tracking 
 
-    # The frame pair
+    # The frame pair (not owning)
     # frame1 is the existing/reference frame
-    Frame frame1
-    Frame frame2
+    Frame* frame1
+    Frame* frame2
 
     # Relative transformation
     geometry_msgs/Pose pose12
@@ -258,38 +256,74 @@ The role of each node is described as follows:
     # Iterate through the matches in FramePair and pt_3d in 
     #   vector<cv::Point3d>:
     #   # Newly triangulated points
-    #   if pt1.mp is a nullptr
-    #     Ensure the two frame pointers are not nullptrs
+    #   if pt1.mp is a nullptr and FramePair.constraint is ATTEMPT_INIT:
     #     map_point $\leftarrow$ create a new map point shared_ptr 
     #       and add it to the set
-    #     add the map_point pointer to pt1 and pt2 in the match
-    #     add pt1 and pt2 to map_point->projections
+    #     add the map_point pointer to pt1 in the match
+    #     add pt1 to map_point->projections
+    #     removeFrame(match.pt2.frame)
     #   # Matched point but not associated with a map point
-    #   elif pt2.mp is a nullptr 
+    #   elif pt2.mp is a nullptr and FramePair.constraint is TRACKING
     #     pt2.mp = pt1.mp 
     #     add pt2 to pt1.mp->projections
     addMapPointProjection(FramePair, vector<cv::Point3d>)
 
-    # Add a new Keyframe
+    # Add a new frame
     # Algorithm:
-    # shared_ptr<Frame> $\leftarrow$ create a new keyframe
-    # Insert the frame to the keyframes set
-    # Return the frame shared_ptr (const)
-    keyframe $\leftarrow$ addKeyframe(Frame)
+    # shared_ptr<Frame> $\leftarrow$ create a new frame
+    # Insert the frame to the frames set
+    # Return the raw frame pointer (const)
+    &frame $\leftarrow$ addFrame(Frame)
+
+    # Remove a frame
+    # Algorithm:
+    # remove the frame by its id or pointer->id
+    # do nothing if the frame cannot be found
+    removeFrame(long unsigned)
+    removeFrame(Frame*)
 
     # Add a pair of constraint
     # Algorithm:
     # Given the tracked relative pose, create a FramePoseConstraint
     # - Use the frame ids to find the keyframe pointers 
-    addKeyframePairConstraint(FramePair)
+    addFramePairConstraint(FramePair)
+
+    # Get N previous keyframes
+    # Algorithm:
+    # kf_it $\leftarrow$ frames.find(curr_kf)
+    # kfs = vector<Frame*>
+    # if kf_it == frames.end() # cannot be found
+    #   return kfs
+    # count = 0
+    # Go one step back
+    # kf_it--
+    # while count < n and kf_it != frames.begin():
+    #   kfs.push_back(kf_it.second.get())
+    # return kfs
+    getNPreviousKeyframes(unsigned int n)
+
+    # Current keyframe getter
+    # Algorithm:
+    # throw an error if curr_kf is a nullptr
+    # return curr_kf
+    curr_kf $\leftarrow$ getCurrentKeyframe()
+
+    # Current keyframe setter
+    # Verify if the frame is valid 
+    #   pointer is not a nullptr and its frame exists
+    setCurrentKeyframe(Frame*)
 
     # --- private --- 
+    # Current keyframe closest to the current camera pose to the best
+    #   of map's knowledge
+    # Frame* curr_kf
+
     # MapPoint-to-Frame constraints
     map<long unsigned, shared_ptr<MapPoint>> map_points
     
     # Frame-to-Frame constraints
-    map<long unsigned, shared_ptr<Frame>> keyframes
-    set<FramePoseConstraint> keyframe_pairs;
+    map<long unsigned, shared_ptr<Frame>> frames
+    set<FramePoseConstraint> frame_pairs;
 
     # --- private --- 
   \end{lstlisting}
