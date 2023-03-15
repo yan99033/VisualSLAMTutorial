@@ -121,8 +121,7 @@ The role of each node is described as follows:
     # while (running):
     #   wait for the signal to unblock and run subsequent commands
     #   curr_kf $\leftarrow$ map.getCurrentKeyframe()
-    #   frames $\leftarrow$ map.getCloseKeyframes()
-    #   constraint_type = FOR_TRACKING
+    #   frames $\leftarrow$ map.getCloseUnconstrainedKeyframes()
     #   for frame in frames:
     #     matches = feature_matcher(curr_kf, frame)
     #     frame_pair = FramePair(curr_kf, frame, matches, constraint_type)
@@ -175,7 +174,7 @@ The role of each node is described as follows:
     Sophus::SE3 pose
     
     # List of points (not owning)
-    vector<MapPoint*> [] pts
+    vector<MapPoint*> [] mps
   \end{verbatim}
 
   \item \textbf{FramePair}
@@ -271,8 +270,9 @@ The role of each node is described as follows:
     #   # Newly triangulated points
     #   if pt1.mp is a nullptr and FramePair.constraint is FOR_INIT:
     #     map_point $\leftarrow$ create a new map point shared_ptr 
-    #       and add it to the set
-    #     add the map_point pointer to pt1 in the match
+    #       and add it to the map_points
+    #     add map_point pointer to pt1 in the match
+    #     add map_point to FramePair.frame1.mps
     #     add pt1 to map_point->projections
     #     removeFrame(match.pt2.frame)
     #   # Matched point but not associated with a map point
@@ -320,9 +320,13 @@ The role of each node is described as follows:
     # Go one step back
     # kf_it--
     # while count < n and kf_it != frames.begin():
+    #   # skip the frame pairs that have
+    #   if frame_pairs.find(kf_it.first, curr_kf->id) != frame_pairs.end()
+    #     continue
     #   kfs.push_back(kf_it.second.get())
+    #   count++
     # return kfs
-    getNPreviousKeyframes(unsigned int n)
+    getNPreviousUnconstrainedKeyframes(unsigned int n)
 
     # Current keyframe getter
     # Algorithm:
@@ -345,7 +349,8 @@ The role of each node is described as follows:
     
     # Frame-to-Frame constraints
     map<long unsigned, shared_ptr<Frame>> frames
-    set<FramePoseConstraint> frame_pairs;
+    # Ensure the first value in the pair is always smaller than the second
+    map<pair<long unsigned, long unsigned>, FramePoseConstraint> frame_pairs;
 
     # --- private --- 
   \end{lstlisting}
