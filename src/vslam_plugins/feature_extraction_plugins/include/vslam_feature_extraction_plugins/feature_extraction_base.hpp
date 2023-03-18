@@ -8,9 +8,10 @@ namespace vslam_feature_extraction_base {
   public:
     using Feature = vslam_datastructure::feature::Feature;
     using FeatureType = vslam_datastructure::feature::Feature::Type;
+    using Features = std::vector<Feature>;
 
     virtual void initialize(int num_features) = 0;
-    virtual Feature extract_features() = 0;
+    virtual Features extract_features(const cv::Mat& image) = 0;
     virtual FeatureType feature_type() = 0;
     virtual ~FeatureExtraction() {}
 
