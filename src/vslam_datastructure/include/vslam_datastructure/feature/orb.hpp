@@ -11,11 +11,10 @@ namespace vslam_datastructure {
 
     struct Orb : public Feature {
       static constexpr int desc_len = 32;
+      static constexpr Type type{Type::orb};
 
       cv::KeyPoint keypoint;
       uint8_t descriptor[desc_len];
-
-      static const Type type{Type::orb};
     };
   }  // namespace feature
 
