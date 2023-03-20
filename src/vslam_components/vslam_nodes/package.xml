@@ -10,7 +10,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>pluginlib</depend>
-  <depend>vslam_feature_extraction_plugins</depend>
+  <depend>vslam_plugins_base</depend>
+  <!-- <depend>vslam_datastructure</depend> -->
+  <!-- <depend>vslam_feature_extractor_plugins</depend> -->
   
   <depend>vslam_msgs</depend>
 

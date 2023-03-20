@@ -1,4 +1,4 @@
-#include "vslam_nodes/vslam_node.hpp"
+#include "vslam_nodes/indirect_vslam_node.hpp"
 
 using std::placeholders::_1;
 
@@ -21,18 +21,28 @@ namespace vslam_components {
 
   namespace vslam_nodes {
 
-    VSlamNode::VSlamNode(const rclcpp::NodeOptions &options) : Node("vslam_node", options) {
+    IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions &options)
+        : Node("vslam_node", options) {
       // ORB feature detector
-      orb_feature_detector_ = cv::ORB::create(declare_parameter("num_features", 2000));
+      feature_extractor_
+          = feature_extractor_loader_.createSharedInstance("vslam_feature_extractor_plugins::Orb");
+      // declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
+      feature_extractor_->initialize(declare_parameter("num_features", 2000));
+
+      // try {
+      // } catch (pluginlib::PluginlibException &ex) {
+      //   printf("The plugin failed to load for some reason. Error: %s\n", ex.what());
+      //   throw
+      // }
 
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
-          "in_frame", 10, std::bind(&VSlamNode::frame_callback, this, _1));
+          "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
       captured_frame_pub_ = frame_pub_;
     }
 
-    void VSlamNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const {
+    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const {
       auto pub_ptr = captured_frame_pub_.lock();
       if (!pub_ptr) {
         RCLCPP_WARN(this->get_logger(), "unable to lock the publisher\n");
@@ -57,4 +67,4 @@ namespace vslam_components {
 // Register the component with class_loader.
 // This acts as a sort of entry point, allowing the component to be discoverable when its library
 // is being loaded into a running process.
-RCLCPP_COMPONENTS_REGISTER_NODE(vslam_components::vslam_nodes::VSlamNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(vslam_components::vslam_nodes::IndirectVSlamNode)

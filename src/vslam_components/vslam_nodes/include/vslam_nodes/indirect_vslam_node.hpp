@@ -9,14 +9,14 @@
 #include <pluginlib/class_loader.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include "vslam_feature_extraction_plugins/feature_extraction_base.hpp"
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_plugins_base/feature_extractor.hpp"
 
 namespace vslam_components {
   namespace vslam_nodes {
-    class VSlamNode : public rclcpp::Node {
+    class IndirectVSlamNode : public rclcpp::Node {
     public:
-      explicit VSlamNode(const rclcpp::NodeOptions &options);
+      explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
 
     private:
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const;
@@ -28,9 +28,10 @@ namespace vslam_components {
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
       // Feature extraction plugin
-      std::shared_ptr<vslam_feature_extraction_base::FeatureExtraction> feature_extractor_;
-
-      cv::Ptr<cv::ORB> orb_feature_detector_;
+      pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor>
+          feature_extractor_loader_{"vslam_plugins_base",
+                                    "vslam_feature_extractor_base::FeatureExtractor"};
+      std::shared_ptr<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components
