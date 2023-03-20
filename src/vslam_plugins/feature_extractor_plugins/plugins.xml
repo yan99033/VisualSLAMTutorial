@@ -1,0 +1,5 @@
+<library path="vslam_feature_extractor_plugins">
+  <class type="vslam_feature_extractor_plugins::Orb" base_class_type="vslam_feature_extractor_base::FeatureExtractor">
+    <description>This is an ORB feature extractor plugin.</description>
+  </class>
+</library>

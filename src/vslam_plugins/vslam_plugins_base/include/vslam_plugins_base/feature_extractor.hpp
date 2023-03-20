@@ -1,10 +1,10 @@
-#ifndef VSLAM_FEATURE_EXTRACTION_PLUGINS__PLUGIN_BASE_HPP_
-#define VSLAM_FEATURE_EXTRACTION_PLUGINS__PLUGIN_BASE_HPP_
+#ifndef VSLAM_PLUGINS_BASE__FEATURE_EXTRACTOR_HPP_
+#define VSLAM_PLUGINS_BASE__FEATURE_EXTRACTOR_HPP_
 
 #include "vslam_datastructure/feature/base.hpp"
 
-namespace vslam_feature_extraction_base {
-  class FeatureExtraction {
+namespace vslam_feature_extractor_base {
+  class FeatureExtractor {
   public:
     using Feature = vslam_datastructure::feature::Feature;
     using FeatureType = vslam_datastructure::feature::Feature::Type;
@@ -13,13 +13,13 @@ namespace vslam_feature_extraction_base {
     virtual void initialize(int num_features) = 0;
     virtual Features extract_features(const cv::Mat& image) = 0;
     virtual FeatureType feature_type() = 0;
-    virtual ~FeatureExtraction() {}
+    virtual ~FeatureExtractor() {}
 
   protected:
-    FeatureExtraction() {}
+    FeatureExtractor() {}
 
     FeatureType feature_type_{FeatureType::undefined};
   };
-}  // namespace vslam_feature_extraction_base
+}  // namespace vslam_feature_extractor_base
 
-#endif  // VSLAM_FEATURE_EXTRACTION_PLUGINS__PLUGIN_BASE_HPP_
+#endif  // VSLAM_PLUGINS_BASE__FEATURE_EXTRACTOR_HPP_
