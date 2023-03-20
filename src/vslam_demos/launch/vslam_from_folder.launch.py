@@ -41,9 +41,9 @@ def generate_launch_description():
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
             ComposableNode(
-                package='feature_extraction_nodes',
-                plugin='vslam_components::feature_extraction_nodes::OrbFeatureExtractionNode',
-                name='orb_feature_extraction_node',
+                package='vslam_nodes',
+                plugin='vslam_components::vslam_nodes::IndirectVSlamNode',
+                name='indirect_vslam_node',
                 parameters=[config],
                 remappings=[
                     ('/in_frame', '/raw_frame'),
@@ -54,39 +54,5 @@ def generate_launch_description():
         output='screen',
     )
 
-    """Generate launch description with multiple components."""
-
-    vslam_frontend_nodes = GroupAction(
-        actions=[
-            Node(
-                package='feature_matching_nodes',
-                executable='feature_matching_nodes_exe',
-                name='orb_matcher_node',
-                output='screen',
-                parameters=[config],
-                remappings=[
-                    ('/in_frame', '/frame_w_features'),
-                    ('/out_frame', '/frame_matched'),
-                ]),
-        ]
-    )
-
-    """Generate launch description with multiple components."""
-    vslam_backend_container = ComposableNodeContainer(
-        name='vslam_backend_container',
-        namespace='',
-        package='rclcpp_components',
-        executable='component_container_mt',
-        composable_node_descriptions=[
-            ComposableNode(
-                package='backend_nodes',
-                plugin='vslam_components::backend_nodes::OrbBackendNode',
-                name='orb_backend_node',
-                parameters=[config],
-                extra_arguments=[{'use_intra_process_comms': True}],),
-        ],
-        output='screen',
-    )
-
     # vslam_frontend_nodes
-    return launch.LaunchDescription([declare_config_file_cmd, vslam_preprocessing_container, vslam_frontend_nodes, vslam_backend_container])
+    return launch.LaunchDescription([declare_config_file_cmd, vslam_preprocessing_container])

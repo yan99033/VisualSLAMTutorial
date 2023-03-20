@@ -23,17 +23,10 @@ namespace vslam_components {
 
     IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions &options)
         : Node("vslam_node", options) {
-      // ORB feature detector
-      feature_extractor_
-          = feature_extractor_loader_.createSharedInstance("vslam_feature_extractor_plugins::Orb");
-      // declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
+      // Feature extractor
+      feature_extractor_ = feature_extractor_loader_.createSharedInstance(
+          declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
       feature_extractor_->initialize(declare_parameter("num_features", 2000));
-
-      // try {
-      // } catch (pluginlib::PluginlibException &ex) {
-      //   printf("The plugin failed to load for some reason. Error: %s\n", ex.what());
-      //   throw
-      // }
 
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
