@@ -42,13 +42,14 @@ namespace vslam_components {
         return;
       }
 
-      RCLCPP_INFO(this->get_logger(), "Getting frame %u\n", frame_msg->id);
+      RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
       cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
                      encoding2mat_type(frame_msg->image.encoding), frame_msg->image.data.data());
 
       // Extract features in the image
+      auto features = feature_extractor_->extract_features(cv_mat);
 
       pub_ptr->publish(std::move(frame_msg));
     }
