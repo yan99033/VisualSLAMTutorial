@@ -13,7 +13,7 @@ namespace vslam_feature_matcher_plugins {
   public:
     void initialize() override;
 
-    MatchedPoints match_features(const FramePair& frame_pair) override;
+    MatchedPoints match_features(const Points& points1, const Points& points2) override;
 
   protected:
     int num_features_{1000};

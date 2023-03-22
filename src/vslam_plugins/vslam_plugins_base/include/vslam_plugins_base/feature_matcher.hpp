@@ -15,7 +15,7 @@ namespace vslam_feature_matcher_base {
     using MatchedPoints = std::vector<MatchedPoint>;
 
     virtual void initialize() = 0;
-    virtual MatchedPoints match_features(const FramePair& frame_pair) = 0;
+    virtual MatchedPoints match_features(const Points& points1, const Points& points2) = 0;
     PointType point_type() const { return point_type_; };
     virtual ~FeatureMatcher() {}
 
