@@ -49,7 +49,7 @@ namespace vslam_components {
                      encoding2mat_type(frame_msg->image.encoding), frame_msg->image.data.data());
 
       // Extract features in the image
-      auto features = feature_extractor_->extract_features(cv_mat);
+      auto points = feature_extractor_->extract_features(cv_mat);
 
       pub_ptr->publish(std::move(frame_msg));
     }
