@@ -9,13 +9,18 @@
 
 namespace vslam_feature_extractor_plugins {
 
-  class VSlamFeatureExtractorPlugins {
+  class Orb : public vslam_feature_extractor_base::FeatureExtractor {
   public:
-    VSlamFeatureExtractorPlugins();
+    void initialize(int num_features) override;
 
-    virtual ~VSlamFeatureExtractorPlugins();
+    Points extract_features(const cv::Mat& image) override;
+
+  protected:
+    int num_features_{1000};
+
+  private:
+    cv::Ptr<cv::ORB> orb_feature_detector_;
   };
-
 }  // namespace vslam_feature_extractor_plugins
 
 #endif
