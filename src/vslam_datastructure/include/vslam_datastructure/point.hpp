@@ -13,6 +13,11 @@ namespace vslam_datastructure {
     Type type{Type::undefined};
   };
 
+  struct MatchedPoint {
+    Point point1;
+    Point point2;
+  };
+
 }  // namespace vslam_datastructure
 
 #endif  // VSLAM_DATASTRUCTURE__POINT_HPP_

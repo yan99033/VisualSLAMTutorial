@@ -22,7 +22,7 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  DIRECTORY include/vslam_datastructure 
+  DIRECTORY include/vslam_datastructure
   DESTINATION include
 )
 
