@@ -12,7 +12,7 @@ namespace vslam_feature_extractor_base {
 
     virtual void initialize(int num_features) = 0;
     virtual Points extract_features(const cv::Mat& image) = 0;
-    virtual PointType point_type() = 0;
+    PointType point_type() const { return point_type_; };
     virtual ~FeatureExtractor() {}
 
   protected:

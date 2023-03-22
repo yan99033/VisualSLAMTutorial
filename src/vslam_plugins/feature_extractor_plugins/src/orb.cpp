@@ -29,8 +29,6 @@ namespace vslam_feature_extractor_plugins {
       return orb_ft_points;
     }
 
-    PointType point_type() override { return point_type_; }
-
   protected:
     int num_features_{1000};
 
