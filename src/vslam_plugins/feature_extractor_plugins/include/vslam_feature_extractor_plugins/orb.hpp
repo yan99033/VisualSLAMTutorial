@@ -4,8 +4,7 @@
 #include <cmath>
 #include <opencv2/calib3d.hpp>
 
-#include "vslam_datastructure/feature/orb.hpp"
-// #include "vslam_feature_extractor_plugins/visibility_control.h"
+#include "vslam_datastructure/point.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 
 namespace vslam_feature_extractor_plugins {
