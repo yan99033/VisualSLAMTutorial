@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
+#include "vslam_plugins_base/feature_matcher.hpp"
 
 namespace vslam_components {
   namespace vslam_nodes {
@@ -32,6 +33,11 @@ namespace vslam_components {
           feature_extractor_loader_{"vslam_plugins_base",
                                     "vslam_feature_extractor_base::FeatureExtractor"};
       std::shared_ptr<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_;
+
+      // Feature matcher plugin
+      pluginlib::ClassLoader<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_loader_{
+          "vslam_plugins_base", "vslam_feature_matcher_base::FeatureMatcher"};
+      std::shared_ptr<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

@@ -28,6 +28,11 @@ namespace vslam_components {
           declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
       feature_extractor_->initialize(declare_parameter("num_features", 2000));
 
+      // Feature matcher
+      feature_matcher_ = feature_matcher_loader_.createSharedInstance(
+          declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
+      feature_matcher_->initialize();
+
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
           "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));

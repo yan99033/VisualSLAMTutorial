@@ -12,3 +12,4 @@ indirect_vslam_node:
   ros__parameters:
     num_features: 2000
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::Orb"
+    feature_matcher_plugin_name: "vslam_feature_matcher_plugins::Orb"
