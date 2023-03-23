@@ -1,5 +1,5 @@
-#ifndef VSLAM_FEATURE_EXTRACTOR_PLUGINS__ORB_HPP_
-#define VSLAM_FEATURE_EXTRACTOR_PLUGINS__ORB_HPP_
+#ifndef VSLAM_FEATURE_MATCHER_PLUGINS__ORB_HPP_
+#define VSLAM_FEATURE_MATCHER_PLUGINS__ORB_HPP_
 
 #include <cmath>
 #include <opencv2/calib3d.hpp>
@@ -23,4 +23,4 @@ namespace vslam_feature_matcher_plugins {
   };
 }  // namespace vslam_feature_matcher_plugins
 
-#endif
+#endif  // VSLAM_FEATURE_MATCHER_PLUGINS__ORB_HPP_

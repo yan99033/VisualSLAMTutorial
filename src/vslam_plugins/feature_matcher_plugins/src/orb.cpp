@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "vslam_feature_matcher_plugins/utils.hpp"
+
 namespace vslam_feature_matcher_plugins {
   void Orb::initialize() {
     point_type_ = PointType::orb;
@@ -10,14 +12,18 @@ namespace vslam_feature_matcher_plugins {
   }
 
   Orb::MatchedPoints Orb::match_features(const Points& points1, const Points& points2) {
-    //   std::vector<cv::KeyPoint> keypoints;
-    //     std::vector<cv::Mat> descriptors_vec;
-    //     for (const auto &ft : points) {
-    //       keypoints.push_back(ft.keypoint);
-    //       descriptors_vec.push_back(ft.descriptor);
-    //     }
-    //     cv::Mat descriptors;
-    //     cv::vconcat(descriptors_vec, descriptors);
+    // Get keypoints and descriptors
+    auto [keypoints1, descriptors1] = extract_keypoints_descriptors(points1);
+    auto [keypoints2, descriptors2] = extract_keypoints_descriptors(points2);
+
+    // Match descriptors
+    std::vector<cv::DMatch> matches;
+    std::vector<char> matcher_mask;
+    orb_feature_matcher_->match(descriptors1, descriptors2, matches, matcher_mask);
+
+    auto matched_points = create_matched_points(points1, points2, matches, matcher_mask);
+
+    return matched_points;
   }
 
 }  // namespace vslam_feature_matcher_plugins

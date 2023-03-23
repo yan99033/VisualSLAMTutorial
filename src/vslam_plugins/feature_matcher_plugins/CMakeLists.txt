@@ -22,6 +22,7 @@ set(dependencies
 
 set(sources
   src/orb.cpp
+  src/utils.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${sources})
