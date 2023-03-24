@@ -21,6 +21,8 @@ namespace vslam_components {
       explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
 
     private:
+      enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
+
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
@@ -30,6 +32,8 @@ namespace vslam_components {
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
       vslam_datastructure::Points prev_points{};
+
+      State state_{State::init};
 
       // Feature extraction plugin
       pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor>
