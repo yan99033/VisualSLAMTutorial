@@ -30,8 +30,6 @@ namespace vslam_datastructure {
     std::mutex mutex;
   };
 
-  long unsigned int Frame::frame_count = 0;
-
   using FramePtr = std::shared_ptr<Frame>;
 
 }  // namespace vslam_datastructure

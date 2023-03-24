@@ -1,6 +1,8 @@
 #ifndef VSLAM_DATASTRUCTURE__POINT_HPP_
 #define VSLAM_DATASTRUCTURE__POINT_HPP_
 
+#include <opencv2/opencv.hpp>
+
 namespace vslam_datastructure {
 
   struct Point {
@@ -11,7 +13,13 @@ namespace vslam_datastructure {
     cv::Mat descriptor;
 
     Type type{Type::undefined};
+
+    long unsigned int id{point_count++};
+
+    static long unsigned int point_count;
   };
+
+  using Points = std::vector<Point>;
 
   struct MatchedPoint {
     Point point1;

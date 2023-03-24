@@ -8,6 +8,28 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Sophus REQUIRED)
+
+set(sources
+  src/frame.cpp
+  src/point.cpp)
+
+set(dependencies
+  OpenCV)
+
+# let the compiler search for headers in the include folder
+include_directories(include)
+
+# create a library called my_value_converter_library
+add_library(${PROJECT_NAME} ${sources})
+target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+install(TARGETS
+  ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -29,5 +51,7 @@ install(
 ament_export_include_directories(
   include
 )
+
+ament_export_libraries(${PROJECT_NAME})
 
 ament_package()
