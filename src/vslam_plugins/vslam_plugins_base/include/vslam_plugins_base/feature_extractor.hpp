@@ -6,19 +6,15 @@
 namespace vslam_feature_extractor_base {
   class FeatureExtractor {
   public:
-    using Point = vslam_datastructure::Point;
-    using PointType = Point::Type;
-    using Points = std::vector<Point>;
-
     virtual void initialize(int num_features) = 0;
-    virtual Points extract_features(const cv::Mat& image) = 0;
-    PointType point_type() const { return point_type_; };
+    virtual vslam_datastructure::Points extract_features(const cv::Mat& image) = 0;
+    vslam_datastructure::Point::Type point_type() const { return point_type_; };
     virtual ~FeatureExtractor() {}
 
   protected:
     FeatureExtractor() {}
 
-    PointType point_type_{PointType::undefined};
+    vslam_datastructure::PointType point_type_{vslam_datastructure::PointType::undefined};
   };
 }  // namespace vslam_feature_extractor_base
 

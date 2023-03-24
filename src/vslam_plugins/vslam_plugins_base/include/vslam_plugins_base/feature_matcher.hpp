@@ -7,22 +7,17 @@
 namespace vslam_feature_matcher_base {
   class FeatureMatcher {
   public:
-    using FramePair = vslam_datastructure::FramePair;
-    using Point = vslam_datastructure::Point;
-    using PointType = vslam_datastructure::Point::Type;
-    using Points = std::vector<Point>;
-    using MatchedPoint = vslam_datastructure::MatchedPoint;
-    using MatchedPoints = std::vector<MatchedPoint>;
-
     virtual void initialize() = 0;
-    virtual MatchedPoints match_features(const Points& points1, const Points& points2) = 0;
-    PointType point_type() const { return point_type_; };
+    virtual vslam_datastructure::MatchedPoints match_features(
+        const vslam_datastructure::Points& points1, const vslam_datastructure::Points& points2)
+        = 0;
+    vslam_datastructure::Point::Type point_type() const { return point_type_; };
     virtual ~FeatureMatcher() {}
 
   protected:
     FeatureMatcher() {}
 
-    PointType point_type_{PointType::undefined};
+    vslam_datastructure::PointType point_type_{vslam_datastructure::PointType::undefined};
   };
 }  // namespace vslam_feature_matcher_base
 

@@ -13,7 +13,9 @@ namespace vslam_feature_matcher_plugins {
   public:
     void initialize() override;
 
-    MatchedPoints match_features(const Points& points1, const Points& points2) override;
+    vslam_datastructure::MatchedPoints match_features(
+        const vslam_datastructure::Points& points1,
+        const vslam_datastructure::Points& points2) override;
 
   protected:
     int num_features_{1000};

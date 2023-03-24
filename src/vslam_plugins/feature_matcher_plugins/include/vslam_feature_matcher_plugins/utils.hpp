@@ -6,16 +6,12 @@
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_feature_matcher_plugins {
-  using MatchedPoint = vslam_datastructure::MatchedPoint;
-  using MatchedPoints = std::vector<MatchedPoint>;
-  using Point = vslam_datastructure::Point;
-  using Points = std::vector<Point>;
+  std::pair<std::vector<cv::KeyPoint>, cv::Mat> extract_keypoints_descriptors(
+      const vslam_datastructure::Points& points);
 
-  std::pair<std::vector<cv::KeyPoint>, cv::Mat> extract_keypoints_descriptors(const Points& points);
-
-  MatchedPoints create_matched_points(const Points& points1, const Points& points2,
-                                      const std::vector<cv::DMatch>& matches,
-                                      const std::vector<char>& matcher_mask);
+  vslam_datastructure::MatchedPoints create_matched_points(
+      const vslam_datastructure::Points& points1, const vslam_datastructure::Points& points2,
+      const std::vector<cv::DMatch>& matches, const std::vector<char>& matcher_mask);
 
 }  // namespace vslam_feature_matcher_plugins
 

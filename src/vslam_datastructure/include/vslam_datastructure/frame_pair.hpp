@@ -10,13 +10,7 @@ namespace vslam_datastructure {
   public:
     enum class ConstraintType { init = 0, tracking = 1, loop_closure = 2, relocalization = 3 };
 
-    using Point = vslam_datastructure::Point;
-    using PointType = vslam_datastructure::Point::Type;
-    using Points = std::vector<Point>;
-    using MatchedPoint = vslam_datastructure::MatchedPoint;
-    using MatchedPoints = std::vector<MatchedPoint>;
-
-    private:
+  private:
     Frame* frame1_;
     Frame* frame2_;
 

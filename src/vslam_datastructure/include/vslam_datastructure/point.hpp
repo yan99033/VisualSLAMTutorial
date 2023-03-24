@@ -19,12 +19,16 @@ namespace vslam_datastructure {
     static long unsigned int point_count;
   };
 
-  using Points = std::vector<Point>;
+  using PointPtr = std::shared_ptr<Point>;
+  using Points = std::vector<PointPtr>;
+  using PointType = Point::Type;
 
   struct MatchedPoint {
-    Point point1;
-    Point point2;
+    PointPtr point1;
+    PointPtr point2;
   };
+
+  using MatchedPoints = std::vector<MatchedPoint>;
 
 }  // namespace vslam_datastructure
 

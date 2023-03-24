@@ -13,7 +13,7 @@ namespace vslam_feature_extractor_plugins {
   public:
     void initialize(int num_features) override;
 
-    Points extract_features(const cv::Mat& image) override;
+    vslam_datastructure::Points extract_features(const cv::Mat& image) override;
 
   protected:
     int num_features_{1000};
