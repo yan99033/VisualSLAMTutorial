@@ -40,7 +40,7 @@ namespace vslam_components {
       captured_frame_pub_ = frame_pub_;
     }
 
-    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const {
+    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
       auto pub_ptr = captured_frame_pub_.lock();
       if (!pub_ptr) {
         RCLCPP_WARN(this->get_logger(), "unable to lock the publisher\n");
@@ -55,6 +55,12 @@ namespace vslam_components {
 
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);
+
+      if (prev_points.empty()) {
+        prev_points = points;
+      } else {
+        auto matched_points = feature_matcher_->match_features(prev_points, points);
+      }
 
       pub_ptr->publish(std::move(frame_msg));
     }

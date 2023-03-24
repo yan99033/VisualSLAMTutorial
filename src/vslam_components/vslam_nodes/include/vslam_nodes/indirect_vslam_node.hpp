@@ -9,6 +9,7 @@
 #include <pluginlib/class_loader.hpp>
 
 #include "rclcpp/rclcpp.hpp"
+#include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 #include "vslam_plugins_base/feature_matcher.hpp"
@@ -20,13 +21,15 @@ namespace vslam_components {
       explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
 
     private:
-      void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) const;
+      void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
 
       // for re-publishing the frame message without creating a copy
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
+
+      vslam_datastructure::Points prev_points{};
 
       // Feature extraction plugin
       pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor>
