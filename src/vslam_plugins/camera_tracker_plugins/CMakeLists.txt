@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(vslam_datastructure)
+project(vslam_camera_tracker_plugins)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -8,27 +8,46 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(vslam_plugins_base REQUIRED)
+find_package(vslam_datastructure REQUIRED)
 find_package(Sophus REQUIRED)
 
-set(sources
-  src/frame.cpp
-  src/point.cpp)
-
 set(dependencies
-  OpenCV)
+  pluginlib
+  vslam_plugins_base
+  vslam_datastructure
+  OpenCV
+)
 
-# let the compiler search for headers in the include folder
-include_directories(include)
+set(sources
+  src/indirect.cpp
+)
 
-add_library(${PROJECT_NAME} ${sources})
+add_library(${PROJECT_NAME} SHARED ${sources})
 target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
-ament_target_dependencies(${PROJECT_NAME} ${dependencies})
-
-install(TARGETS
+target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
   ${PROJECT_NAME}
+  ${dependencies}
+)
+
+pluginlib_export_plugin_description_file(vslam_plugins_base plugins.xml)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  RUNTIME DESTINATION bin
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -42,15 +61,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(
-  DIRECTORY include/vslam_datastructure
-  DESTINATION include
-)
-
 ament_export_include_directories(
   include
 )
+ament_export_libraries(
+  ${PROJECT_NAME}
+)
 
-ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(
+  export_${PROJECT_NAME}
+)
 
 ament_package()
