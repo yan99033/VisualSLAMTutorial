@@ -8,7 +8,7 @@
 namespace vslam_camera_tracker_base {
   class CameraTracker {
   public:
-    virtual void initialize() = 0;
+    virtual void initialize(const cv::Mat& K) = 0;
     virtual Sophus::SE3d track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points)
         = 0;
     virtual ~CameraTracker() {}

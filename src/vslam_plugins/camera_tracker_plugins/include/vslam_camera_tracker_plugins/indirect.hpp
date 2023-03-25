@@ -11,13 +11,13 @@ namespace vslam_camera_tracker_plugins {
 
   class Indirect : public vslam_camera_tracker_base::CameraTracker {
   public:
-    void initialize() override;
+    void initialize(const cv::Mat& K) override;
 
     virtual Sophus::SE3d track_camera_2d2d(
-        const vslam_datastructure::MatchedPoints& matched_points);
+        const vslam_datastructure::MatchedPoints& matched_points) override;
 
   protected:
-    int num_features_{1000};
+    cv::Mat K;
 
   private:
     cv::Ptr<cv::ORB> orb_feature_detector_;

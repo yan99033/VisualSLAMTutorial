@@ -34,9 +34,9 @@ namespace vslam_components {
       feature_matcher_->initialize();
 
       // Camera tracker
-      camera_tracker_ = camera_tracker_loader_.createSharedInstance(
-          declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
-      camera_tracker_->initialize();
+      // camera_tracker_ = camera_tracker_loader_.createSharedInstance(
+      //     declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
+      // camera_tracker_->initialize();
 
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
