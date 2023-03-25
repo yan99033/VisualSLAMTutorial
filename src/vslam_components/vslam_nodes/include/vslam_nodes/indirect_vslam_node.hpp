@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_plugins_base/camera_tracker.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 #include "vslam_plugins_base/feature_matcher.hpp"
 
@@ -45,6 +46,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_loader_{
           "vslam_plugins_base", "vslam_feature_matcher_base::FeatureMatcher"};
       std::shared_ptr<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_;
+
+      // Camera tracker plugin
+      pluginlib::ClassLoader<vslam_camera_tracker_base::CameraTracker> camera_tracker_loader_{
+          "vslam_plugins_base", "vslam_camera_tracker_base::CameraTracker"};
+      std::shared_ptr<vslam_camera_tracker_base::CameraTracker> camera_tracker_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components
