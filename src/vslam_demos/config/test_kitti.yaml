@@ -2,15 +2,15 @@ camera_node:
   ros__parameters:
     frame_rate_hz: 10
     image_folder: "/Users/sy/kitti/00/image_2"
+    
+indirect_vslam_node:
+  ros__parameters:
+    num_features: 2000
     camera_params:
       fx: 718.856
       fy: 718.856
       cx: 607.1928
       cy: 185.2157
-
-indirect_vslam_node:
-  ros__parameters:
-    num_features: 2000
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::Orb"
     feature_matcher_plugin_name: "vslam_feature_matcher_plugins::Orb"
     camera_tracker_plugin_name: "vslam_camera_tracker_plugins::Indirect"
