@@ -39,6 +39,7 @@ private:
       captured_frame_pub_;
 
   vslam_datastructure::Points prev_points{};
+  Sophus::SE3d prev_pose_to_world;
 
   State state_{State::init};
 

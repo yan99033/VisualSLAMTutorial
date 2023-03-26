@@ -11,8 +11,6 @@
 
   <depend>pluginlib</depend>
   <depend>vslam_plugins_base</depend>
-  <!-- <depend>vslam_datastructure</depend> -->
-  <!-- <depend>vslam_feature_extractor_plugins</depend> -->
   
   <depend>vslam_msgs</depend>
 

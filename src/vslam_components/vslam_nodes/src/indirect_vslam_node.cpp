@@ -82,6 +82,20 @@ void IndirectVSlamNode::frame_callback(
     const auto matched_points =
         feature_matcher_->match_features(prev_points, points);
     const auto pose21 = camera_tracker_->track_camera_2d2d(matched_points);
+
+    prev_pose_to_world = pose21 * prev_pose_to_world;
+
+    // write pose to the frame message
+    const auto world_to_prev_pose = prev_pose_to_world.inverse();
+    const auto quat = world_to_prev_pose.unit_quaternion();
+    const auto trans = world_to_prev_pose.translation();
+    frame_msg->pose.position.x = trans.x();
+    frame_msg->pose.position.y = trans.y();
+    frame_msg->pose.position.z = trans.z();
+    frame_msg->pose.orientation.x = quat.x();
+    frame_msg->pose.orientation.y = quat.y();
+    frame_msg->pose.orientation.z = quat.z();
+    frame_msg->pose.orientation.w = quat.w();
   }
 
   pub_ptr->publish(std::move(frame_msg));
