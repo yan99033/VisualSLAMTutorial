@@ -5,8 +5,8 @@
 import launch
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, GroupAction
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import LaunchConfiguration
 
@@ -48,6 +48,14 @@ def generate_launch_description():
                 remappings=[
                     ('/in_frame', '/raw_frame'),
                     ('/out_frame', '/frame_w_features'),
+                ],
+                extra_arguments=[{'use_intra_process_comms': True}],),
+            ComposableNode(
+                package='visualization_nodes',
+                plugin='vslam_components::visualization_nodes::RvizVisualNode',
+                name='rviz_visual_node',
+                remappings=[
+                    ('/in_frame', '/frame_w_features'),
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
         ],
