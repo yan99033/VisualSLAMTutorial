@@ -79,7 +79,9 @@ void IndirectVSlamNode::frame_callback(
   if (prev_points.empty()) {
     prev_points = points;
   } else {
-    auto matched_points = feature_matcher_->match_features(prev_points, points);
+    const auto matched_points =
+        feature_matcher_->match_features(prev_points, points);
+    const auto pose21 = camera_tracker_->track_camera_2d2d(matched_points);
   }
 
   pub_ptr->publish(std::move(frame_msg));
