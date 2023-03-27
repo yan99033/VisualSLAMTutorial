@@ -3,10 +3,9 @@
 #ifndef VISUALIZATION_NODES__RVIZ_VISUAL_NODE_HPP_
 #define VISUALIZATION_NODES__RVIZ_VISUAL_NODE_HPP_
 
+#include <Eigen/Dense>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-
-#include <Eigen/Dense>
 
 #include "rclcpp/rclcpp.hpp"
 #include "visualization_msgs/msg/marker.hpp"

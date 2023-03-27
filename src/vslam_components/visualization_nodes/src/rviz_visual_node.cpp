@@ -21,7 +21,8 @@ namespace {
     throw std::runtime_error("Unsupported mat type");
   }
 
-  void calculateLivePoseMarkers(const geometry_msgs::msg::Pose& pose, visualization_msgs::msg::Marker& pose_marker, const Eigen::Matrix3d cam_axes_transform = Eigen::Matrix3d::Identity()) {
+  void calculateLivePoseMarkers(const geometry_msgs::msg::Pose& pose, visualization_msgs::msg::Marker& pose_marker,
+                                const Eigen::Matrix3d cam_axes_transform = Eigen::Matrix3d::Identity()) {
     // Convert the pose to an Eigen matrix
     Eigen::Isometry3d eigen_transform;
     tf2::fromMsg(pose, eigen_transform);
@@ -49,26 +50,26 @@ namespace {
     marker_vertices << p0[0], p0[1], p0[2], p0[3],  //
         p1[0], p1[1], p1[2], p1[3],                 //
 
-        p0[0], p0[1], p0[2], p0[3],  //
-        p2[0], p2[1], p2[2], p2[3],  //
+        p0[0], p0[1], p0[2], p0[3],                 //
+        p2[0], p2[1], p2[2], p2[3],                 //
 
-        p0[0], p0[1], p0[2], p0[3],  //
-        p3[0], p3[1], p3[2], p3[3],  //
+        p0[0], p0[1], p0[2], p0[3],                 //
+        p3[0], p3[1], p3[2], p3[3],                 //
 
-        p0[0], p0[1], p0[2], p0[3],  //
-        p4[0], p4[1], p4[2], p4[3],  //
+        p0[0], p0[1], p0[2], p0[3],                 //
+        p4[0], p4[1], p4[2], p4[3],                 //
 
-        p4[0], p4[1], p4[2], p4[3],  //
-        p3[0], p3[1], p3[2], p3[3],  //
+        p4[0], p4[1], p4[2], p4[3],                 //
+        p3[0], p3[1], p3[2], p3[3],                 //
 
-        p3[0], p3[1], p3[2], p3[3],  //
-        p2[0], p2[1], p2[2], p2[3],  //
+        p3[0], p3[1], p3[2], p3[3],                 //
+        p2[0], p2[1], p2[2], p2[3],                 //
 
-        p2[0], p2[1], p2[2], p2[3],  //
-        p1[0], p1[1], p1[2], p1[3],  //
+        p2[0], p2[1], p2[2], p2[3],                 //
+        p1[0], p1[1], p1[2], p1[3],                 //
 
-        p1[0], p1[1], p1[2], p1[3],  //
-        p4[0], p4[1], p4[2], p4[3];  //
+        p1[0], p1[1], p1[2], p1[3],                 //
+        p4[0], p4[1], p4[2], p4[3];                 //
 
     const auto vertices_transformed = eigen_transform.matrix() * marker_vertices.transpose();
 
@@ -91,42 +92,25 @@ namespace {
       pose_marker.points.push_back(pt);
     }
   }
-
-  // convert coords
-  // # Convert from left-hand rule to right-hand rule coordinates system
-  // (visualization) # Right-hand rule: x forward, y left, z up # Left-hand rule:
-  // z forward, x right, y down convert_coords = True cam_axes_transform =
-  // np.array([[0.0 , 0.0 , 1.0],
-  //                                [-1.0, 0.0 , 0.0],
-  //                                [0.0 , -1.0, 0.0]]).astype(np.float)
-  //
-  // rot_mat_c = cam_axes_transform @ rot_mat @ np.linalg.inv(cam_axes_transform)
-  // trans_c = cam_axes_transform @ trans
-
 }  // namespace
 
 namespace vslam_components {
 
   namespace visualization_nodes {
 
-    const Eigen::Matrix3d RvizVisualNode::cam_axes_transform_ =  (Eigen::Matrix3d() << 0.0 , 0.0 , 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished(); 
+    const Eigen::Matrix3d RvizVisualNode::cam_axes_transform_
+        = (Eigen::Matrix3d() << 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished();
 
     RvizVisualNode::RvizVisualNode(const rclcpp::NodeOptions& options) : Node("rviz_visual_node", options) {
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&RvizVisualNode::frame_callback, this, _1));
       live_frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 1);
-
-      // TODO:
-      // set frame id
     }
 
     void RvizVisualNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
-      // TODO:
-      // 1. transform to the right-hand rule coordinate system
-      // 2. Publish the frame marker
       visualization_msgs::msg::Marker pose_marker;
       calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
       pose_marker.id = live_pose_marker_id_;
