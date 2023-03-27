@@ -21,10 +21,13 @@ namespace {
     throw std::runtime_error("Unsupported mat type");
   }
 
-  void calculateLivePoseMarkers(const geometry_msgs::msg::Pose& pose, visualization_msgs::msg::Marker& pose_marker) {
+  void calculateLivePoseMarkers(const geometry_msgs::msg::Pose& pose, visualization_msgs::msg::Marker& pose_marker, const Eigen::Matrix3d cam_axes_transform = Eigen::Matrix3d::Identity()) {
     // Convert the pose to an Eigen matrix
     Eigen::Isometry3d eigen_transform;
     tf2::fromMsg(pose, eigen_transform);
+
+    eigen_transform.translation() = cam_axes_transform * eigen_transform.translation();
+    eigen_transform.linear() = cam_axes_transform * eigen_transform.rotation() * cam_axes_transform.inverse();
 
     // Calculate the preset vertices
     constexpr double s = 1.0;
@@ -116,8 +119,6 @@ namespace vslam_components {
 
       // TODO:
       // set frame id
-      // create a constexpr for the left-hand to right-hand rule coordinate
-      //   conversion matrix
     }
 
     void RvizVisualNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
@@ -127,7 +128,7 @@ namespace vslam_components {
       // 1. transform to the right-hand rule coordinate system
       // 2. Publish the frame marker
       visualization_msgs::msg::Marker pose_marker;
-      calculateLivePoseMarkers(frame_msg->pose, pose_marker);
+      calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
       pose_marker.id = live_pose_marker_id_;
       live_frame_publisher_->publish(pose_marker);
     }
