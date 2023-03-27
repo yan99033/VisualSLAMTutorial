@@ -15,6 +15,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -22,6 +23,7 @@ find_package(OpenCV REQUIRED)
 set(dependencies
   rclcpp
   rclcpp_components
+  tf2_eigen
   visualization_msgs
   vslam_msgs
   OpenCV
