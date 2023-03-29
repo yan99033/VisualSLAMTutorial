@@ -15,6 +15,18 @@ namespace {
     }
     throw std::runtime_error("Unsupported mat type");
   }
+
+  std::pair<cv::Mat, cv::Mat> transformationMatToTranslationQuaternion(const cv::Mat &T) {
+    // Rotation matrix and translation vector
+    cv::Mat R = T(cv::Rect(0, 0, 3, 3));
+    cv::Mat t = T(cv::Rect(3, 0, 1, 3));
+
+    // Rotation matrix to quaternion
+    cv::Mat quat = cv::Mat::zeros(4, 1, CV_64F);
+    cv::Rodrigues(R, quat);
+
+    return {t, quat};
+  }
 }  // namespace
 
 namespace vslam_components {
@@ -76,21 +88,21 @@ namespace vslam_components {
 
       if (!prev_points.empty()) {
         const auto matched_points = feature_matcher_->match_features(prev_points, points);
-        const auto pose21 = camera_tracker_->track_camera_2d2d(matched_points);
+        const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
-        prev_pose_to_world = pose21 * prev_pose_to_world;
+        // Camera pose
+        T_p_w_ = T_c_p * T_p_w_;
 
         // write pose to the frame message
-        const auto world_to_prev_pose = prev_pose_to_world.inverse();
-        const auto quat = world_to_prev_pose.unit_quaternion();
-        const auto trans = world_to_prev_pose.translation();
-        frame_msg->pose.position.x = trans.x();
-        frame_msg->pose.position.y = trans.y();
-        frame_msg->pose.position.z = trans.z();
-        frame_msg->pose.orientation.x = quat.x();
-        frame_msg->pose.orientation.y = quat.y();
-        frame_msg->pose.orientation.z = quat.z();
-        frame_msg->pose.orientation.w = quat.w();
+        const auto T_w_p = T_p_w_.inv();
+        const auto [trans, quat] = transformationMatToTranslationQuaternion(T_w_p);
+        frame_msg->pose.position.x = trans.at<double>(0);
+        frame_msg->pose.position.y = trans.at<double>(1);
+        frame_msg->pose.position.z = trans.at<double>(2);
+        frame_msg->pose.orientation.x = quat.at<double>(0);
+        frame_msg->pose.orientation.y = quat.at<double>(1);
+        frame_msg->pose.orientation.z = quat.at<double>(2);
+        frame_msg->pose.orientation.w = quat.at<double>(3);
       }
 
       prev_points = points;

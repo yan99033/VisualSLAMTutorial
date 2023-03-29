@@ -13,8 +13,7 @@ namespace vslam_camera_tracker_plugins {
   public:
     void initialize(const cv::Mat& K) override;
 
-    virtual Sophus::SE3d track_camera_2d2d(
-        const vslam_datastructure::MatchedPoints& matched_points) override;
+    virtual cv::Mat track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points) override;
 
   protected:
     cv::Mat K;

@@ -11,7 +11,7 @@ find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
-find_package(Sophus REQUIRED)
+# find_package(Sophus REQUIRED)
 
 set(dependencies
   pluginlib
@@ -25,7 +25,7 @@ set(sources
 )
 
 add_library(${PROJECT_NAME} SHARED ${sources})
-target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
+# target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

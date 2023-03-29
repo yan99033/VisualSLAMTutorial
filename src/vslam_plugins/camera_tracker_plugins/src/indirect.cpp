@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <opencv2/core/eigen.hpp>
 
 namespace {
   using cvPoint2dVec = std::vector<cv::Point2d>;
@@ -17,21 +16,22 @@ namespace {
     return {cv_points1, cv_points2};
   }
 
-  Sophus::SE3d cv2Sophus(const cv::Mat& R, const cv::Mat& t) {
-    Eigen::Matrix3d R_eigen;
-    Eigen::Vector3d t_eigen;
+  cv::Mat toTransformationMatrix(const cv::Mat& R, const cv::Mat& t) {
+    // Create an identity matrix
+    cv::Mat T = cv::Mat::eye(4, 4, CV_64F);
 
-    cv::cv2eigen(R, R_eigen);
-    cv::cv2eigen(t, t_eigen);
+    // Copy data
+    R.copyTo(T(cv::Rect(0, 0, 3, 3)));
+    t.copyTo(T(cv::Rect(3, 0, 1, 3)));
 
-    return Sophus::SE3d{R_eigen, t_eigen};
+    return T;
   }
 }  // namespace
 
 namespace vslam_camera_tracker_plugins {
   void Indirect::initialize(const cv::Mat& K) { this->K = K; }
 
-  Sophus::SE3d Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points) {
+  cv::Mat Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points) {
     const auto [cv_points1, cv_points2] = getCorrespondences(matched_points);
 
     cv::Mat inlier_mask;
@@ -40,7 +40,7 @@ namespace vslam_camera_tracker_plugins {
     cv::Mat E = cv::findEssentialMat(cv_points1, cv_points2, K, cv::RANSAC, 0.999, 1.0, inlier_mask);
     const int num_inliers = cv::recoverPose(E, cv_points1, cv_points2, K, R, t, inlier_mask);
 
-    return cv2Sophus(R, t);
+    return toTransformationMatrix(R, t);
   }
 
 }  // namespace vslam_camera_tracker_plugins
