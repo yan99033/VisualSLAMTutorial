@@ -50,6 +50,10 @@ namespace vslam_components {
           = camera_tracker_loader_.createSharedInstance(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
       camera_tracker_->initialize(K_);
 
+      // Mapper
+      mapper_ = mapper_loader_.createSharedInstance(declare_parameter("mapper_plugin_name", "UNDEFINED"));
+      mapper_->initialize(K_);
+
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&IndirectVSlamNode::frame_callback, this, _1));
@@ -87,11 +91,13 @@ namespace vslam_components {
       auto points = feature_extractor_->extract_features(cv_mat);
 
       if (!prev_points.empty()) {
-        const auto matched_points = feature_matcher_->match_features(prev_points, points);
+        auto matched_points = feature_matcher_->match_features(prev_points, points);
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
         // Camera pose
         T_p_w_ = T_c_p * T_p_w_;
+
+        mapper_->map(matched_points, T_p_w_, T_c_p);
 
         // write pose to the frame message
         const auto T_w_p = T_p_w_.inv();

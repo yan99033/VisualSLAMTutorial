@@ -14,6 +14,7 @@
 #include "vslam_plugins_base/camera_tracker.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 #include "vslam_plugins_base/feature_matcher.hpp"
+#include "vslam_plugins_base/mapper.hpp"
 
 namespace vslam_components {
   namespace vslam_nodes {
@@ -55,6 +56,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_camera_tracker_base::CameraTracker> camera_tracker_loader_{
           "vslam_plugins_base", "vslam_camera_tracker_base::CameraTracker"};
       std::shared_ptr<vslam_camera_tracker_base::CameraTracker> camera_tracker_;
+
+      // Mapper plugin
+      pluginlib::ClassLoader<vslam_mapper_base::Mapper> mapper_loader_{"vslam_plugins_base",
+                                                                       "vslam_mapper_base::Mapper"};
+      std::shared_ptr<vslam_mapper_base::Mapper> mapper_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components
