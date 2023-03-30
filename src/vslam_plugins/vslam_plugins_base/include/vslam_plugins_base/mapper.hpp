@@ -7,7 +7,8 @@ namespace vslam_mapper_base {
   class Mapper {
   public:
     virtual void initialize(const cv::Mat& K) = 0;
-    virtual void map(vslam_datastructure::MatchedPoints& matched_points) = 0;
+    virtual void map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w, const cv::Mat& T_2_1)
+        = 0;
     virtual ~Mapper() {}
 
   protected:

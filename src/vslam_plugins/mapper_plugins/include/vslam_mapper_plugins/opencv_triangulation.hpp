@@ -12,10 +12,11 @@ namespace vslam_mapper_plugins {
   public:
     void initialize(const cv::Mat& K) override;
 
-    virtual void map(vslam_datastructure::MatchedPoints& matched_points) override;
+    virtual void map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
+                     const cv::Mat& T_2_1) override;
 
   protected:
-    cv::Mat K;
+    cv::Mat K_;
   };
 }  // namespace vslam_mapper_plugins
 

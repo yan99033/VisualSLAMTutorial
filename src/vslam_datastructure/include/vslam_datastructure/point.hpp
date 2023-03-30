@@ -7,7 +7,6 @@
 namespace vslam_datastructure {
   struct MapPoint;
   using MapPointPtr = std::shared_ptr<MapPoint>;
-
   struct Point {
     enum class Type { undefined = 0, orb = 1 };
 
@@ -36,7 +35,7 @@ namespace vslam_datastructure {
   using MatchedPoints = std::vector<MatchedPoint>;
 
   struct MapPoint {
-    cv::Point3d mappoint;
+    cv::Point3d pt_3d;
 
     /*
      * @brief: the corresponding points
