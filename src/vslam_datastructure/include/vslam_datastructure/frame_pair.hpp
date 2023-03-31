@@ -17,7 +17,7 @@ namespace vslam_datastructure {
     MatchedPoints matches_;
 
     // Camera pose
-    Sophus::SE3d T_1_2;
+    cv::Mat T_1_2;
 
     ConstraintType constraint_type_{ConstraintType::init};
   };

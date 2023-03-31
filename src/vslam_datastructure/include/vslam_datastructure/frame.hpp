@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <opencv2/core.hpp>
-#include <sophus/se3.hpp>
 
 namespace vslam_datastructure {
   class Frame {
@@ -11,11 +10,11 @@ namespace vslam_datastructure {
     explicit Frame(const cv::Mat& image);
 
     // Getters
-    void getPose(Sophus::SE3d& Tcw);
+    cv::Mat getPose() const;
     cv::Mat getImage() const;
 
     // Setter
-    void setPose(const Sophus::SE3d& Tcw);
+    void setPose(const cv::Mat& Tcw);
 
   private:
     cv::Mat image;  //<! the image of the frame
@@ -25,7 +24,7 @@ namespace vslam_datastructure {
     static long unsigned int frame_count;
 
     // Camera pose
-    Sophus::SE3d Tcw;
+    cv::Mat Tcw;
 
     std::mutex mutex;
   };
