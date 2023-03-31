@@ -14,7 +14,7 @@ namespace {
     size_t i = 0;
     for (const auto& match : matched_points) {
       // Check if a map point is already available for the pair
-      if (!match.point1->mappoint.has_value()) {
+      if (!match.point1->mappoint.get()) {
         cv_points1.push_back(match.point1->keypoint.pt);
         cv_points2.push_back(match.point2->keypoint.pt);
         match_idx.push_back(i);
@@ -59,9 +59,8 @@ namespace vslam_mapper_plugins {
       mp->projections.push_back(matched_points[j].point1);
       mp->projections.push_back(matched_points[j].point2);
 
-      auto mp_opt = std::optional<vslam_datastructure::MapPointPtr>(mp);
-      matched_points[j].point1->mappoint = mp_opt;
-      matched_points[j].point2->mappoint = mp_opt;
+      matched_points[j].point1->mappoint = mp;
+      matched_points[j].point2->mappoint = mp;
     }
   }
 

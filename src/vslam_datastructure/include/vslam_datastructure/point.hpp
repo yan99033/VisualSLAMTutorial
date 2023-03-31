@@ -2,11 +2,13 @@
 #define VSLAM_DATASTRUCTURE__POINT_HPP_
 
 #include <opencv2/opencv.hpp>
-#include <optional>
+
+#include "vslam_datastructure/frame.hpp"
 
 namespace vslam_datastructure {
   struct MapPoint;
   using MapPointPtr = std::shared_ptr<MapPoint>;
+
   struct Point {
     enum class Type { undefined = 0, orb = 1 };
 
@@ -16,7 +18,9 @@ namespace vslam_datastructure {
 
     Type type{Type::undefined};
 
-    std::optional<MapPointPtr> mappoint;
+    MapPointPtr mappoint;
+
+    FramePtr frame;
 
     long unsigned int id{point_count++};
 
