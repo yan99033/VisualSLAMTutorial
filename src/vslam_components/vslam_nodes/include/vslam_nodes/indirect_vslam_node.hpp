@@ -9,6 +9,7 @@
 #include <pluginlib/class_loader.hpp>
 
 #include "rclcpp/rclcpp.hpp"
+#include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_plugins_base/camera_tracker.hpp"
@@ -23,7 +24,7 @@ namespace vslam_components {
       explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
 
     private:
-      enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
+      enum class State : uint8_t { init = 0, tracking = 1, relocalization = 2 };
 
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
@@ -37,6 +38,8 @@ namespace vslam_components {
       cv::Mat T_p_w_{cv::Mat::eye(4, 4, CV_64F)};
 
       State state_{State::init};
+
+      vslam_datastructure::Frame::SharedPtr current_frame_{std::make_shared<vslam_datastructure::Frame>()};
 
       cv::Mat load_camera_info();
 

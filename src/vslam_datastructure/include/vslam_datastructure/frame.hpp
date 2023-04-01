@@ -2,9 +2,7 @@
 #define VSLAM_DATASTRUCTURE__FRAME_HPP_
 
 #include <memory>
-#include <opencv2/calib3d.hpp>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
 
 #include "vslam_msgs/msg/frame.hpp"
 
@@ -23,7 +21,7 @@ namespace vslam_datastructure {
     cv::Mat getImage() const;
 
     // Set the id, timestamp, image
-    void fromMsg(vslam_msgs::msg::Frame::UniquePtr frame_msg);
+    void fromMsg(vslam_msgs::msg::Frame* frame_msg);
 
     // Set the points
     void setPoints(Points& points);
