@@ -29,8 +29,8 @@ namespace {
 namespace vslam_mapper_plugins {
   void OpenCvTriangulation::initialize(const cv::Mat& K) { K_ = K; }
 
-  void OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
-                                const cv::Mat& T_2_1) {
+  vslam_datastructure::MapPoints OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points,
+                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1) {
     // Get the matched points that don't have a map point
     // e.g., calculate a std::vector<bool> mask to indicate which matched points do not have a 3D point
     const auto [cv_points1, cv_points2, match_idx] = getCorrespondences(matched_points);
@@ -45,6 +45,7 @@ namespace vslam_mapper_plugins {
     cv::triangulatePoints(P1, P2, cv_points1, cv_points2, cv_points1_3d);
 
     // Create map points for the points
+    vslam_datastructure::MapPoints new_mps;
     for (size_t i = 0; i < cv_points1.size(); i++) {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
@@ -61,7 +62,11 @@ namespace vslam_mapper_plugins {
 
       matched_points[j].point1->mappoint = mp;
       matched_points[j].point2->mappoint = mp;
+
+      new_mps.push_back(mp);
     }
+
+    return new_mps;
   }
 
 }  // namespace vslam_mapper_plugins

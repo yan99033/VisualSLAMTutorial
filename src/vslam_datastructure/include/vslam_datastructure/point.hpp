@@ -8,6 +8,7 @@
 namespace vslam_datastructure {
   struct MapPoint;
   using MapPointPtr = std::shared_ptr<MapPoint>;
+  using MapPoints = std::vector<MapPointPtr>;
 
   struct Point {
     enum class Type { undefined = 0, orb = 1 };
