@@ -50,12 +50,14 @@ namespace vslam_mapper_plugins {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
       pt_3d /= pt_3d.at<double>(3, 0);
-      pt_3d = T_1_w.inv() * pt_3d;
 
       // Remove points behind the camera
-      if (pt_3d.at<double>(2) < 0) {
+      if (pt_3d.at<double>(2) < 0.0) {
         continue;
       }
+
+      // Transform to world coordinate
+      pt_3d = T_1_w.inv() * pt_3d;
 
       // The corresponding index in `matched_points`
       const auto j = match_idx[i];
