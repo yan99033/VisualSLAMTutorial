@@ -52,6 +52,11 @@ namespace vslam_mapper_plugins {
       pt_3d /= pt_3d.at<double>(3, 0);
       pt_3d = T_1_w.inv() * pt_3d;
 
+      // Remove points behind the camera
+      if (pt_3d.at<double>(2) < 0) {
+        continue;
+      }
+
       // The corresponding index in `matched_points`
       const auto j = match_idx[i];
 
