@@ -103,7 +103,7 @@ namespace vslam_components {
       }
 
       if (!prev_points.empty()) {
-        auto matched_points = feature_matcher_->match_features(prev_points, points);
+        auto matched_points = feature_matcher_->match_features(&prev_points, &points);
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
         // Camera pose

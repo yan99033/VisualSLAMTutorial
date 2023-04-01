@@ -24,7 +24,7 @@ namespace vslam_components {
       explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
 
     private:
-      enum class State : uint8_t { init = 0, tracking = 1, relocalization = 2 };
+      enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
 
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
@@ -39,7 +39,7 @@ namespace vslam_components {
 
       State state_{State::init};
 
-      vslam_datastructure::Frame::SharedPtr current_frame_{std::make_shared<vslam_datastructure::Frame>()};
+      vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
       cv::Mat load_camera_info();
 
