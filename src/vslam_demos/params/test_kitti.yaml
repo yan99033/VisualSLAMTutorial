@@ -5,7 +5,7 @@ camera_node:
     
 indirect_vslam_node:
   ros__parameters:
-    num_features: 2000
+    num_features: 1000
     camera_params:
       fx: 718.856
       fy: 718.856

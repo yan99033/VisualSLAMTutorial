@@ -1,5 +1,8 @@
 #include "vslam_nodes/indirect_vslam_node.hpp"
 
+#include "vslam_msgs/msg/vector2d.hpp"
+#include "vslam_msgs/msg/vector3d.hpp"
+
 using std::placeholders::_1;
 
 namespace {
@@ -97,7 +100,7 @@ namespace vslam_components {
         // Camera pose
         T_p_w_ = T_c_p * T_p_w_;
 
-        mapper_->map(matched_points, T_p_w_, T_c_p);
+        const auto new_mps = mapper_->map(matched_points, T_p_w_, T_c_p);
 
         // write pose to the frame message
         const auto T_w_p = T_p_w_.inv();
@@ -109,6 +112,23 @@ namespace vslam_components {
         frame_msg->pose.orientation.y = quat.at<double>(1);
         frame_msg->pose.orientation.z = quat.at<double>(2);
         frame_msg->pose.orientation.w = quat.at<double>(3);
+
+        // Write 2D keypoints to the frame message
+        for (const auto &[_, pt2] : matched_points) {
+          vslam_msgs::msg::Vector2d pt_2d;
+          pt_2d.x = pt2->keypoint.pt.x;
+          pt_2d.y = pt2->keypoint.pt.y;
+          frame_msg->keypoints.push_back(pt_2d);
+        }
+
+        // Write 3D map points to the frame message
+        for (const auto &mp : new_mps) {
+          vslam_msgs::msg::Vector3d pt_3d;
+          pt_3d.x = mp->pt_3d.x;
+          pt_3d.y = mp->pt_3d.y;
+          pt_3d.z = mp->pt_3d.z;
+          frame_msg->mappoints.push_back(pt_3d);
+        }
       }
 
       prev_points = points;
