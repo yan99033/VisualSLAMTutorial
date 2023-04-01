@@ -94,6 +94,7 @@ namespace vslam_components {
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&RvizVisualNode::frame_callback, this, _1));
       live_frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 1);
+      mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1);
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
     }
 
@@ -112,6 +113,26 @@ namespace vslam_components {
         cv::circle(cv_mat, cv::Point2d{kp.x, kp.y}, radius, color, thickness);
       }
       image_publisher_->publish(frame_msg->image);
+
+      // Add 3D map points to the marker message and publish
+      visualization_msgs::msg::Marker mps_marker;
+      mps_marker.header.frame_id = "map";
+      mps_marker.type = visualization_msgs::msg::Marker::POINTS;
+      mps_marker.action = visualization_msgs::msg::Marker::ADD;
+      mps_marker.scale.x = 0.2;
+      mps_marker.scale.y = 0.2;
+      mps_marker.scale.z = 0.2;
+      mps_marker.color.r = 1.0;
+      mps_marker.color.a = 1.0;
+      mps_marker.id = frame_msg->id;
+      for (const auto &mp : frame_msg->mappoints) {
+        auto pt = geometry_msgs::msg::Point();
+        pt.x = mp.z;
+        pt.y = -mp.x;
+        pt.z = -mp.y;
+        mps_marker.points.push_back(pt);
+      }
+      mappoint_publisher_->publish(mps_marker);
 
       visualization_msgs::msg::Marker pose_marker;
       calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);

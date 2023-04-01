@@ -25,6 +25,7 @@ namespace vslam_components {
       static constexpr int live_pose_marker_id_{0};
 
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr live_frame_publisher_;
+      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
 
       static const Eigen::Matrix3d cam_axes_transform_;

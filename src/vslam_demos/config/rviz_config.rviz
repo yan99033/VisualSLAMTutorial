@@ -74,6 +74,19 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /live_image
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mappoints
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -120,7 +133,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 125.4294204711914
+      Distance: 97.80902099609375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
