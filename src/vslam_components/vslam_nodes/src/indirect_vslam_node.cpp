@@ -96,6 +96,12 @@ namespace vslam_components {
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);
 
+      if (state_ == State::init) {
+        current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
+        current_keyframe_->fromMsg(frame_msg.get());
+        // current_keyframe_->setPoints(points);
+      }
+
       if (!prev_points.empty()) {
         auto matched_points = feature_matcher_->match_features(prev_points, points);
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
@@ -106,6 +112,7 @@ namespace vslam_components {
         const auto new_mps = mapper_->map(matched_points, T_p_w_, T_c_p);
 
         // write pose to the frame message
+        // TODO: simplify
         const auto T_w_p = T_p_w_.inv();
         const auto [trans, rpy] = transformationMatToTranslationRpy(T_w_p);
         tf2::Quaternion q;

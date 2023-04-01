@@ -31,7 +31,7 @@ namespace vslam_datastructure {
 
   private:
     long unsigned int id_{0};                    //!< frame id
-    unsigned int timestamp_{0};                  //!< timestamp
+    double timestamp_{0};                        //!< timestamp
     cv::Mat T_c_w_{cv::Mat::eye(4, 4, CV_64F)};  //!< Camera pose
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points

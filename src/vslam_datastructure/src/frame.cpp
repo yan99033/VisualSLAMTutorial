@@ -1,5 +1,7 @@
 #include "vslam_datastructure/frame.hpp"
 
+#include <iostream>
+
 namespace {
   int encoding2mat_type(const std::string& encoding) {
     if (encoding == "mono8") {
@@ -18,8 +20,15 @@ namespace {
 namespace vslam_datastructure {
 
   void Frame::fromMsg(vslam_msgs::msg::Frame* frame_msg) {
+    if (frame_msg == nullptr) {
+      return;
+    }
+
     id_ = frame_msg->id;
-    timestamp_ = frame_msg->header.stamp.nanosec;
+
+    timestamp_ = static_cast<double>(frame_msg->header.stamp.sec)
+                 + static_cast<double>(frame_msg->header.stamp.nanosec) / 1000000000.0;
+
     cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
                    frame_msg->image.data.data());
     image_ = cv_mat.clone();
