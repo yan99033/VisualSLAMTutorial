@@ -6,8 +6,10 @@
 #include "vslam_datastructure/frame.hpp"
 
 namespace vslam_datastructure {
+  // Forward declarations
   struct Point;
   using PointSharedPtr = std::shared_ptr<Point>;
+  class Frame;
 
   struct MapPoint {
     using SharedPtr = std::shared_ptr<MapPoint>;
@@ -38,7 +40,7 @@ namespace vslam_datastructure {
 
     MapPoint::SharedPtr mappoint;
 
-    Frame::WeakPtr frame;
+    Frame* frame;  //!< non-owning frame pointer
 
     long unsigned int id{point_count++};
 

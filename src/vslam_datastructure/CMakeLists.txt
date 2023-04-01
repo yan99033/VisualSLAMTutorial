@@ -14,20 +14,22 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Sophus REQUIRED)
+# find_package(Sophus REQUIRED)
+find_package(vslam_msgs REQUIRED)
 
 set(sources
   src/frame.cpp
   src/point.cpp)
 
 set(dependencies
-  OpenCV)
+  OpenCV
+  vslam_msgs)
 
 # let the compiler search for headers in the include folder
 include_directories(include)
 
 add_library(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
+# target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 install(TARGETS

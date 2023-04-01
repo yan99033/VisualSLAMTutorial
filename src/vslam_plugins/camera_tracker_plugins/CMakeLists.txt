@@ -11,13 +11,15 @@ find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
+find_package(vslam_msgs REQUIRED)
 # find_package(Sophus REQUIRED)
 
 set(dependencies
+  OpenCV
   pluginlib
   vslam_plugins_base
   vslam_datastructure
-  OpenCV
+  vslam_msgs
 )
 
 set(sources
