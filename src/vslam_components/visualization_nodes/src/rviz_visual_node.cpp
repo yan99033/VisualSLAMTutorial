@@ -28,9 +28,6 @@ namespace {
     Eigen::Isometry3d eigen_transform;
     tf2::fromMsg(pose, eigen_transform);
 
-    eigen_transform.translation() = cam_axes_transform * eigen_transform.translation();
-    eigen_transform.linear() = cam_axes_transform * eigen_transform.rotation() * cam_axes_transform.inverse();
-
     // Calculate the preset vertices
     constexpr double s = 5.0;
     constexpr double fx = 340.0;
@@ -57,9 +54,8 @@ namespace {
         p0[3], p1[3], p0[3], p2[3], p0[3], p3[3], p0[3], p4[3], p4[3], p3[3], p3[3], p2[3], p2[3], p1[3], p1[3],
         p4[3];         //
 
+    marker_vertices = eigen_transform.matrix() * marker_vertices;
     marker_vertices.topRows(3) = cam_axes_transform * marker_vertices.topRows(3);
-
-    const auto vertices_transformed = eigen_transform.matrix() * marker_vertices;
 
     auto marker = visualization_msgs::msg::Marker();
 
@@ -73,9 +69,9 @@ namespace {
 
     for (int i = 0; i < num_vertices; i++) {
       auto pt = geometry_msgs::msg::Point();
-      pt.x = vertices_transformed.col(i)(0);
-      pt.y = vertices_transformed.col(i)(1);
-      pt.z = vertices_transformed.col(i)(2);
+      pt.x = marker_vertices.col(i)(0);
+      pt.y = marker_vertices.col(i)(1);
+      pt.z = marker_vertices.col(i)(2);
 
       pose_marker.points.push_back(pt);
     }
@@ -134,6 +130,7 @@ namespace vslam_components {
       }
       mappoint_publisher_->publish(mps_marker);
 
+      // TODO: publish tf transform so we can follow the camera trajectory
       visualization_msgs::msg::Marker pose_marker;
       calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
       pose_marker.id = live_pose_marker_id_;
