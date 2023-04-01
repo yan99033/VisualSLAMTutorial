@@ -1,5 +1,6 @@
 #include "visualization_nodes/rviz_visual_node.hpp"
 
+#include <opencv2/imgproc.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include "geometry_msgs/msg/pose.hpp"
@@ -93,10 +94,24 @@ namespace vslam_components {
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&RvizVisualNode::frame_callback, this, _1));
       live_frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 1);
+      image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
     }
 
     void RvizVisualNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
+
+      // Create a cv::Mat from the image message (without copying).
+      cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
+                     frame_msg->image.data.data());
+
+      // Add 2D keypoints to the image message and publish
+      for (const auto &kp : frame_msg->keypoints) {
+        constexpr int radius = 5;
+        const cv::Scalar color(0, 0, 255);
+        const int thickness = -1;
+        cv::circle(cv_mat, cv::Point2d{kp.x, kp.y}, radius, color, thickness);
+      }
+      image_publisher_->publish(frame_msg->image);
 
       visualization_msgs::msg::Marker pose_marker;
       calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
