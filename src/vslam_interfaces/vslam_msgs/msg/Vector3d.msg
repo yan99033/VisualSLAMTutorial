@@ -1,4 +1,4 @@
-# Unique ID for establishing correspondence
+# Unique ID associated with the vector
 uint64 id
 
 float64 x

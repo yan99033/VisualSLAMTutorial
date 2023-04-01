@@ -16,4 +16,5 @@ sensor_msgs/Image image
 geometry_msgs/Pose pose
 
 # Points
-Point[] points
+Vector2d[] keypoints
+Vector3d[] mappoints

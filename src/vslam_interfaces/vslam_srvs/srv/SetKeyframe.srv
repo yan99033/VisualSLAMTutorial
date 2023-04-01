@@ -1,6 +1,0 @@
-# Assume nodes’ good faith, i.e.,
-# nodes will not sabotage the system
-vslam_msgs/Frame keyframe
----
-# Indicate if the keyframe is set
-bool success
