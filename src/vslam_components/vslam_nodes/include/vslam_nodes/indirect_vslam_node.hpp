@@ -34,9 +34,6 @@ namespace vslam_components {
       // for re-publishing the frame message without creating a copy
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
-      vslam_datastructure::Points prev_points{};
-      cv::Mat T_p_w_{cv::Mat::eye(4, 4, CV_64F)};
-
       State state_{State::init};
 
       vslam_datastructure::Frame::SharedPtr current_keyframe_;

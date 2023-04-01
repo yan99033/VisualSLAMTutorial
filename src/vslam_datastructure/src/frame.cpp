@@ -18,6 +18,7 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
+  cv::Mat Frame::getPose() const { return T_f_w_; }
 
   void Frame::fromMsg(vslam_msgs::msg::Frame* frame_msg) {
     if (frame_msg == nullptr) {
@@ -34,7 +35,11 @@ namespace vslam_datastructure {
     image_ = cv_mat.clone();
   }
 
+  void Frame::setPose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); }
+
   void Frame::setPoints(vslam_datastructure::Points& points) { points_.swap(points); }
 
   Points* Frame::getPoints() { return &points_; }
+
+  bool Frame::hasPoints() const { return !points_.empty(); }
 }  // namespace vslam_datastructure

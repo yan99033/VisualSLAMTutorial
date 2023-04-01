@@ -99,21 +99,34 @@ namespace vslam_components {
       if (state_ == State::init) {
         current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
         current_keyframe_->fromMsg(frame_msg.get());
-        // current_keyframe_->setPoints(points);
-      }
+        current_keyframe_->setPoints(points);
 
-      if (!prev_points.empty()) {
-        auto matched_points = feature_matcher_->match_features(&prev_points, &points);
+        state_ = State::attempt_init;
+      } else {
+        if (!current_keyframe_->hasPoints() || points.empty()) {
+          state_ = State::init;
+          return;
+        }
+
+        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+        current_frame->fromMsg(frame_msg.get());
+        current_frame->setPoints(points);
+
+        auto matched_points
+            = feature_matcher_->match_features(current_keyframe_->getPoints(), current_frame->getPoints());
+
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
         // Camera pose
-        T_p_w_ = T_c_p * T_p_w_;
+        cv::Mat T_p_w = current_keyframe_->getPose();
+        cv::Mat T_c_w = T_c_p * T_p_w;
+        current_frame->setPose(T_c_w);
 
-        const auto new_mps = mapper_->map(matched_points, T_p_w_, T_c_p);
+        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
 
         // write pose to the frame message
         // TODO: simplify
-        const auto T_w_p = T_p_w_.inv();
+        const auto T_w_p = T_p_w.inv();
         const auto [trans, rpy] = transformationMatToTranslationRpy(T_w_p);
         tf2::Quaternion q;
         q.setRPY(rpy.at<double>(0), rpy.at<double>(1), rpy.at<double>(2));
@@ -138,9 +151,9 @@ namespace vslam_components {
           pt_3d.z = mp->pt_3d.z;
           frame_msg->mappoints.push_back(pt_3d);
         }
-      }
 
-      prev_points = points;
+        current_keyframe_ = current_frame;
+      }
 
       pub_ptr->publish(std::move(frame_msg));
     }

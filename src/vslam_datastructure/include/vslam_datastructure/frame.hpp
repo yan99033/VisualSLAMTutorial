@@ -23,16 +23,22 @@ namespace vslam_datastructure {
     // Set the id, timestamp, image
     void fromMsg(vslam_msgs::msg::Frame* frame_msg);
 
+    // Set the camera pose
+    void setPose(const cv::Mat& T_f_w);
+
     // Set the points
     void setPoints(Points& points);
 
     // Get points
     Points* getPoints();
 
+    // Check if there are points available to match or map
+    bool hasPoints() const;
+
   private:
     long unsigned int id_{0};                    //!< frame id
     double timestamp_{0};                        //!< timestamp
-    cv::Mat T_c_w_{cv::Mat::eye(4, 4, CV_64F)};  //!< Camera pose
+    cv::Mat T_f_w_{cv::Mat::eye(4, 4, CV_64F)};  //!< Camera pose
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points
 
