@@ -21,6 +21,8 @@ find_package(vslam_datastructure REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Sophus REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 set(dependencies
   rclcpp
@@ -30,6 +32,8 @@ set(dependencies
   vslam_plugins_base
   vslam_msgs
   OpenCV
+  tf2_eigen
+  tf2_geometry_msgs
 )
 
 include_directories(include)
