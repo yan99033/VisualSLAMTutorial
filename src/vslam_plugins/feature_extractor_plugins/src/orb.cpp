@@ -6,7 +6,7 @@
 namespace vslam_feature_extractor_plugins {
   void Orb::initialize(int num_features) {
     num_features_ = num_features;
-    point_type_ = vslam_datastructure::PointType::orb;
+    point_type_ = vslam_datastructure::Point::Type::orb;
     orb_feature_detector_ = cv::ORB::create(num_features);
   }
 
@@ -31,5 +31,4 @@ namespace vslam_feature_extractor_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_feature_extractor_plugins::Orb,
-                       vslam_feature_extractor_base::FeatureExtractor)
+PLUGINLIB_EXPORT_CLASS(vslam_feature_extractor_plugins::Orb, vslam_feature_extractor_base::FeatureExtractor)

@@ -14,7 +14,7 @@ namespace vslam_feature_extractor_base {
   protected:
     FeatureExtractor() {}
 
-    vslam_datastructure::PointType point_type_{vslam_datastructure::PointType::undefined};
+    vslam_datastructure::Point::Type point_type_{vslam_datastructure::Point::Type::undefined};
   };
 }  // namespace vslam_feature_extractor_base
 

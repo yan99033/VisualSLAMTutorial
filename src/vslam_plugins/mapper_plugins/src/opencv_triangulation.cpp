@@ -55,7 +55,7 @@ namespace vslam_mapper_plugins {
       // The corresponding index in `matched_points`
       const auto j = match_idx[i];
 
-      vslam_datastructure::MapPointPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
+      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
       mp->pt_3d = cv::Point3d(pt_3d.at<double>(0), pt_3d.at<double>(1), pt_3d.at<double>(2));
       mp->projections.push_back(matched_points[j].point1);
       mp->projections.push_back(matched_points[j].point2);

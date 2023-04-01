@@ -9,6 +9,9 @@ namespace vslam_datastructure {
   public:
     explicit Frame(const cv::Mat& image);
 
+    using SharedPtr = std::shared_ptr<Frame>;
+    using WeakPtr = std::weak_ptr<Frame>;
+
     // Getters
     cv::Mat getPose() const;
     cv::Mat getImage() const;
@@ -28,8 +31,6 @@ namespace vslam_datastructure {
 
     std::mutex mutex;
   };
-
-  using FramePtr = std::shared_ptr<Frame>;
 
 }  // namespace vslam_datastructure
 

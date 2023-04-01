@@ -7,12 +7,12 @@
 
 namespace vslam_feature_matcher_plugins {
   void Orb::initialize() {
-    point_type_ = vslam_datastructure::PointType::orb;
+    point_type_ = vslam_datastructure::Point::Type::orb;
     orb_feature_matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
   }
 
-  vslam_datastructure::MatchedPoints Orb::match_features(
-      const vslam_datastructure::Points& points1, const vslam_datastructure::Points& points2) {
+  vslam_datastructure::MatchedPoints Orb::match_features(const vslam_datastructure::Points& points1,
+                                                         const vslam_datastructure::Points& points2) {
     // Get keypoints and descriptors
     auto [keypoints1, descriptors1] = extract_keypoints_descriptors(points1);
     auto [keypoints2, descriptors2] = extract_keypoints_descriptors(points2);
@@ -31,5 +31,4 @@ namespace vslam_feature_matcher_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::Orb,
-                       vslam_feature_matcher_base::FeatureMatcher)
+PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::Orb, vslam_feature_matcher_base::FeatureMatcher)

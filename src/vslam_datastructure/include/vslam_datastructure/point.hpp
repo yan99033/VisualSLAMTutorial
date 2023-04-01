@@ -6,11 +6,28 @@
 #include "vslam_datastructure/frame.hpp"
 
 namespace vslam_datastructure {
-  struct MapPoint;
-  using MapPointPtr = std::shared_ptr<MapPoint>;
-  using MapPoints = std::vector<MapPointPtr>;
+  struct Point;
+  using PointSharedPtr = std::shared_ptr<Point>;
+
+  struct MapPoint {
+    using SharedPtr = std::shared_ptr<MapPoint>;
+
+    cv::Point3d pt_3d;
+
+    /*
+     * @brief: the corresponding points
+     */
+    std::vector<PointSharedPtr> projections;
+
+    long unsigned int id{point_count++};
+
+    static long unsigned int point_count;
+  };
+  using MapPoints = std::vector<MapPoint::SharedPtr>;
 
   struct Point {
+    using SharedPtr = std::shared_ptr<Point>;
+
     enum class Type { undefined = 0, orb = 1 };
 
     cv::KeyPoint keypoint;
@@ -19,38 +36,21 @@ namespace vslam_datastructure {
 
     Type type{Type::undefined};
 
-    MapPointPtr mappoint;
+    MapPoint::SharedPtr mappoint;
 
-    FramePtr frame;
+    Frame::WeakPtr frame;
 
     long unsigned int id{point_count++};
 
     static long unsigned int point_count;
   };
-
-  using PointPtr = std::shared_ptr<Point>;
-  using Points = std::vector<PointPtr>;
-  using PointType = Point::Type;
+  using Points = std::vector<Point::SharedPtr>;
 
   struct MatchedPoint {
-    PointPtr point1;
-    PointPtr point2;
+    Point::SharedPtr point1;
+    Point::SharedPtr point2;
   };
-
   using MatchedPoints = std::vector<MatchedPoint>;
-
-  struct MapPoint {
-    cv::Point3d pt_3d;
-
-    /*
-     * @brief: the corresponding points
-     */
-    std::vector<PointPtr> projections;
-
-    long unsigned int id{point_count++};
-
-    static long unsigned int point_count;
-  };
 
 }  // namespace vslam_datastructure
 
