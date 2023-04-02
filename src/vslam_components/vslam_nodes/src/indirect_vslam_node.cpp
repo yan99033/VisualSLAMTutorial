@@ -84,39 +84,43 @@ namespace vslam_components {
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);
 
-      if (state_ == State::init) {
-        current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
-        current_keyframe_->from_msg(frame_msg.get());
-        current_keyframe_->set_points(points);
+      switch (state_) {
+        case State::init:
+          current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
+          current_keyframe_->from_msg(frame_msg.get());
+          current_keyframe_->set_points(points);
 
-        state_ = State::attempt_init;
-      } else {
-        if (!current_keyframe_->has_points() || points.empty()) {
-          state_ = State::init;
-          return;
-        }
+          state_ = State::attempt_init;
+          break;
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
-        current_frame->from_msg(frame_msg.get());
-        current_frame->set_points(points);
+        case State::attempt_init:
+          if (!current_keyframe_->has_points() || points.empty()) {
+            state_ = State::init;
+            return;
+          }
 
-        auto matched_points
-            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
+          auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+          current_frame->from_msg(frame_msg.get());
+          current_frame->set_points(points);
 
-        const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
+          auto matched_points
+              = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
-        // Camera pose
-        cv::Mat T_p_w = current_keyframe_->get_pose();
-        cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->set_pose(T_c_w);
+          const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
-        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          // Camera pose
+          cv::Mat T_p_w = current_keyframe_->get_pose();
+          cv::Mat T_c_w = T_c_p * T_p_w;
+          current_frame->set_pose(T_c_w);
 
-        // write pose to the frame message
-        constexpr bool skip_loaded = true;
-        current_frame->to_msg(frame_msg.get(), skip_loaded);
+          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
 
-        current_keyframe_ = current_frame;
+          // write pose to the frame message
+          constexpr bool skip_loaded = true;
+          current_frame->to_msg(frame_msg.get(), skip_loaded);
+
+          current_keyframe_ = current_frame;
+          break;
       }
 
       pub_ptr->publish(std::move(frame_msg));
