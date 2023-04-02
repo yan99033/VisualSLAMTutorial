@@ -130,6 +130,21 @@ namespace vslam_components {
         auto matched_points
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
+        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points);
+
+        // Camera pose
+        cv::Mat T_p_w = current_keyframe_->get_pose();
+        cv::Mat T_c_w = T_c_p * T_p_w;
+        current_frame->set_pose(T_c_w);
+
+        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+
+        // write pose to the frame message
+        constexpr bool skip_loaded = true;
+        current_frame->to_msg(frame_msg.get(), skip_loaded);
+
+        current_keyframe_ = current_frame;
+
       } else {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;

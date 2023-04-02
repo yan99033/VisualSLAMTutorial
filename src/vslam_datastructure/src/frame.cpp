@@ -117,7 +117,14 @@ namespace vslam_datastructure {
 
   void Frame::set_pose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); }
 
-  void Frame::set_points(vslam_datastructure::Points& points) { points_.swap(points); }
+  void Frame::set_points(vslam_datastructure::Points& points) {
+    points_.swap(points);
+
+    // Set the frame ptr
+    for (auto& pt : points_) {
+      pt->frame = this;
+    }
+  }
 
   Points* Frame::get_points() { return &points_; }
 

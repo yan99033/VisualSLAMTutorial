@@ -10,6 +10,7 @@ namespace vslam_camera_tracker_base {
   public:
     virtual void initialize(const cv::Mat& K) = 0;
     virtual cv::Mat track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points) = 0;
+    virtual cv::Mat track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points) = 0;
     virtual ~CameraTracker() {}
 
   protected:
