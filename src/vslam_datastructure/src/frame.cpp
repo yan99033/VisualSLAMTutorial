@@ -29,6 +29,8 @@ namespace vslam_datastructure {
 
     timestamp_ = static_cast<double>(frame_msg->header.stamp.sec)
                  + static_cast<double>(frame_msg->header.stamp.nanosec) / 1000000000.0;
+    ros_timestamp_sec_ = frame_msg->header.stamp.sec;
+    ros_timestamp_nanosec_ = frame_msg->header.stamp.nanosec;
 
     cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
                    frame_msg->image.data.data());

@@ -23,6 +23,9 @@ namespace vslam_datastructure {
     // Set the id, timestamp, image
     void fromMsg(vslam_msgs::msg::Frame* frame_msg);
 
+    //
+    vslam_msgs::msg::Frame toMsg() const;
+
     // Set the camera pose
     void setPose(const cv::Mat& T_f_w);
 
@@ -38,6 +41,8 @@ namespace vslam_datastructure {
   private:
     long unsigned int id_{0};                    //!< frame id
     double timestamp_{0};                        //!< timestamp
+    int ros_timestamp_sec_{0};                   //!< seconds component of ROS2 timestamp
+    unsigned int ros_timestamp_nanosec_{0};      //!< nanoseconds component of ROS2 timestamp
     cv::Mat T_f_w_{cv::Mat::eye(4, 4, CV_64F)};  //!< Camera pose
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points
