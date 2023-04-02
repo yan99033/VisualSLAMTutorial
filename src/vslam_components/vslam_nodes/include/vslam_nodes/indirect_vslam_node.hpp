@@ -3,7 +3,6 @@
 #ifndef VSLAM_NODES__VSLAM_NODE_HPP_
 #define VSLAM_NODES__VSLAM_NODE_HPP_
 
-#include <opencv2/calib3d.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <pluginlib/class_loader.hpp>

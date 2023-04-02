@@ -16,6 +16,8 @@ find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
 # find_package(Sophus REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 set(sources
   src/frame.cpp
@@ -23,7 +25,9 @@ set(sources
 
 set(dependencies
   OpenCV
-  vslam_msgs)
+  vslam_msgs
+  tf2_eigen
+  tf2_geometry_msgs)
 
 # let the compiler search for headers in the include folder
 include_directories(include)

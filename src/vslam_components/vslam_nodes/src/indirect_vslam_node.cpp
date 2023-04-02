@@ -1,8 +1,6 @@
 #include "vslam_nodes/indirect_vslam_node.hpp"
 
 #include <geometry_msgs/msg/pose.hpp>
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "vslam_msgs/msg/vector2d.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
@@ -88,35 +86,35 @@ namespace vslam_components {
 
       if (state_ == State::init) {
         current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
-        current_keyframe_->fromMsg(frame_msg.get());
-        current_keyframe_->setPoints(points);
+        current_keyframe_->from_msg(frame_msg.get());
+        current_keyframe_->set_points(points);
 
         state_ = State::attempt_init;
       } else {
-        if (!current_keyframe_->hasPoints() || points.empty()) {
+        if (!current_keyframe_->has_points() || points.empty()) {
           state_ = State::init;
           return;
         }
 
         auto current_frame = std::make_shared<vslam_datastructure::Frame>();
-        current_frame->fromMsg(frame_msg.get());
-        current_frame->setPoints(points);
+        current_frame->from_msg(frame_msg.get());
+        current_frame->set_points(points);
 
         auto matched_points
-            = feature_matcher_->match_features(current_keyframe_->getPoints(), current_frame->getPoints());
+            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe_->getPose();
+        cv::Mat T_p_w = current_keyframe_->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->setPose(T_c_w);
+        current_frame->set_pose(T_c_w);
 
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
-        current_frame->toMsg(frame_msg.get(), skip_loaded);
+        current_frame->to_msg(frame_msg.get(), skip_loaded);
 
         current_keyframe_ = current_frame;
       }

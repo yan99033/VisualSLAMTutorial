@@ -17,27 +17,27 @@ namespace vslam_datastructure {
     using WeakPtr = std::weak_ptr<Frame>;
 
     // Getters
-    cv::Mat getPose() const;
-    cv::Mat getImage() const;
+    cv::Mat get_pose() const;
+    cv::Mat get_image() const;
 
     // Set the id, timestamp, image
-    void fromMsg(vslam_msgs::msg::Frame* frame_msg);
+    void from_msg(vslam_msgs::msg::Frame* frame_msg);
 
     // Set the id, timestamp, image, pose and points
     // A flag to skip the loaded data (id, timestamp and image)
-    void toMsg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false) const;
+    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false) const;
 
     // Set the camera pose
-    void setPose(const cv::Mat& T_f_w);
+    void set_pose(const cv::Mat& T_f_w);
 
     // Set the points
-    void setPoints(Points& points);
+    void set_points(Points& points);
 
     // Get points
-    Points* getPoints();
+    Points* get_points();
 
     // Check if there are points available to match or map
-    bool hasPoints() const;
+    bool has_points() const;
 
   private:
     long unsigned int id_{0};                    //!< frame id

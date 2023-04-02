@@ -1,6 +1,11 @@
 #include "vslam_datastructure/frame.hpp"
 
 #include <iostream>
+#include <opencv2/calib3d.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include "vslam_datastructure/point.hpp"
 
 namespace {
   int encoding2mat_type(const std::string& encoding) {
@@ -31,7 +36,7 @@ namespace {
     }
   }
 
-  geometry_msgs::msg::Pose transformationMatToPoseMsg(const cv::Mat& T) {
+  geometry_msgs::msg::Pose transformation_mat_to_pose_msg(const cv::Mat& T) {
     // Rotation matrix and translation vector
     cv::Mat R = T(cv::Rect(0, 0, 3, 3));
     cv::Mat t = T(cv::Rect(3, 0, 1, 3));
@@ -53,9 +58,9 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
-  cv::Mat Frame::getPose() const { return T_f_w_; }
+  cv::Mat Frame::get_pose() const { return T_f_w_; }
 
-  void Frame::fromMsg(vslam_msgs::msg::Frame* frame_msg) {
+  void Frame::from_msg(vslam_msgs::msg::Frame* frame_msg) {
     if (frame_msg == nullptr) {
       return;
     }
@@ -72,7 +77,7 @@ namespace vslam_datastructure {
     image_ = cv_mat.clone();
   }
 
-  void Frame::toMsg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) const {
+  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) const {
     if (frame_msg == nullptr) {
       return;
     }
@@ -90,31 +95,31 @@ namespace vslam_datastructure {
       frame_msg->image.data.assign(image_.datastart, image_.dataend);
     }
 
-    frame_msg->pose = transformationMatToTranslationRpy(T_f_w_.inv());
+    frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
 
     for (const auto& pt : points_) {
       // 2D keypoints
       vslam_msgs::msg::Vector2d pt_2d;
-      pt_2d.x = pt2->keypoint.pt.x;
-      pt_2d.y = pt2->keypoint.pt.y;
+      pt_2d.x = pt->keypoint.pt.x;
+      pt_2d.y = pt->keypoint.pt.y;
       frame_msg->keypoints.push_back(pt_2d);
 
       // 3D map points
-      if (pt.mappoint.get()) {
+      if (pt->mappoint.get()) {
         vslam_msgs::msg::Vector3d pt_3d;
-        pt_3d.x = pt.mappoint->pt_3d.x;
-        pt_3d.y = pt.mappoint->pt_3d.y;
-        pt_3d.z = pt.mappoint->pt_3d.z;
+        pt_3d.x = pt->mappoint->pt_3d.x;
+        pt_3d.y = pt->mappoint->pt_3d.y;
+        pt_3d.z = pt->mappoint->pt_3d.z;
         frame_msg->mappoints.push_back(pt_3d);
       }
     }
   }
 
-  void Frame::setPose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); }
+  void Frame::set_pose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); }
 
-  void Frame::setPoints(vslam_datastructure::Points& points) { points_.swap(points); }
+  void Frame::set_points(vslam_datastructure::Points& points) { points_.swap(points); }
 
-  Points* Frame::getPoints() { return &points_; }
+  Points* Frame::get_points() { return &points_; }
 
-  bool Frame::hasPoints() const { return !points_.empty(); }
+  bool Frame::has_points() const { return !points_.empty(); }
 }  // namespace vslam_datastructure
