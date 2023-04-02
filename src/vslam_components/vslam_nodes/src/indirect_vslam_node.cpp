@@ -1,5 +1,6 @@
 #include "vslam_nodes/indirect_vslam_node.hpp"
 
+#include <geometry_msgs/msg/pose.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -22,17 +23,6 @@ namespace {
     throw std::runtime_error("Unsupported mat type");
   }
 
-  std::pair<cv::Mat, cv::Mat> transformationMatToTranslationRpy(const cv::Mat &T) {
-    // Rotation matrix and translation vector
-    cv::Mat R = T(cv::Rect(0, 0, 3, 3));
-    cv::Mat t = T(cv::Rect(3, 0, 1, 3));
-
-    // Rotation matrix to quaternion
-    cv::Mat rpy = cv::Mat::zeros(3, 1, CV_64F);
-    cv::Rodrigues(R, rpy);
-
-    return {t, rpy};
-  }
 }  // namespace
 
 namespace vslam_components {
@@ -125,32 +115,8 @@ namespace vslam_components {
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
 
         // write pose to the frame message
-        // TODO: simplify
-        const auto T_w_p = T_p_w.inv();
-        const auto [trans, rpy] = transformationMatToTranslationRpy(T_w_p);
-        tf2::Quaternion q;
-        q.setRPY(rpy.at<double>(0), rpy.at<double>(1), rpy.at<double>(2));
-        frame_msg->pose.position.x = trans.at<double>(0);
-        frame_msg->pose.position.y = trans.at<double>(1);
-        frame_msg->pose.position.z = trans.at<double>(2);
-        frame_msg->pose.orientation = tf2::toMsg(q);
-
-        // Write 2D keypoints to the frame message
-        for (const auto &[_, pt2] : matched_points) {
-          vslam_msgs::msg::Vector2d pt_2d;
-          pt_2d.x = pt2->keypoint.pt.x;
-          pt_2d.y = pt2->keypoint.pt.y;
-          frame_msg->keypoints.push_back(pt_2d);
-        }
-
-        // Write 3D map points to the frame message
-        for (const auto &mp : new_mps) {
-          vslam_msgs::msg::Vector3d pt_3d;
-          pt_3d.x = mp->pt_3d.x;
-          pt_3d.y = mp->pt_3d.y;
-          pt_3d.z = mp->pt_3d.z;
-          frame_msg->mappoints.push_back(pt_3d);
-        }
+        constexpr bool skip_loaded = true;
+        current_frame->toMsg(frame_msg.get(), skip_loaded);
 
         current_keyframe_ = current_frame;
       }

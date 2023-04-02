@@ -23,8 +23,9 @@ namespace vslam_datastructure {
     // Set the id, timestamp, image
     void fromMsg(vslam_msgs::msg::Frame* frame_msg);
 
-    //
-    vslam_msgs::msg::Frame toMsg() const;
+    // Set the id, timestamp, image, pose and points
+    // A flag to skip the loaded data (id, timestamp and image)
+    void toMsg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false) const;
 
     // Set the camera pose
     void setPose(const cv::Mat& T_f_w);

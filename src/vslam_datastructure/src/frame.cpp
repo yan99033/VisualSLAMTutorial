@@ -15,6 +15,41 @@ namespace {
     }
     throw std::runtime_error("Unsupported mat type");
   }
+
+  std::string mat_type2encoding(int mat_type) {
+    switch (mat_type) {
+      case CV_8UC1:
+        return "mono8";
+      case CV_8UC3:
+        return "bgr8";
+      case CV_16SC1:
+        return "mono16";
+      case CV_8UC4:
+        return "rgba8";
+      default:
+        throw std::runtime_error("Unsupported encoding type");
+    }
+  }
+
+  geometry_msgs::msg::Pose transformationMatToPoseMsg(const cv::Mat& T) {
+    // Rotation matrix and translation vector
+    cv::Mat R = T(cv::Rect(0, 0, 3, 3));
+    cv::Mat t = T(cv::Rect(3, 0, 1, 3));
+
+    // Rotation matrix to quaternion
+    cv::Mat rpy = cv::Mat::zeros(3, 1, CV_64F);
+    cv::Rodrigues(R, rpy);
+    tf2::Quaternion q;
+    q.setRPY(rpy.at<double>(0), rpy.at<double>(1), rpy.at<double>(2));
+
+    geometry_msgs::msg::Pose pose;
+    pose.position.x = t.at<double>(0);
+    pose.position.y = t.at<double>(1);
+    pose.position.z = t.at<double>(2);
+    pose.orientation = tf2::toMsg(q);
+
+    return pose;
+  }
 }  // namespace
 
 namespace vslam_datastructure {
@@ -35,6 +70,44 @@ namespace vslam_datastructure {
     cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
                    frame_msg->image.data.data());
     image_ = cv_mat.clone();
+  }
+
+  void Frame::toMsg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) const {
+    if (frame_msg == nullptr) {
+      return;
+    }
+
+    if (!skip_loaded) {
+      frame_msg->id = id_;
+      frame_msg->header.stamp.sec = ros_timestamp_sec_;
+      frame_msg->header.stamp.nanosec = ros_timestamp_nanosec_;
+
+      frame_msg->image.height = image_.rows;
+      frame_msg->image.width = image_.cols;
+      frame_msg->image.encoding = mat_type2encoding(image_.type());
+      frame_msg->image.is_bigendian = false;
+      frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
+      frame_msg->image.data.assign(image_.datastart, image_.dataend);
+    }
+
+    frame_msg->pose = transformationMatToTranslationRpy(T_f_w_.inv());
+
+    for (const auto& pt : points_) {
+      // 2D keypoints
+      vslam_msgs::msg::Vector2d pt_2d;
+      pt_2d.x = pt2->keypoint.pt.x;
+      pt_2d.y = pt2->keypoint.pt.y;
+      frame_msg->keypoints.push_back(pt_2d);
+
+      // 3D map points
+      if (pt.mappoint.get()) {
+        vslam_msgs::msg::Vector3d pt_3d;
+        pt_3d.x = pt.mappoint->pt_3d.x;
+        pt_3d.y = pt.mappoint->pt_3d.y;
+        pt_3d.z = pt.mappoint->pt_3d.z;
+        frame_msg->mappoints.push_back(pt_3d);
+      }
+    }
   }
 
   void Frame::setPose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); }
