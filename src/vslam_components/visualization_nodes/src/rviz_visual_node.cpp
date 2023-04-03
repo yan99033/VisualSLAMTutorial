@@ -29,7 +29,7 @@ namespace {
     tf2::fromMsg(pose, eigen_transform);
 
     // Calculate the preset vertices
-    constexpr double s = 5.0;
+    constexpr double s = 0.3;
     constexpr double fx = 340.0;
     constexpr double fy = 350.0;
     constexpr double cx = 300.0;
@@ -63,7 +63,7 @@ namespace {
     pose_marker.header.frame_id = "map";
     pose_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     pose_marker.action = visualization_msgs::msg::Marker::ADD;
-    pose_marker.scale.x = 0.5;
+    pose_marker.scale.x = 0.05;
     pose_marker.color.g = 1.0;
     pose_marker.color.a = 1.0;
 
@@ -115,17 +115,21 @@ namespace vslam_components {
       mps_marker.header.frame_id = "map";
       mps_marker.type = visualization_msgs::msg::Marker::POINTS;
       mps_marker.action = visualization_msgs::msg::Marker::ADD;
-      mps_marker.scale.x = 0.2;
-      mps_marker.scale.y = 0.2;
-      mps_marker.scale.z = 0.2;
+      constexpr double marker_scale = 0.05;
+      mps_marker.scale.x = marker_scale;
+      mps_marker.scale.y = marker_scale;
+      mps_marker.scale.z = marker_scale;
       mps_marker.color.r = 1.0;
       mps_marker.color.a = 1.0;
       mps_marker.id = frame_msg->id;
       for (const auto &mp : frame_msg->mappoints) {
+        Eigen::Vector3d mp_eigen(mp.x, mp.y, mp.z);
+        mp_eigen = cam_axes_transform_ * mp_eigen;
+
         auto pt = geometry_msgs::msg::Point();
-        pt.x = mp.z;
-        pt.y = -mp.x;
-        pt.z = -mp.y;
+        pt.x = mp_eigen.x();
+        pt.y = mp_eigen.y();
+        pt.z = mp_eigen.z();
         mps_marker.points.push_back(pt);
       }
       mappoint_publisher_->publish(mps_marker);
