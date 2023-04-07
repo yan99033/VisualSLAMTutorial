@@ -28,15 +28,25 @@ namespace {
     }
 
     vslam_datastructure::MatchedPoints matched_points;
+    int associated = 0;
     for (size_t i = 0; i < matches.size(); i++) {
       if (mask.empty() || mask[i]) {
         const int i1 = matches[i].queryIdx;
         const int i2 = matches[i].trainIdx;
 
+        // Create a match
         vslam_datastructure::MatchedPoint matched_point{points1->at(i1), points2->at(i2)};
+
+        // Associate the map point with the corresponding point
+        if (points1->at(i1)->mappoint.get() && !points1->at(i1)->mappoint->is_outlier) {
+          points2->at(i2)->mappoint = points1->at(i1)->mappoint;
+          points1->at(i1)->mappoint->projections.insert(points2->at(i2));
+          associated++;
+        }
         matched_points.push_back(matched_point);
       }
     }
+    std::cout << "associated " << associated << " features with existing map points." << std::endl;
 
     return matched_points;
   }
