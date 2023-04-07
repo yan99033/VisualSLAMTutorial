@@ -16,10 +16,12 @@ namespace vslam_datastructure {
 
     cv::Point3d pt_3d;
 
+    bool is_outlier{false};
+
     /*
      * @brief: the corresponding points
      */
-    std::vector<PointSharedPtr> projections;
+    std::set<PointSharedPtr> projections;
 
     long unsigned int id{point_count++};
 
