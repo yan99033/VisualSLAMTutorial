@@ -13,13 +13,11 @@ namespace {
     PointIdx match_idx;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (!matched_points[i].point1->mappoint.get()) {
-        points1_mat.at<double>(0, i) = matched_points[i].point1->keypoint.pt.x;
-        points1_mat.at<double>(1, i) = matched_points[i].point1->keypoint.pt.y;
-        points2_mat.at<double>(0, i) = matched_points[i].point2->keypoint.pt.x;
-        points2_mat.at<double>(1, i) = matched_points[i].point2->keypoint.pt.y;
-        match_idx.push_back(i);
-      }
+      points1_mat.at<double>(0, i) = matched_points[i].point1->keypoint.pt.x;
+      points1_mat.at<double>(1, i) = matched_points[i].point1->keypoint.pt.y;
+      points2_mat.at<double>(0, i) = matched_points[i].point2->keypoint.pt.x;
+      points2_mat.at<double>(1, i) = matched_points[i].point2->keypoint.pt.y;
+      match_idx.push_back(i);
     }
 
     return {points1_mat, points2_mat, match_idx};
@@ -83,14 +81,21 @@ namespace vslam_mapper_plugins {
 
     // Create map points for the points
     vslam_datastructure::MapPoints new_mps;
-    for (size_t i = 0; i < cv_points1.cols; i++) {
+    for (size_t i = 0; i < match_idx.size(); i++) {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
       pt_3d /= pt_3d.at<double>(3, 0);
       pt_3d /= pt_scale;
 
+      // Replace NaNs with zeros so the point can be removed
+      for (size_t j = 0; j < 3; j++) {
+        if (std::isnan(pt_3d.at<double>(j, 0))) {
+          pt_3d.at<double>(j, 0) = 0;
+        }
+      }
+
       // Remove points behind the camera
-      if (pt_3d.at<double>(2) < 0.0) {
+      if (pt_3d.at<double>(2, 0) <= 1.0) {
         continue;
       }
 
@@ -104,19 +109,38 @@ namespace vslam_mapper_plugins {
       // Transform to world coordinate
       pt_3d = T_1_w.inv() * pt_3d;
 
+      // std::cout << "new mp: " << pt_3d.t() << std::endl;
+
       // The corresponding index in `matched_points`
       const auto j = match_idx[i];
 
-      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
-      mp->pt_3d = cv::Point3d(pt_3d.at<double>(0), pt_3d.at<double>(1), pt_3d.at<double>(2));
-      mp->projections.push_back(matched_points[j].point1);
-      mp->projections.push_back(matched_points[j].point2);
+      if (matched_points.at(j).point1->mappoint.get() && !matched_points.at(j).point1->mappoint->is_outlier) {
+        // If there is an existing map point, calculate the mean
+        auto mp = matched_points.at(j).point1->mappoint;
+        mp->pt_3d = cv::Point3d((mp->pt_3d.x + pt_3d.at<double>(0, 0)) / 2, (mp->pt_3d.y + pt_3d.at<double>(1, 0)) / 2,
+                                (mp->pt_3d.z + pt_3d.at<double>(2, 0)) / 2);
+      } else {
+        // Create a new map point
+        vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
+        mp->pt_3d = cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0));
+        mp->projections.insert(matched_points.at(j).point1);
+        mp->projections.insert(matched_points.at(j).point2);
 
-      matched_points[j].point1->mappoint = mp;
-      matched_points[j].point2->mappoint = mp;
+        matched_points.at(j).point1->mappoint = mp;
+        matched_points.at(j).point2->mappoint = mp;
 
-      new_mps.push_back(mp);
+        new_mps.push_back(mp);
+      }
     }
+
+    int total_mps = 0;
+    for (const auto& match : matched_points) {
+      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier) {
+        total_mps++;
+      }
+    }
+    std::cout << "total existing plus new: " << total_mps << std::endl;
+
     return new_mps;
   }
 
