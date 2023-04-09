@@ -21,14 +21,14 @@ namespace vslam_feature_extractor_plugins {
   private:
     // goodFeaturesToTrack
     double quality_level_{0.005};
-    double min_dist_{10};
+    double min_dist_{8};
 
     // ORB feature detector
     int nlevels_{8};
     double scale_factor_{1.2};
-    int harris_block_size_{7};
-    int patch_size_{31};
-    int desc_size_{32};
+    static constexpr int harris_block_size_{7};
+    static constexpr int patch_size_{31};
+    static constexpr int desc_size_{32};
   };
 }  // namespace vslam_feature_extractor_plugins
 
