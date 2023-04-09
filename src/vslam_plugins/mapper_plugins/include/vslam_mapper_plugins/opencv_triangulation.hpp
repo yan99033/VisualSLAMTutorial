@@ -13,7 +13,7 @@ namespace vslam_mapper_plugins {
     void initialize(const cv::Mat& K) override;
 
     virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
-                                               const cv::Mat& T_2_1, const bool normalize_depth = false) override;
+                                               const cv::Mat& T_2_1) override;
 
   protected:
     cv::Mat K_;

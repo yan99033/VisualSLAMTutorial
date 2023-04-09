@@ -8,7 +8,7 @@ namespace vslam_mapper_base {
   public:
     virtual void initialize(const cv::Mat& K) = 0;
     virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
-                                               const cv::Mat& T_2_1, const bool normalize_depth = false)
+                                               const cv::Mat& T_2_1)
         = 0;
     virtual ~Mapper() {}
 

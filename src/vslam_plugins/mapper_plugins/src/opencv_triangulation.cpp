@@ -54,8 +54,7 @@ namespace vslam_mapper_plugins {
   void OpenCvTriangulation::initialize(const cv::Mat& K) { K_ = K; }
 
   vslam_datastructure::MapPoints OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points,
-                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1,
-                                                          const bool normalize_depth) {
+                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1) {
     // Get the matched points that don't have a map point
     // e.g., calculate a std::vector<bool> mask to indicate which matched points do not have a 3D point
     const auto [cv_points1, cv_points2, match_idx] = getCorrespondences(matched_points);
@@ -69,15 +68,11 @@ namespace vslam_mapper_plugins {
     cv::Mat cv_points1_3d;
     cv::triangulatePoints(P1, P2, cv_points1, cv_points2, cv_points1_3d);
 
-    // map scale
-    const double pt_scale = [&]() {
-      if (normalize_depth) {
-        cv::Mat normalized_z = cv_points1_3d.row(2) / cv_points1_3d.row(3);
-        return find_median_depth(normalized_z);
-      } else {
-        return 1.0;
-      }
-    }();
+    // // map scale
+    // if (normalize_depth) {
+    //   cv::Mat normalized_z = cv_points1_3d.row(2) / cv_points1_3d.row(3);
+    //   normalize_scale = 1.0 / find_median_depth(normalized_z);
+    // }
 
     // Create map points for the points
     vslam_datastructure::MapPoints new_mps;
@@ -85,7 +80,7 @@ namespace vslam_mapper_plugins {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
       pt_3d /= pt_3d.at<double>(3, 0);
-      pt_3d /= pt_scale;
+      // pt_3d *= normalize_scale;
 
       // Replace NaNs with zeros so the point can be removed
       for (size_t j = 0; j < 3; j++) {
