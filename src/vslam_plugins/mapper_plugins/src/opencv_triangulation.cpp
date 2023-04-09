@@ -94,11 +94,6 @@ namespace vslam_mapper_plugins {
         }
       }
 
-      // Remove points behind the camera
-      if (pt_3d.at<double>(2, 0) <= 1.0) {
-        continue;
-      }
-
       // Remove points that have a large re-projection error
       cv::Mat pt_3d_projected = project_point_3d2d(pt_3d.rowRange(0, 3), K_);
       constexpr double proj_err_thresh = 8.0;
@@ -106,10 +101,13 @@ namespace vslam_mapper_plugins {
         continue;
       }
 
+      // Remove points behind the camera
+      if (pt_3d.at<double>(2, 0) <= 0.0) {
+        continue;
+      }
+
       // Transform to world coordinate
       pt_3d = T_1_w.inv() * pt_3d;
-
-      // std::cout << "new mp: " << pt_3d.t() << std::endl;
 
       // The corresponding index in `matched_points`
       const auto j = match_idx[i];
@@ -139,8 +137,6 @@ namespace vslam_mapper_plugins {
         total_mps++;
       }
     }
-    std::cout << "total existing plus new: " << total_mps << std::endl;
-
     return new_mps;
   }
 
