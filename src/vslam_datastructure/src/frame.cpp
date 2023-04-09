@@ -98,14 +98,14 @@ namespace vslam_datastructure {
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
 
     for (const auto& pt : points_) {
-      // 2D keypoints
-      vslam_msgs::msg::Vector2d pt_2d;
-      pt_2d.x = pt->keypoint.pt.x;
-      pt_2d.y = pt->keypoint.pt.y;
-      frame_msg->keypoints.push_back(pt_2d);
-
-      // 3D map points
       if (pt->mappoint.get()) {
+        // 2D keypoints
+        vslam_msgs::msg::Vector2d pt_2d;
+        pt_2d.x = pt->keypoint.pt.x;
+        pt_2d.y = pt->keypoint.pt.y;
+        frame_msg->keypoints.push_back(pt_2d);
+
+        // 3D map points
         vslam_msgs::msg::Vector3d pt_3d;
         pt_3d.x = pt->mappoint->pt_3d.x;
         pt_3d.y = pt->mappoint->pt_3d.y;
