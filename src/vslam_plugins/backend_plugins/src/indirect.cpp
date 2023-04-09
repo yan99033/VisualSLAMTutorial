@@ -11,6 +11,12 @@ namespace vslam_backend_plugins {
     current_keyframe_ = keyframe;
   }
 
+  void Indirect::remove_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
+    if (keyframes_.find(keyframe->id()) != keyframes_.end()) {
+      keyframes_.erase(keyframe->id());
+    }
+  }
+
   vslam_datastructure::Frame::SharedPtr Indirect::get_current_keyframe() { return current_keyframe_; }
 
 }  // namespace vslam_backend_plugins

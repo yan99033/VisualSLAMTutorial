@@ -12,6 +12,8 @@ namespace vslam_backend_plugins {
 
     void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
+    void remove_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
+
     vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
 
   private:

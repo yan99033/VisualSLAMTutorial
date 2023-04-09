@@ -11,6 +11,8 @@ namespace vslam_backend_base {
 
     virtual void add_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
+    virtual void remove_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
+
     // The current keyframe could be the latest keyframe added to the backend or
     // a previous keyframe that is similar to the current frame (calculate by the place
     // recognition method)
