@@ -8,7 +8,7 @@
 using std::placeholders::_1;
 
 namespace {
-  int encoding2mat_type(const std::string &encoding) {
+  int encoding2mat_type(const std::string& encoding) {
     if (encoding == "mono8") {
       return CV_8UC1;
     } else if (encoding == "bgr8") {
@@ -27,7 +27,7 @@ namespace vslam_components {
 
   namespace vslam_nodes {
 
-    IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions &options)
+    IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options)
         : Node("vslam_node", options), K_{load_camera_info()} {
       // Feature extractor
       feature_extractor_ = feature_extractor_loader_.createSharedInstance(
@@ -104,21 +104,24 @@ namespace vslam_components {
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
+        T_c_p_ = T_c_p;
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
-        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);  // , true);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded);
 
+        current_keyframe_ = current_frame;
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
         if (!current_keyframe_->has_points() || points.empty()) {
+          std::cout << "Current frame has no point to track" << std::endl;
           state_ = State::relocalization;
           return;
         }
@@ -130,28 +133,63 @@ namespace vslam_components {
         auto matched_points
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
+        // Check if we have enough map points for camera tracking
+        if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_)) {
+          std::cout << "Insufficient amount of points needed for tracking" << std::endl;
+          state_ = State::relocalization;
+          return;
+        }
+
         const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points);
+
+        // Check the number of outliers in the calculating the camera pose
+        if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_)) {
+          std::cout << "Insufficient amount of points used for tracking" << std::endl;
+          state_ = State::relocalization;
+          return;
+        }
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
-        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
-
         // write pose to the frame message
         constexpr bool skip_loaded = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded);
 
-        current_keyframe_ = current_frame;
-
+        // Check if we need a new keyframe
+        if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
+          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          current_keyframe_ = current_frame;
+          std::cout << "created a new keyframe " << std::endl;
+        } else {
+          std::cout << "didn't create a new keyframe" << std::endl;
+        }
+        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " map points" << std::endl;
       } else {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;
       }
-
       pub_ptr->publish(std::move(frame_msg));
     }
+
+    bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
+                                              const int goodness_thresh) {
+      size_t num_mps{0};
+      for (const auto& match : matched_points) {
+        if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier) {
+          num_mps++;
+        }
+
+        if (num_mps > goodness_thresh) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
   }  // namespace vslam_nodes
 }  // namespace vslam_components
 

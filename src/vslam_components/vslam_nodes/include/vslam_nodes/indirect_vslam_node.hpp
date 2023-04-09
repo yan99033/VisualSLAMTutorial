@@ -20,12 +20,15 @@ namespace vslam_components {
   namespace vslam_nodes {
     class IndirectVSlamNode : public rclcpp::Node {
     public:
-      explicit IndirectVSlamNode(const rclcpp::NodeOptions &options);
+      explicit IndirectVSlamNode(const rclcpp::NodeOptions& options);
 
     private:
       enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
 
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
+
+      // Check the goodness of the mapped points so far to determine the matching and tracking qualities
+      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const int goodness_thresh);
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
@@ -40,6 +43,18 @@ namespace vslam_components {
       cv::Mat load_camera_info();
 
       cv::Mat K_;
+
+      // The previously calculated relative transformation for the initial guess in camera tracking
+      cv::Mat T_c_p_{cv::Mat::eye(4, 4, CV_64F)};
+
+      // Minimum number of map points needed for camera tracking
+      size_t min_num_mps_cam_tracking_{30};
+
+      // Minimum number of inliers needed for good camera tracking
+      size_t min_num_cam_tracking_inliers_{15};
+
+      // Minimum number of map points needed for a keyframe
+      size_t min_num_kf_mps_{250};
 
       // Feature extraction plugin
       pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_loader_{
