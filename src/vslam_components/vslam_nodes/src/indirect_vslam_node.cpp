@@ -48,6 +48,10 @@ namespace vslam_components {
       mapper_ = mapper_loader_.createSharedInstance(declare_parameter("mapper_plugin_name", "UNDEFINED"));
       mapper_->initialize(K_);
 
+      // Back-end
+      backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
+      backend_->initialize();
+
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&IndirectVSlamNode::frame_callback, this, _1));
@@ -85,13 +89,18 @@ namespace vslam_components {
       auto points = feature_extractor_->extract_features(cv_mat);
 
       if (state_ == State::init) {
-        current_keyframe_ = std::make_shared<vslam_datastructure::Frame>();
-        current_keyframe_->from_msg(frame_msg.get());
-        current_keyframe_->set_points(points);
+        auto frame = std::make_shared<vslam_datastructure::Frame>();
+        frame->from_msg(frame_msg.get());
+        frame->set_points(points);
+        frame->set_keyframe();
+
+        backend_->add_keyframe(frame);
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
-        if (!current_keyframe_->has_points() || points.empty()) {
+        auto current_keyframe = backend_->get_current_keyframe();
+        if (!current_keyframe->has_points() || points.empty()) {
+          backend_->remove_keyframe(current_keyframe);
           state_ = State::init;
           return;
         }
@@ -101,13 +110,13 @@ namespace vslam_components {
         current_frame->set_points(points);
 
         auto matched_points
-            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
+            = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
         T_c_p_ = T_c_p;
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe_->get_pose();
+        cv::Mat T_p_w = current_keyframe->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
@@ -117,10 +126,11 @@ namespace vslam_components {
         constexpr bool skip_loaded = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded);
 
-        current_keyframe_ = current_frame;
+        current_keyframe = current_frame;
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
-        if (!current_keyframe_->has_points() || points.empty()) {
+        auto current_keyframe = backend_->get_current_keyframe();
+        if (!current_keyframe->has_points() || points.empty()) {
           std::cout << "Current frame has no point to track" << std::endl;
           state_ = State::relocalization;
           return;
@@ -131,7 +141,7 @@ namespace vslam_components {
         current_frame->set_points(points);
 
         auto matched_points
-            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
+            = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         // Check if we have enough map points for camera tracking
         if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_)) {
@@ -150,7 +160,7 @@ namespace vslam_components {
         }
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe_->get_pose();
+        cv::Mat T_p_w = current_keyframe->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
@@ -160,13 +170,15 @@ namespace vslam_components {
 
         // Check if we need a new keyframe
         if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
+          current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
-          current_keyframe_ = current_frame;
+          backend_->add_keyframe(current_frame);
+          // current_keyframe_ = current_frame;
           std::cout << "created a new keyframe " << std::endl;
         } else {
           std::cout << "didn't create a new keyframe" << std::endl;
         }
-        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " map points" << std::endl;
+        std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " map points" << std::endl;
       } else {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;

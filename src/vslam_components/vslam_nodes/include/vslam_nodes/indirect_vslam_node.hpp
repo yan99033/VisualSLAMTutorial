@@ -11,6 +11,7 @@
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_plugins_base/backend.hpp"
 #include "vslam_plugins_base/camera_tracker.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 #include "vslam_plugins_base/feature_matcher.hpp"
@@ -75,6 +76,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_mapper_base::Mapper> mapper_loader_{"vslam_plugins_base",
                                                                        "vslam_mapper_base::Mapper"};
       std::shared_ptr<vslam_mapper_base::Mapper> mapper_;
+
+      // Back-end plugin
+      pluginlib::ClassLoader<vslam_backend_base::Backend> backend_loader_{"vslam_plugins_base",
+                                                                          "vslam_backend_base::Backend"};
+      std::shared_ptr<vslam_backend_base::Backend> backend_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

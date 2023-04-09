@@ -5,7 +5,7 @@ camera_node:
     
 indirect_vslam_node:
   ros__parameters:
-    num_features: 1000
+    num_features: 2000
     camera_params:
       fx: 718.856
       fy: 718.856
@@ -15,3 +15,4 @@ indirect_vslam_node:
     feature_matcher_plugin_name: "vslam_feature_matcher_plugins::Orb"
     camera_tracker_plugin_name: "vslam_camera_tracker_plugins::Indirect"
     mapper_plugin_name: "vslam_mapper_plugins::OpenCvTriangulation"
+    backend_plugin_name: "vslam_backend_plugins::Indirect"
