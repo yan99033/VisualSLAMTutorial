@@ -52,7 +52,6 @@ namespace {
         matched_points.push_back(matched_point);
       }
     }
-    std::cout << "associated " << associated << " features with existing map points." << std::endl;
 
     return matched_points;
   }
