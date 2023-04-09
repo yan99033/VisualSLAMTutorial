@@ -98,7 +98,7 @@ namespace vslam_datastructure {
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
 
     for (const auto& pt : points_) {
-      if (pt->mappoint.get()) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
         // 2D keypoints
         vslam_msgs::msg::Vector2d pt_2d;
         pt_2d.x = pt->keypoint.pt.x;
@@ -127,6 +127,16 @@ namespace vslam_datastructure {
   }
 
   Points* Frame::get_points() { return &points_; }
+
+  size_t Frame::get_num_mps() const {
+    size_t num_mps{0};
+    for (const auto& pt : points_) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
+        num_mps++;
+      }
+    }
+    return num_mps;
+  }
 
   bool Frame::has_points() const { return !points_.empty(); }
 }  // namespace vslam_datastructure

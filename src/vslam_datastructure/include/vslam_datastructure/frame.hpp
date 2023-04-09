@@ -36,6 +36,9 @@ namespace vslam_datastructure {
     // Get points
     Points* get_points();
 
+    // Get the numbe of map points
+    size_t get_num_mps() const;
+
     // Check if there are points available to match or map
     bool has_points() const;
 
