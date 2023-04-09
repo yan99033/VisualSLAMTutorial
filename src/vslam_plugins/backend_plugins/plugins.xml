@@ -1,0 +1,5 @@
+<library path="vslam_backend_plugins">
+  <class type="vslam_backend_plugins::Indirect" base_class_type="vslam_backend_base::Backend">
+    <description>This is a back-end plugin for the indirect method.</description>
+  </class>
+</library>
