@@ -19,7 +19,16 @@ namespace vslam_feature_extractor_plugins {
     int num_features_{1000};
 
   private:
-    cv::Ptr<cv::ORB> orb_feature_detector_;
+    // goodFeaturesToTrack
+    double quality_level_{0.005};
+    double min_dist_{10};
+
+    // ORB feature detector
+    int nlevels_{8};
+    double scale_factor_{1.2};
+    int harris_block_size_{7};
+    int patch_size_{31};
+    int desc_size_{32};
   };
 }  // namespace vslam_feature_extractor_plugins
 

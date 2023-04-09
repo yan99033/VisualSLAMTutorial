@@ -305,8 +305,8 @@ namespace {
   }
 
   bool calculate_harris_response_and_octave(const CvMatPyr image_pyr, cv::KeyPoint& kp, const int nlevels,
-                                            const std::vector<double>& scale_factors, const int harris_block_size,
-                                            const float harris_k = 0.04) {
+                                            const std::vector<double>& scale_factors, const int patch_size,
+                                            const int harris_block_size, const float harris_k = 0.04) {
     assert(!image_pyr.empty() && (static_cast<int>(image_pyr.size()) == nlevels)
            && (static_cast<int>(scale_factors.size()) == nlevels));
 
@@ -356,6 +356,7 @@ namespace {
       if (response > kp.response) {
         kp.response = response;
         kp.octave = octave;
+        kp.size = static_cast<float>(patch_size) / scale_factors.at(octave);
       }
     }
     return true;
@@ -425,7 +426,7 @@ namespace {
       const cv::Mat& image, const std::vector<cv::Point2d>& corners, const int nlevels = 8,
       const double scale_factor = 1.2, const int harris_block_size = 7, const int patch_size = 31,
       const int desc_size = 32) {
-    assert(patch_size == 31);
+    assert((patch_size == 31) && (desc_size == 32));
 
     // Calculate the pyramid info
     CvMatPyr image_pyramid;
@@ -465,7 +466,7 @@ namespace {
     Keypoints keypoints;
     for (size_t i = 0; i < corners.size(); i++) {
       cv::KeyPoint kp(corners[i], 1.0f);
-      if (calculate_harris_response_and_octave(image_pyramid, kp, nlevels, scale_factors, harris_block_size)
+      if (calculate_harris_response_and_octave(image_pyramid, kp, nlevels, scale_factors, patch_size, harris_block_size)
           && calculate_ic_angle(image_pyramid.at(kp.octave), kp, umax, half_patch_size)) {
         keypoints.push_back(kp);
       }
@@ -504,7 +505,6 @@ namespace vslam_feature_extractor_plugins {
   void Orb::initialize(int num_features) {
     num_features_ = num_features;
     point_type_ = vslam_datastructure::Point::Type::orb;
-    orb_feature_detector_ = cv::ORB::create(num_features);
   }
 
   vslam_datastructure::Points Orb::extract_features(const cv::Mat& image) {
@@ -512,11 +512,11 @@ namespace vslam_feature_extractor_plugins {
     cv::Mat grey_image;
     cv::cvtColor(image, grey_image, cv::COLOR_BGR2GRAY);
     std::vector<cv::Point2d> corners;
-    constexpr double quality_level = 0.005;
-    constexpr double min_dist = 10;
-    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level, min_dist);
 
-    const auto [keypoints, descriptors] = calculate_keypoints_and_descriptors(grey_image, corners);
+    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_);
+
+    const auto [keypoints, descriptors] = calculate_keypoints_and_descriptors(
+        grey_image, corners, nlevels_, scale_factor_, harris_block_size_, patch_size_);
 
     vslam_datastructure::Points orb_ft_points;
     for (size_t i = 0; i < keypoints.size(); i++) {
