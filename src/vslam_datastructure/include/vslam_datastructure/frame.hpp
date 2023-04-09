@@ -46,12 +46,15 @@ namespace vslam_datastructure {
     inline long unsigned int id() const { return id_; }
 
     // Set the frame as keyframe
-    void set_keyframe() { is_keyframe_ = true; }
+    void set_keyframe();
 
     // A boolean to indicate if the frame is a keyframe
     inline bool is_keyframe() const { return is_keyframe_; }
 
   private:
+    // Iterate through the map points and set the projection constraints
+    void set_mappoint_projections();
+
     long unsigned int id_{0};                    //!< frame id
     double timestamp_{0};                        //!< timestamp
     int ros_timestamp_sec_{0};                   //!< seconds component of ROS2 timestamp

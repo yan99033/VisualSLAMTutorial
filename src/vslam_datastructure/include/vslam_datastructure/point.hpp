@@ -8,7 +8,6 @@
 namespace vslam_datastructure {
   // Forward declarations
   struct Point;
-  using PointSharedPtr = std::shared_ptr<Point>;
   class Frame;
 
   struct MapPoint {
@@ -21,7 +20,7 @@ namespace vslam_datastructure {
     /*
      * @brief: the corresponding points
      */
-    std::set<PointSharedPtr> projections;
+    std::set<Point*> projections;
 
     long unsigned int id{point_count++};
 

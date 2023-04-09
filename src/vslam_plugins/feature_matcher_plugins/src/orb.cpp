@@ -46,7 +46,6 @@ namespace {
         // Associate the map point with the corresponding point
         if (points1->at(i1)->mappoint.get() && !points1->at(i1)->mappoint->is_outlier) {
           points2->at(i2)->mappoint = points1->at(i1)->mappoint;
-          points1->at(i1)->mappoint->projections.insert(points2->at(i2));
           associated++;
         }
         matched_points.push_back(matched_point);

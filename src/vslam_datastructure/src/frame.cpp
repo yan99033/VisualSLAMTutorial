@@ -131,4 +131,17 @@ namespace vslam_datastructure {
     }
     return num_mps;
   }
+
+  void Frame::set_keyframe() {
+    set_mappoint_projections();
+    is_keyframe_ = true;
+  }
+
+  void Frame::set_mappoint_projections() {
+    for (auto& pt : points_) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
+        pt->mappoint->projections.insert(pt.get());
+      }
+    }
+  }
 }  // namespace vslam_datastructure
