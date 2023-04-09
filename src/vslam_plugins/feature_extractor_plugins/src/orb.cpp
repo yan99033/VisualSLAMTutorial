@@ -512,8 +512,11 @@ namespace vslam_feature_extractor_plugins {
     cv::Mat grey_image;
     cv::cvtColor(image, grey_image, cv::COLOR_BGR2GRAY);
     std::vector<cv::Point2d> corners;
-
-    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_);
+    int half_patch_size = ceil(patch_size_ / 2);
+    cv::Mat mask = cv::Mat::ones(image.rows - patch_size_, image.cols - patch_size_, CV_8U);
+    cv::copyMakeBorder(mask, mask, half_patch_size, patch_size_ - half_patch_size, half_patch_size,
+                       patch_size_ - half_patch_size, cv::BORDER_CONSTANT, cv::Scalar(0));
+    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_, mask);
 
     const auto [keypoints, descriptors] = calculate_keypoints_and_descriptors(
         grey_image, corners, nlevels_, scale_factor_, harris_block_size_, patch_size_);
