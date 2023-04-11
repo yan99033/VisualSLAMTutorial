@@ -64,6 +64,10 @@ namespace vslam_datastructure {
     Points points_;                              //!< vector containing 2D and 3D points
     bool is_keyframe_{false};                    //!< a boolean to indicate if the frame is a keyframe
     std::mutex mutex;
+
+    // Constraints between current (key)frame and the adjacent keyframes
+    std::pair<Frame::WeakPtr, cv::Mat> T_this_next_kf_;
+    std::pair<Frame::WeakPtr, cv::Mat> T_this_prev_kf_;
   };
 
 }  // namespace vslam_datastructure
