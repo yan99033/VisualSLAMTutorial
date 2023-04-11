@@ -45,11 +45,38 @@ namespace vslam_backend_plugins {
         break;
       }
 
-      std::cout << "run local BA" << std::endl;
+      if (keyframes_.size() < num_core_kfs_) {
+        continue;
+      }
+
+      auto [core_kfs, core_mps] = get_core_keyframes_mappoints();
 
       run_local_ba_ = false;
     }
     std::cout << "terminated local BA" << std::endl;
+  }
+
+  std::pair<Indirect::CoreKfs, Indirect::CoreMps> Indirect::get_core_keyframes_mappoints() {
+    assert(num_core_kfs_ > 0);
+
+    CoreKfs core_keyframes;
+    CoreMps core_mappoints;
+    auto kfs_it = keyframes_.rbegin();
+    for (size_t i = 0; i < num_core_kfs_; i++) {
+      auto kf = kfs_it->second;
+      core_keyframes.insert(kf);
+
+      // TODO: make it thread-safe
+      for (auto pt : *(kf->get_points())) {
+        if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
+          core_mappoints.insert(pt->mappoint);
+        }
+      }
+
+      kfs_it++;
+    }
+
+    return {core_keyframes, core_mappoints};
   }
 
 }  // namespace vslam_backend_plugins
