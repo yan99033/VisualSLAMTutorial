@@ -137,6 +137,14 @@ namespace vslam_datastructure {
     is_keyframe_ = true;
   }
 
+  void Frame::set_T_this_prev_kf(Frame::SharedPtr prev_kf, const cv::Mat& T_this_prev) {
+    T_this_prev_kf_ = {prev_kf, T_this_prev};
+  }
+
+  void Frame::set_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next) {
+    T_this_next_kf_ = {next_kf, T_this_next};
+  }
+
   void Frame::set_mappoint_projections() {
     for (auto& pt : points_) {
       if (pt->mappoint.get() && !pt->mappoint->is_outlier) {

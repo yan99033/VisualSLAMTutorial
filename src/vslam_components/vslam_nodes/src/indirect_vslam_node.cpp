@@ -126,7 +126,6 @@ namespace vslam_components {
         constexpr bool skip_loaded = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded);
 
-        current_keyframe = current_frame;
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
         auto current_keyframe = backend_->get_current_keyframe();
@@ -170,6 +169,11 @@ namespace vslam_components {
 
         // Check if we need a new keyframe
         if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
+          // Set constraints between adjacent keyframes
+          current_keyframe->set_T_this_next_kf(current_frame, T_c_p.inv());
+          current_frame->set_T_this_prev_kf(current_keyframe, T_c_p);
+
+          // Set the current frame as keyframe
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           backend_->add_keyframe(current_frame);

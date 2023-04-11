@@ -51,6 +51,10 @@ namespace vslam_datastructure {
     // A boolean to indicate if the frame is a keyframe
     inline bool is_keyframe() const { return is_keyframe_; }
 
+    // Set pose constraints between adjacent keyframes
+    void set_T_this_prev_kf(Frame::SharedPtr prev_kf, const cv::Mat& T_this_prev);
+    void set_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next);
+
   private:
     // Iterate through the map points and set the projection constraints
     void set_mappoint_projections();
@@ -66,8 +70,8 @@ namespace vslam_datastructure {
     std::mutex mutex;
 
     // Constraints between current (key)frame and the adjacent keyframes
-    std::pair<Frame::WeakPtr, cv::Mat> T_this_next_kf_;
     std::pair<Frame::WeakPtr, cv::Mat> T_this_prev_kf_;
+    std::pair<Frame::WeakPtr, cv::Mat> T_this_next_kf_;
   };
 
 }  // namespace vslam_datastructure
