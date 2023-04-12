@@ -1,5 +1,16 @@
 #include "vslam_backend_plugins/indirect.hpp"
 
+#include <g2o/core/optimization_algorithm_factory.h>
+#include <g2o/core/robust_kernel_impl.h>
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/types/sba/types_six_dof_expmap.h>
+
+#if defined G2O_HAVE_CHOLMOD
+G2O_USE_OPTIMIZATION_LIBRARY(cholmod);
+#else
+G2O_USE_OPTIMIZATION_LIBRARY(eigen);
+#endif
+
 namespace vslam_backend_plugins {
   Indirect::~Indirect() {
     exit_thread_ = true;
@@ -51,6 +62,8 @@ namespace vslam_backend_plugins {
 
       auto [core_kfs, core_mps] = get_core_keyframes_mappoints();
 
+      run_local_ba(core_kfs, core_mps);
+
       run_local_ba_ = false;
     }
     std::cout << "terminated local BA" << std::endl;
@@ -77,6 +90,30 @@ namespace vslam_backend_plugins {
     }
 
     return {core_keyframes, core_mappoints};
+  }
+
+  void Indirect::run_local_ba(CoreKfs& core_keyframes, CoreMps& core_mappoints) {
+    // Setup g2o optimizer
+    g2o::SparseOptimizer optimizer;
+    optimizer.setVerbose(false);
+    std::string solver_name;
+#ifdef G2O_HAVE_CHOLMOD
+    solver_name = "lm_fix6_3_cholmod";
+#else
+    solver_name = "lm_fix6_3";
+#endif;
+    g2o::OptimizationAlgorithmProperty solver_property;
+    optimizer.setAlgorithm(g2o::OptimizationAlgorithmFactory::instance()->construct(solver_name, solver_property));
+
+    // Create keyframe vertices
+
+    // Create map point vertices
+
+    // Create projection edges
+
+    // optimize graph
+
+    // Update keyframes and map points
   }
 
 }  // namespace vslam_backend_plugins

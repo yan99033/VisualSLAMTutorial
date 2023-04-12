@@ -39,7 +39,7 @@ namespace vslam_backend_plugins {
     std::thread local_ba_thread_;
     void local_ba_loop();
     std::pair<CoreKfs, CoreMps> get_core_keyframes_mappoints();
-    void run_local_ba();
+    void run_local_ba(CoreKfs& core_keyframes, CoreMps& core_mappoints);
     size_t num_core_kfs_{5};
 
     std::atomic_bool exit_thread_{false};
