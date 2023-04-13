@@ -7,7 +7,7 @@
 namespace vslam_backend_base {
   class Backend {
   public:
-    virtual void initialize() = 0;
+    virtual void initialize(const cv::Mat& K) = 0;
 
     virtual void add_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 

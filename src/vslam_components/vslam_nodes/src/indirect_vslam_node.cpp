@@ -50,7 +50,7 @@ namespace vslam_components {
 
       // Back-end
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
-      backend_->initialize();
+      backend_->initialize(K_);
 
       // Frame subscriber and publisher
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,

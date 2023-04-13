@@ -17,7 +17,7 @@ namespace vslam_datastructure {
     using WeakPtr = std::weak_ptr<Frame>;
 
     // Getters
-    cv::Mat get_pose() const { return T_f_w_; };
+    cv::Mat get_pose() const { return T_f_w_.clone(); };
     cv::Mat get_image() const;
 
     // Set the id, timestamp, image
@@ -67,7 +67,7 @@ namespace vslam_datastructure {
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points
     bool is_keyframe_{false};                    //!< a boolean to indicate if the frame is a keyframe
-    std::mutex mutex;
+    std::mutex data_mutex;                       //!< Mutex for synchronizing reading and writing frame data
 
     // Constraints between current (key)frame and the adjacent keyframes
     std::pair<Frame::WeakPtr, cv::Mat> T_this_prev_kf_;

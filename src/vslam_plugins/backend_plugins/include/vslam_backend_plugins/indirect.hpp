@@ -14,7 +14,7 @@ namespace vslam_backend_plugins {
   public:
     ~Indirect();
 
-    void initialize() override;
+    void initialize(const cv::Mat& K) override;
 
     void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
@@ -23,8 +23,8 @@ namespace vslam_backend_plugins {
     vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
 
   private:
-    using CoreKfs = std::set<vslam_datastructure::Frame::SharedPtr>;
-    using CoreMps = std::set<vslam_datastructure::MapPoint::SharedPtr>;
+    using CoreKfsMap = std::map<long unsigned int, vslam_datastructure::Frame*>;
+    using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
 
     // All keyframes (can be looked up using their id)
     std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
@@ -32,14 +32,17 @@ namespace vslam_backend_plugins {
     // The keyframe that is closest to the current camera pose
     vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
+    // Camera matrix
+    cv::Mat K_;
+
     // Local BA
     std::condition_variable local_ba_condition_;
     std::atomic_bool run_local_ba_{false};
     std::mutex local_ba_mutex_;
     std::thread local_ba_thread_;
     void local_ba_loop();
-    std::pair<CoreKfs, CoreMps> get_core_keyframes_mappoints();
-    void run_local_ba(CoreKfs& core_keyframes, CoreMps& core_mappoints);
+    std::pair<CoreKfsMap, CoreMpsSet> get_core_keyframes_mappoints();
+    void run_local_ba(CoreKfsMap& core_keyframes, CoreMpsSet& core_mappoints);
     size_t num_core_kfs_{5};
 
     std::atomic_bool exit_thread_{false};
