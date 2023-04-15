@@ -54,6 +54,8 @@ namespace vslam_datastructure {
     Point::SharedPtr point2;
   };
   using MatchedPoints = std::vector<MatchedPoint>;
+  using MatchedIndexPairs = std::vector<std::pair<size_t, size_t>>;
+  using Matches = std::pair<MatchedPoints, MatchedIndexPairs>;
 
 }  // namespace vslam_datastructure
 

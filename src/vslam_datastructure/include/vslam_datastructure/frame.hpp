@@ -35,7 +35,7 @@ namespace vslam_datastructure {
     void set_points(Points& points);
 
     // Get points
-    Points* get_points() { return &points_; }
+    const Points* get_points() const { return &points_; }
 
     // Get the numbe of map points
     size_t get_num_mps() const;

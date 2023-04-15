@@ -8,8 +8,8 @@ namespace vslam_feature_matcher_base {
   class FeatureMatcher {
   public:
     virtual void initialize() = 0;
-    virtual vslam_datastructure::MatchedPoints match_features(const vslam_datastructure::Points* points1,
-                                                              const vslam_datastructure::Points* points2)
+    virtual vslam_datastructure::Matches match_features(const vslam_datastructure::Points* const points1,
+                                                        const vslam_datastructure::Points* const points2)
         = 0;
     vslam_datastructure::Point::Type point_type() const { return point_type_; };
     virtual ~FeatureMatcher() {}

@@ -109,7 +109,7 @@ namespace vslam_components {
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
-        auto matched_points
+        auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
@@ -139,7 +139,7 @@ namespace vslam_components {
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
-        auto matched_points
+        auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         // Check if we have enough map points for camera tracking
