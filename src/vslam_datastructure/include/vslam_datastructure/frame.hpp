@@ -16,9 +16,13 @@ namespace vslam_datastructure {
     using SharedPtr = std::shared_ptr<Frame>;
     using WeakPtr = std::weak_ptr<Frame>;
 
-    // Getters
-    cv::Mat get_pose() const { return T_f_w_.clone(); };
     cv::Mat get_image() const;
+
+    // Get the camera pose
+    cv::Mat get_pose();
+
+    // Set the camera pose
+    void set_pose(const cv::Mat& T_f_w);
 
     // Set the id, timestamp, image
     void from_msg(vslam_msgs::msg::Frame* frame_msg);
@@ -26,9 +30,6 @@ namespace vslam_datastructure {
     // Set the id, timestamp, image, pose and points
     // A flag to skip the loaded data (id, timestamp and image)
     void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false) const;
-
-    // Set the camera pose
-    void set_pose(const cv::Mat& T_f_w) { T_f_w_ = T_f_w.clone(); };
 
     // Set the points
     void set_points(Points& points);
@@ -53,7 +54,7 @@ namespace vslam_datastructure {
 
     // Set pose constraints between adjacent keyframes
     void set_T_this_prev_kf(Frame::SharedPtr prev_kf, const cv::Mat& T_this_prev);
-    void set_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next);
+    void add_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next);
 
   private:
     // Iterate through the map points and set the projection constraints
@@ -67,11 +68,12 @@ namespace vslam_datastructure {
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points
     bool is_keyframe_{false};                    //!< a boolean to indicate if the frame is a keyframe
-    std::mutex data_mutex;                       //!< Mutex for synchronizing reading and writing frame data
+    std::mutex data_mutex_;                      //!< Mutex for synchronizing reading and writing frame data
 
     // Constraints between current (key)frame and the adjacent keyframes
+    // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
     std::pair<Frame::WeakPtr, cv::Mat> T_this_prev_kf_;
-    std::pair<Frame::WeakPtr, cv::Mat> T_this_next_kf_;
+    std::vector<std::pair<Frame::WeakPtr, cv::Mat>> T_this_next_kf_;
   };
 
 }  // namespace vslam_datastructure

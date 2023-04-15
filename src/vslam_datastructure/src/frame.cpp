@@ -58,6 +58,15 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
+  cv::Mat Frame::get_pose() {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    return T_f_w_.clone();
+  }
+
+  void Frame::set_pose(const cv::Mat& T_f_w) {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    T_f_w_ = T_f_w.clone();
+  }
   void Frame::from_msg(vslam_msgs::msg::Frame* frame_msg) {
     if (frame_msg == nullptr) {
       return;
@@ -141,8 +150,8 @@ namespace vslam_datastructure {
     T_this_prev_kf_ = {prev_kf, T_this_prev};
   }
 
-  void Frame::set_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next) {
-    T_this_next_kf_ = {next_kf, T_this_next};
+  void Frame::add_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next) {
+    T_this_next_kf_.emplace_back(next_kf, T_this_next);
   }
 
   void Frame::set_mappoint_projections() {

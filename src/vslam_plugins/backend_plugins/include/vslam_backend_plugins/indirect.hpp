@@ -23,7 +23,7 @@ namespace vslam_backend_plugins {
     vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
 
   private:
-    using CoreKfsMap = std::map<long unsigned int, vslam_datastructure::Frame*>;
+    using CoreKfsSet = std::set<vslam_datastructure::Frame*>;
     using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
 
     // All keyframes (can be looked up using their id)
@@ -41,8 +41,8 @@ namespace vslam_backend_plugins {
     std::mutex local_ba_mutex_;
     std::thread local_ba_thread_;
     void local_ba_loop();
-    std::pair<CoreKfsMap, CoreMpsSet> get_core_keyframes_mappoints();
-    void run_local_ba(CoreKfsMap& core_keyframes, CoreMpsSet& core_mappoints);
+    std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
+    void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
     size_t num_core_kfs_{5};
 
     std::atomic_bool exit_thread_{false};

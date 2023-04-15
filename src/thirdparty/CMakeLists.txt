@@ -17,4 +17,13 @@ CPMAddPackage(
   OPTIONS "G2O_BUILD_APPS OFF" "G2O_BUILD_EXAMPLES OFF"
 )
 
+CPMAddPackage(
+  NAME Eigen 
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+  GIT_TAG master
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+  OPTIONS "EIGEN_BUILD_DOC OFF" "BUILD_TESTING OFF"
+)
+
 ament_package()

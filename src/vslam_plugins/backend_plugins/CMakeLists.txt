@@ -13,6 +13,7 @@ find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(g2o REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 set(dependencies
   OpenCV
@@ -28,7 +29,7 @@ set(sources
 
 
 add_library(${PROJECT_NAME} SHARED ${sources})
-target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::solver_cholmod g2o::solver_eigen)
+target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::solver_cholmod g2o::solver_eigen Eigen3::Eigen)
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
