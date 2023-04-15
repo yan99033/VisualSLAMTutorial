@@ -2,12 +2,13 @@
 #define VSLAM_PLUGINS_BASE__BACKEND_HPP_
 
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/frame_queue.hpp"
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_backend_base {
   class Backend {
   public:
-    virtual void initialize(const cv::Mat& K) = 0;
+    virtual void initialize(const cv::Mat& K, const FrameQueue::SharedPtr frame_queue = nullptr) = 0;
 
     virtual void add_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
@@ -22,6 +23,9 @@ namespace vslam_backend_base {
 
   protected:
     Backend() {}
+
+    // frame_queue_ is used to add the updated keyframes so they can be updated visually
+    FrameQueue::SharedPtr frame_queue_;
   };
 }  // namespace vslam_backend_base
 

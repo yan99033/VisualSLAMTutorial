@@ -55,8 +55,9 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Indirect::initialize(const cv::Mat& K) {
+  void Indirect::initialize(const cv::Mat& K, const FrameQueue::SharedPtr frame_queue) {
     K_ = K;
+    frame_queue_ = frame_queue;
     local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this);
   }
 

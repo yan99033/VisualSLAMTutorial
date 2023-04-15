@@ -7,6 +7,8 @@
 
 class FrameQueue {
 public:
+  using SharedPtr = std::shared_ptr<FrameQueue>;
+
   void send(vslam_msgs::msg::Frame &&msg);
   void stop();
   vslam_msgs::msg::Frame receive();
