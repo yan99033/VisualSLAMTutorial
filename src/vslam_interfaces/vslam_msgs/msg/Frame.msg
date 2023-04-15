@@ -18,3 +18,6 @@ geometry_msgs/Pose pose
 # Points
 Vector2d[] keypoints
 Vector3d[] mappoints
+
+# Pose constraints
+Vector3d[] other_keyframes_pos
