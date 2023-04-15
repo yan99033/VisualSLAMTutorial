@@ -3,24 +3,20 @@
 #include <cmath>
 #include <iostream>
 
-using PointIdx = std::vector<size_t>;
-
 namespace {
-  std::tuple<cv::Mat, cv::Mat, PointIdx> getCorrespondences(const vslam_datastructure::MatchedPoints& matched_points) {
+  std::pair<cv::Mat, cv::Mat> getCorrespondences(const vslam_datastructure::MatchedPoints& matched_points) {
     const size_t npts = matched_points.size();
     cv::Mat points1_mat = cv::Mat(2, npts, CV_64F);
     cv::Mat points2_mat = cv::Mat(2, npts, CV_64F);
-    PointIdx match_idx;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
       points1_mat.at<double>(0, i) = matched_points[i].point1->keypoint.pt.x;
       points1_mat.at<double>(1, i) = matched_points[i].point1->keypoint.pt.y;
       points2_mat.at<double>(0, i) = matched_points[i].point2->keypoint.pt.x;
       points2_mat.at<double>(1, i) = matched_points[i].point2->keypoint.pt.y;
-      match_idx.push_back(i);
     }
 
-    return {points1_mat, points2_mat, match_idx};
+    return {points1_mat, points2_mat};
   }
 
   cv::Mat project_point_3d2d(const cv::Mat& pt, const cv::Mat& K) {
@@ -55,9 +51,8 @@ namespace vslam_mapper_plugins {
 
   vslam_datastructure::MapPoints OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points,
                                                           const cv::Mat& T_1_w, const cv::Mat& T_2_1) {
-    // Get the matched points that don't have a map point
-    // e.g., calculate a std::vector<bool> mask to indicate which matched points do not have a 3D point
-    const auto [cv_points1, cv_points2, match_idx] = getCorrespondences(matched_points);
+    // Preprocess the matched points for triangulation
+    const auto [cv_points1, cv_points2] = getCorrespondences(matched_points);
 
     // Calculate the projection matrix
     cv::Mat P1 = cv::Mat::eye(4, 4, CV_64F);
@@ -76,7 +71,7 @@ namespace vslam_mapper_plugins {
 
     // Create map points for the points
     vslam_datastructure::MapPoints new_mps;
-    for (size_t i = 0; i < match_idx.size(); i++) {
+    for (size_t i = 0; i < matched_points.size(); i++) {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
       pt_3d /= pt_3d.at<double>(3, 0);
@@ -104,12 +99,9 @@ namespace vslam_mapper_plugins {
       // Transform to world coordinate
       pt_3d = T_1_w.inv() * pt_3d;
 
-      // The corresponding index in `matched_points`
-      const auto j = match_idx[i];
-
-      if (matched_points.at(j).point1->mappoint.get() && !matched_points.at(j).point1->mappoint->is_outlier) {
+      if (matched_points.at(i).point1->mappoint.get() && !matched_points.at(i).point1->mappoint->is_outlier) {
         // If there is an existing map point, calculate the mean
-        auto mp = matched_points.at(j).point1->mappoint;
+        auto mp = matched_points.at(i).point1->mappoint;
         mp->pt_3d = cv::Point3d((mp->pt_3d.x + pt_3d.at<double>(0, 0)) / 2, (mp->pt_3d.y + pt_3d.at<double>(1, 0)) / 2,
                                 (mp->pt_3d.z + pt_3d.at<double>(2, 0)) / 2);
       } else {
@@ -117,19 +109,13 @@ namespace vslam_mapper_plugins {
         vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
         mp->pt_3d = cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0));
 
-        matched_points.at(j).point1->mappoint = mp;
-        matched_points.at(j).point2->mappoint = mp;
+        matched_points.at(i).point1->mappoint = mp;
+        matched_points.at(i).point2->mappoint = mp;
 
         new_mps.push_back(mp);
       }
     }
 
-    int total_mps = 0;
-    for (const auto& match : matched_points) {
-      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier) {
-        total_mps++;
-      }
-    }
     return new_mps;
   }
 
