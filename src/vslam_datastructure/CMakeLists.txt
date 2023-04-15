@@ -14,13 +14,13 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
-# find_package(Sophus REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
 set(sources
   src/frame.cpp
+  src/frame_queue.cpp
   src/point.cpp)
 
 set(dependencies
@@ -33,7 +33,6 @@ set(dependencies
 include_directories(include)
 
 add_library(${PROJECT_NAME} ${sources})
-# target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 install(TARGETS
