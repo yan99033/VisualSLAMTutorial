@@ -31,7 +31,7 @@ namespace vslam_datastructure {
 
     // Set the id, timestamp, image, pose and points
     // A flag to skip the loaded data (id, timestamp and image)
-    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false) const;
+    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false);
 
     // Set the points
     void set_points(Points& points);
@@ -42,7 +42,7 @@ namespace vslam_datastructure {
     void set_map_points(const MapPoints mappoints, const std::vector<size_t> indices);
 
     // Get the numbe of map points
-    size_t get_num_mps() const;
+    size_t get_num_mps();
 
     // Check if there are points available to match or map
     inline bool has_points() const { return !points_.empty(); }

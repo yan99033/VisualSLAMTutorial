@@ -72,6 +72,8 @@ namespace vslam_datastructure {
       return;
     }
 
+    std::lock_guard<std::mutex> lck(data_mutex_);
+
     id_ = frame_msg->id;
 
     timestamp_ = static_cast<double>(frame_msg->header.stamp.sec)
@@ -84,10 +86,11 @@ namespace vslam_datastructure {
     image_ = cv_mat.clone();
   }
 
-  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) const {
+  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) {
     if (frame_msg == nullptr) {
       return;
     }
+    std::lock_guard<std::mutex> lck(data_mutex_);
 
     if (!skip_loaded) {
       frame_msg->id = id_;
@@ -111,6 +114,7 @@ namespace vslam_datastructure {
         pt_2d.x = pt->keypoint.pt.x;
         pt_2d.y = pt->keypoint.pt.y;
         frame_msg->keypoints.push_back(pt_2d);
+        frame_msg->keypoints_triangulated.push_back(pt_2d);
 
         // 3D map points
         vslam_msgs::msg::Vector3d pt_3d;
@@ -118,11 +122,18 @@ namespace vslam_datastructure {
         pt_3d.y = pt->mappoint->pt_3d.y;
         pt_3d.z = pt->mappoint->pt_3d.z;
         frame_msg->mappoints.push_back(pt_3d);
+      } else {
+        // 2D keypoints
+        vslam_msgs::msg::Vector2d pt_2d;
+        pt_2d.x = pt->keypoint.pt.x;
+        pt_2d.y = pt->keypoint.pt.y;
+        frame_msg->keypoints.push_back(pt_2d);
       }
     }
   }
 
   void Frame::set_points(Points& points) {
+    std::lock_guard<std::mutex> lck(data_mutex_);
     points_.swap(points);
 
     // Set the frame ptr
@@ -134,6 +145,8 @@ namespace vslam_datastructure {
   void Frame::set_map_points(const MapPoints mappoints, const std::vector<size_t> indices) {
     assert(is_keyframe_);
     assert(mappoints.size() == indices.size());
+
+    std::lock_guard<std::mutex> lck(data_mutex_);
 
     auto mp_it = mappoints.begin();
     for (const auto i : indices) {
@@ -158,7 +171,8 @@ namespace vslam_datastructure {
     set_mappoint_projections();
   }
 
-  size_t Frame::get_num_mps() const {
+  size_t Frame::get_num_mps() {
+    std::lock_guard<std::mutex> lck(data_mutex_);
     size_t num_mps{0};
     for (const auto& pt : points_) {
       if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
@@ -169,15 +183,18 @@ namespace vslam_datastructure {
   }
 
   void Frame::set_keyframe() {
+    std::lock_guard<std::mutex> lck(data_mutex_);
     set_mappoint_projections();
     is_keyframe_ = true;
   }
 
   void Frame::set_T_this_prev_kf(Frame::SharedPtr prev_kf, const cv::Mat& T_this_prev) {
+    std::lock_guard<std::mutex> lck(data_mutex_);
     T_this_prev_kf_ = {prev_kf, T_this_prev};
   }
 
   void Frame::add_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next) {
+    std::lock_guard<std::mutex> lck(data_mutex_);
     T_this_next_kf_.emplace_back(next_kf, T_this_next);
   }
 
