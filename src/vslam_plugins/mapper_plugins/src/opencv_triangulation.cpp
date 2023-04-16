@@ -88,32 +88,24 @@ namespace vslam_mapper_plugins {
       cv::Mat pt_3d_projected = project_point_3d2d(pt_3d.rowRange(0, 3), K_);
       constexpr double proj_err_thresh = 8.0;
       if (cv::norm(pt_3d_projected, cv_points1.col(i)) > proj_err_thresh) {
+        new_mps.push_back(nullptr);
         continue;
       }
 
       // Remove points behind the camera
       if (pt_3d.at<double>(2, 0) <= 0.0) {
+        new_mps.push_back(nullptr);
         continue;
       }
 
       // Transform to world coordinate
       pt_3d = T_1_w.inv() * pt_3d;
 
-      if (matched_points.at(i).point1->mappoint.get() && !matched_points.at(i).point1->mappoint->is_outlier) {
-        // If there is an existing map point, calculate the mean
-        auto mp = matched_points.at(i).point1->mappoint;
-        mp->pt_3d = cv::Point3d((mp->pt_3d.x + pt_3d.at<double>(0, 0)) / 2, (mp->pt_3d.y + pt_3d.at<double>(1, 0)) / 2,
-                                (mp->pt_3d.z + pt_3d.at<double>(2, 0)) / 2);
-      } else {
-        // Create a new map point
-        vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
-        mp->pt_3d = cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0));
+      // Create a new map point
+      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
+      mp->pt_3d = cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0));
 
-        matched_points.at(i).point1->mappoint = mp;
-        matched_points.at(i).point2->mappoint = mp;
-
-        new_mps.push_back(mp);
-      }
+      new_mps.push_back(mp);
     }
 
     return new_mps;

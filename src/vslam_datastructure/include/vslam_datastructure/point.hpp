@@ -11,11 +11,13 @@ namespace vslam_datastructure {
   class Frame;
 
   struct MapPoint {
+    std::mutex mutex;
+
     using SharedPtr = std::shared_ptr<MapPoint>;
 
     cv::Point3d pt_3d;
 
-    bool is_outlier{false};
+    std::atomic_bool is_outlier{false};
 
     /*
      * @brief: the corresponding points
@@ -55,15 +57,7 @@ namespace vslam_datastructure {
   };
   using MatchedPoints = std::vector<MatchedPoint>;
   using MatchedIndexPairs = std::vector<std::pair<size_t, size_t>>;
-
-  struct Matches {
-    MatchedPoints matched_points;
-    MatchedIndexPairs matched_index_pairs;
-
-    std::vector<size_t> get_first_indices() const;
-    std::vector<size_t> get_second_indices() const;
-  };
-  // using Matches = std::pair<MatchedPoints, MatchedIndexPairs>;
+  using Matches = std::pair<MatchedPoints, MatchedIndexPairs>;
 
 }  // namespace vslam_datastructure
 

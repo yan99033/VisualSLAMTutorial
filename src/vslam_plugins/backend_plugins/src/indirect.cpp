@@ -123,7 +123,7 @@ namespace vslam_backend_plugins {
       core_keyframes.insert(kf.get());
 
       // TODO: make it thread-safe
-      for (auto pt : *(kf->get_points())) {
+      for (auto pt : kf->get_points()) {
         if (pt->mappoint.get() && !pt->mappoint->is_outlier && pt->mappoint->projections.size() > 1) {
           core_mappoints.insert(pt->mappoint.get());
         }

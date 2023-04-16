@@ -5,10 +5,10 @@
 
 namespace {
   std::pair<std::vector<cv::KeyPoint>, cv::Mat> extract_keypoints_descriptors(
-      const vslam_datastructure::Points* points) {
+      const vslam_datastructure::Points& points) {
     std::vector<cv::KeyPoint> keypoints;
     std::vector<cv::Mat> descriptors_vec;
-    for (const auto& pt : *points) {
+    for (const auto& pt : points) {
       keypoints.push_back(pt->keypoint);
       descriptors_vec.push_back(pt->descriptor);
     }
@@ -18,8 +18,8 @@ namespace {
     return {keypoints, descriptors};
   }
 
-  vslam_datastructure::Matches create_matched_points(const vslam_datastructure::Points* points1,
-                                                     const vslam_datastructure::Points* points2,
+  vslam_datastructure::Matches create_matched_points(const vslam_datastructure::Points& points1,
+                                                     const vslam_datastructure::Points& points2,
                                                      const std::vector<cv::DMatch>& matches,
                                                      const std::vector<char>& mask,
                                                      const double max_coord_dist = 100.0) {
@@ -36,17 +36,13 @@ namespace {
         const int i2 = matches[i].trainIdx;
 
         // Check distance
-        if (cv::norm(points1->at(i1)->keypoint.pt - points2->at(i2)->keypoint.pt) > max_coord_dist) {
+        if (cv::norm(points1.at(i1)->keypoint.pt - points2.at(i2)->keypoint.pt) > max_coord_dist) {
           continue;
         }
 
         // Create a match
-        vslam_datastructure::MatchedPoint matched_point{points1->at(i1), points2->at(i2)};
+        vslam_datastructure::MatchedPoint matched_point{points1.at(i1), points2.at(i2)};
 
-        // Associate the map point with the corresponding point
-        // if (points1->at(i1)->mappoint.get() && !points1->at(i1)->mappoint->is_outlier) {
-        //   points2->at(i2)->mappoint = points1->at(i1)->mappoint;
-        // }
         matched_points.push_back(matched_point);
 
         matched_index_pairs.push_back({i1, i2});
@@ -63,9 +59,9 @@ namespace vslam_feature_matcher_plugins {
     orb_feature_matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
   }
 
-  vslam_datastructure::Matches Orb::match_features(const vslam_datastructure::Points* const points1,
-                                                   const vslam_datastructure::Points* const points2) {
-    if (points1 == nullptr || points2 == nullptr) {
+  vslam_datastructure::Matches Orb::match_features(const vslam_datastructure::Points& points1,
+                                                   const vslam_datastructure::Points& points2) {
+    if (points1.empty() || points2.empty()) {
       vslam_datastructure::MatchedPoints();
     }
 

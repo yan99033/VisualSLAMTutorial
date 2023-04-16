@@ -21,6 +21,22 @@ namespace {
     throw std::runtime_error("Unsupported mat type");
   }
 
+  std::vector<size_t> get_first_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
+    std::vector<size_t> indices;
+    for (const auto& [idx, _] : indice_pairs) {
+      indices.push_back(idx);
+    }
+    return indices;
+  }
+
+  std::vector<size_t> get_second_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
+    std::vector<size_t> indices;
+    for (const auto& [_, idx] : indice_pairs) {
+      indices.push_back(idx);
+    }
+    return indices;
+  }
+
 }  // namespace
 
 namespace vslam_components {
@@ -121,6 +137,7 @@ namespace vslam_components {
         current_frame->set_pose(T_c_w);
 
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);  // , true);
+        current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
@@ -144,7 +161,8 @@ namespace vslam_components {
 
         // Check if we have enough map points for camera tracking
         if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_)) {
-          std::cout << "Insufficient amount of points needed for tracking" << std::endl;
+          std::cout << "Insufficient amount of points (" << current_keyframe->get_num_mps() << ") needed for tracking"
+                    << std::endl;
           state_ = State::relocalization;
           return;
         }
@@ -153,7 +171,8 @@ namespace vslam_components {
 
         // Check the number of outliers in the calculating the camera pose
         if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_)) {
-          std::cout << "Insufficient amount of points used for tracking" << std::endl;
+          std::cout << "Insufficient amount of inlier points (" << current_keyframe->get_num_mps()
+                    << ") used for tracking" << std::endl;
           state_ = State::relocalization;
           return;
         }
@@ -162,10 +181,6 @@ namespace vslam_components {
         cv::Mat T_p_w = current_keyframe->get_pose();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
-
-        // write pose to the frame message
-        constexpr bool skip_loaded = true;
-        current_frame->to_msg(frame_msg.get(), skip_loaded);
 
         // Check if we need a new keyframe
         if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
@@ -176,13 +191,18 @@ namespace vslam_components {
           // Set the current frame as keyframe
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
+          current_frame->set_map_points(new_mps, get_second_indices(matched_index_pairs));
           backend_->add_keyframe(current_frame);
-          // current_keyframe_ = current_frame;
           std::cout << "created a new keyframe " << std::endl;
         } else {
           std::cout << "didn't create a new keyframe" << std::endl;
         }
         std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " map points" << std::endl;
+
+        // write pose to the frame message
+        constexpr bool skip_loaded = true;
+        current_frame->to_msg(frame_msg.get(), skip_loaded);
       } else {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;

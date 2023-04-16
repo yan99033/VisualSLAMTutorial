@@ -122,13 +122,40 @@ namespace vslam_datastructure {
     }
   }
 
-  void Frame::set_points(vslam_datastructure::Points& points) {
+  void Frame::set_points(Points& points) {
     points_.swap(points);
 
     // Set the frame ptr
     for (auto& pt : points_) {
       pt->frame = this;
     }
+  }
+
+  void Frame::set_map_points(const MapPoints mappoints, const std::vector<size_t> indices) {
+    assert(is_keyframe_);
+    assert(mappoints.size() == indices.size());
+
+    auto mp_it = mappoints.begin();
+    for (const auto i : indices) {
+      auto mp = points_.at(i)->mappoint;
+      auto new_mp = *mp_it;
+
+      if (new_mp.get() == nullptr) {
+        mp_it++;
+        continue;
+      }
+
+      if (mp.get() && !mp->is_outlier) {
+        mp->pt_3d = cv::Point3d((mp->pt_3d.x + new_mp->pt_3d.x) / 2, (mp->pt_3d.y + new_mp->pt_3d.y) / 2,
+                                (mp->pt_3d.z + new_mp->pt_3d.z) / 2);
+      } else {
+        points_.at(i)->mappoint = new_mp;
+      }
+
+      mp_it++;
+    }
+
+    set_mappoint_projections();
   }
 
   size_t Frame::get_num_mps() const {

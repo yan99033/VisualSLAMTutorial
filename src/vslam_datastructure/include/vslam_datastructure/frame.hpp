@@ -9,7 +9,9 @@
 namespace vslam_datastructure {
   // Forward declaration
   struct Point;
+  struct MapPoint;
   using Points = std::vector<std::shared_ptr<Point>>;
+  using MapPoints = std::vector<std::shared_ptr<MapPoint>>;
 
   class Frame {
   public:
@@ -35,7 +37,9 @@ namespace vslam_datastructure {
     void set_points(Points& points);
 
     // Get points
-    const Points* get_points() const { return &points_; }
+    inline const Points& get_points() const { return points_; }
+
+    void set_map_points(const MapPoints mappoints, const std::vector<size_t> indices);
 
     // Get the numbe of map points
     size_t get_num_mps() const;
