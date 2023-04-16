@@ -124,7 +124,7 @@ namespace vslam_backend_plugins {
 
       // TODO: make it thread-safe
       for (auto pt : kf->get_points()) {
-        if (pt->mappoint.get() && !pt->mappoint->is_outlier && pt->mappoint->projections.size() > 1) {
+        if (pt->mappoint.get() && !pt->mappoint->is_outlier() && pt->mappoint->get_projections().size() > 1) {
           core_mappoints.insert(pt->mappoint.get());
         }
       }
@@ -162,19 +162,19 @@ namespace vslam_backend_plugins {
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
     unsigned long int vertex_id{0};
     for (auto mp : core_mappoints) {
-      if (mp == nullptr || mp->is_outlier || mp->projections.empty()) {
+      if (mp == nullptr || mp->is_outlier() || mp->get_projections().empty()) {
         continue;
       }
 
       g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
       core_mp_vertices[mp_vertex] = mp;
-      mp_vertex->setEstimate(cvPoint3dToEigenVector3d(mp->pt_3d));
+      mp_vertex->setEstimate(cvPoint3dToEigenVector3d(mp->get_mappoint()));
       mp_vertex->setId(vertex_id++);
       mp_vertex->setMarginalized(true);
       optimizer.addVertex(mp_vertex);
 
       // Projections
-      for (auto pt : mp->projections) {
+      for (auto pt : mp->get_projections()) {
         if (pt == nullptr || pt->frame == nullptr) {
           continue;
         }

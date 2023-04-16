@@ -103,7 +103,7 @@ namespace vslam_mapper_plugins {
 
       // Create a new map point
       vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
-      mp->pt_3d = cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0));
+      mp->set_mappoint(cv::Point3d(pt_3d.at<double>(0, 0), pt_3d.at<double>(1, 0), pt_3d.at<double>(2, 0)));
 
       new_mps.push_back(mp);
     }

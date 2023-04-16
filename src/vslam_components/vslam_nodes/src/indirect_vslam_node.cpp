@@ -214,7 +214,7 @@ namespace vslam_components {
                                               const int goodness_thresh) {
       size_t num_mps{0};
       for (const auto& match : matched_points) {
-        if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier) {
+        if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
           num_mps++;
         }
 

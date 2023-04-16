@@ -9,7 +9,7 @@
 namespace vslam_datastructure {
   // Forward declaration
   struct Point;
-  struct MapPoint;
+  class MapPoint;
   using Points = std::vector<std::shared_ptr<Point>>;
   using MapPoints = std::vector<std::shared_ptr<MapPoint>>;
 

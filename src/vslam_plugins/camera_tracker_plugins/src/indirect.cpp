@@ -26,11 +26,11 @@ namespace {
     cvPoint2dVec cv_points_2d_2;
     PointPtrVec points_3d_1_ptr;
     for (const auto& match : matched_points) {
-      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier) {
+      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
         assert(match.point1->frame != nullptr);
 
         // Transform the 3d point in point1 to local
-        cv::Point3d pt_3d_1 = match.point1->mappoint->pt_3d;
+        cv::Point3d pt_3d_1 = match.point1->mappoint->get_mappoint();
 
         cv::Mat T_1_w = match.point1->frame->get_pose();
         cv::Matx33d R = T_1_w.rowRange(0, 3).colRange(0, 3);
@@ -42,7 +42,7 @@ namespace {
         points_3d_1_ptr.push_back(match.point1->mappoint);
 
         // Mark it as outlier first and decide later
-        match.point1->mappoint->is_outlier = true;
+        match.point1->mappoint->set_outlier();
       }
     }
 
@@ -119,12 +119,12 @@ namespace vslam_camera_tracker_plugins {
     cv::Rodrigues(rpy, R);
 
     for (size_t i = 0; i < inliers.total(); i++) {
-      points_3d_1_ptr[inliers.at<int>(i)]->is_outlier = false;
+      points_3d_1_ptr[inliers.at<int>(i)]->set_inlier();
     }
 
     int num_outliers = 0;
     for (const auto& mp : points_3d_1_ptr) {
-      if (mp->is_outlier) {
+      if (mp->is_outlier()) {
         num_outliers++;
       }
     }

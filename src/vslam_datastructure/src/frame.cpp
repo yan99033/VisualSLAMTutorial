@@ -108,14 +108,15 @@ namespace vslam_datastructure {
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
 
     for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
         frame_msg->keypoints_has_mp.push_back(true);
 
         // 3D map points
         vslam_msgs::msg::Vector3d pt_3d;
-        pt_3d.x = pt->mappoint->pt_3d.x;
-        pt_3d.y = pt->mappoint->pt_3d.y;
-        pt_3d.z = pt->mappoint->pt_3d.z;
+        const auto mp_pt_3d = pt->mappoint->get_mappoint();
+        pt_3d.x = mp_pt_3d.x;
+        pt_3d.y = mp_pt_3d.y;
+        pt_3d.z = mp_pt_3d.z;
         frame_msg->mappoints.push_back(pt_3d);
       } else {
         frame_msg->keypoints_has_mp.push_back(false);
@@ -155,9 +156,8 @@ namespace vslam_datastructure {
         continue;
       }
 
-      if (mp.get() && !mp->is_outlier) {
-        mp->pt_3d = cv::Point3d((mp->pt_3d.x + new_mp->pt_3d.x) / 2, (mp->pt_3d.y + new_mp->pt_3d.y) / 2,
-                                (mp->pt_3d.z + new_mp->pt_3d.z) / 2);
+      if (mp.get() && !mp->is_outlier()) {
+        mp->update_mappoint(new_mp->get_mappoint());
       } else {
         points_.at(i)->mappoint = new_mp;
       }
@@ -172,7 +172,7 @@ namespace vslam_datastructure {
     std::lock_guard<std::mutex> lck(data_mutex_);
     size_t num_mps{0};
     for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
         num_mps++;
       }
     }
@@ -197,8 +197,8 @@ namespace vslam_datastructure {
 
   void Frame::set_mappoint_projections() {
     for (auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
-        pt->mappoint->projections.insert(pt.get());
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
+        pt->mappoint->add_projection(pt.get());
       }
     }
   }
