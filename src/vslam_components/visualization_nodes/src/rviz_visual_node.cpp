@@ -87,14 +87,16 @@ namespace vslam_components {
 
     RvizVisualNode::RvizVisualNode(const rclcpp::NodeOptions &options) : Node("rviz_visual_node", options) {
       // Frame subscriber and publisher
-      frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
-                                                               std::bind(&RvizVisualNode::frame_callback, this, _1));
+      live_frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
+          "in_frame", 10, std::bind(&RvizVisualNode::live_frame_callback, this, _1));
+      update_frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
+          "update_frame", 10, std::bind(&RvizVisualNode::update_frame_callback, this, _1));
       live_frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 1);
       mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1);
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
     }
 
-    void RvizVisualNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
+    void RvizVisualNode::live_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
@@ -102,11 +104,22 @@ namespace vslam_components {
                      frame_msg->image.data.data());
 
       // Add 2D keypoints to the image message and publish
-      for (const auto &kp : frame_msg->keypoints) {
-        constexpr int radius = 5;
-        const cv::Scalar color(0, 0, 255);
-        const int thickness = -1;
-        cv::circle(cv_mat, cv::Point2d{kp.x, kp.y}, radius, color, thickness);
+      for (size_t i = 0; i < frame_msg->keypoints.size(); i++) {
+        auto kp = frame_msg->keypoints.at(i);
+        auto has_mp = frame_msg->keypoints_has_mp.at(i);
+
+        constexpr int ft_radius = 5;
+        const cv::Scalar ft_rgb(0, 0, 255);
+        const int ft_thickness = -1;
+        cv::circle(cv_mat, cv::Point2d{kp.x, kp.y}, ft_radius, ft_rgb, ft_thickness);
+
+        if (has_mp) {
+          constexpr int half_size = 5;
+          const cv::Scalar sq_color(0, 255, 0);
+          const int sq_thickness = 2;
+          cv::rectangle(cv_mat, cv::Point2d{kp.x - half_size, kp.y - half_size},
+                        cv::Point2d{kp.x + half_size, kp.y + half_size}, sq_color, sq_thickness);
+        }
       }
       image_publisher_->publish(frame_msg->image);
 
@@ -137,9 +150,15 @@ namespace vslam_components {
       // TODO: publish tf transform so we can follow the camera trajectory
       visualization_msgs::msg::Marker pose_marker;
       calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
-      pose_marker.id = live_pose_marker_id_;
+      pose_marker.id = cam_marker_id_++;
+      pose_marker.ns = "live";
       live_frame_publisher_->publish(pose_marker);
     }
+
+    void RvizVisualNode::update_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
+      RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
+    }
+
   }  // namespace visualization_nodes
 }  // namespace vslam_components
 

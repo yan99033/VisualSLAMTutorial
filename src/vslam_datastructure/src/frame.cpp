@@ -109,12 +109,7 @@ namespace vslam_datastructure {
 
     for (const auto& pt : points_) {
       if (pt->mappoint.get() && !pt->mappoint->is_outlier) {
-        // 2D keypoints
-        vslam_msgs::msg::Vector2d pt_2d;
-        pt_2d.x = pt->keypoint.pt.x;
-        pt_2d.y = pt->keypoint.pt.y;
-        frame_msg->keypoints.push_back(pt_2d);
-        frame_msg->keypoints_triangulated.push_back(pt_2d);
+        frame_msg->keypoints_has_mp.push_back(true);
 
         // 3D map points
         vslam_msgs::msg::Vector3d pt_3d;
@@ -123,12 +118,14 @@ namespace vslam_datastructure {
         pt_3d.z = pt->mappoint->pt_3d.z;
         frame_msg->mappoints.push_back(pt_3d);
       } else {
-        // 2D keypoints
-        vslam_msgs::msg::Vector2d pt_2d;
-        pt_2d.x = pt->keypoint.pt.x;
-        pt_2d.y = pt->keypoint.pt.y;
-        frame_msg->keypoints.push_back(pt_2d);
+        frame_msg->keypoints_has_mp.push_back(false);
       }
+
+      // 2D keypoints
+      vslam_msgs::msg::Vector2d pt_2d;
+      pt_2d.x = pt->keypoint.pt.x;
+      pt_2d.y = pt->keypoint.pt.y;
+      frame_msg->keypoints.push_back(pt_2d);
     }
   }
 
