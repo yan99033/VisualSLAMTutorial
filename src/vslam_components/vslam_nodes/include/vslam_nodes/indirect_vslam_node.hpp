@@ -9,6 +9,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/frame_queue.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_plugins_base/backend.hpp"
@@ -23,6 +24,8 @@ namespace vslam_components {
     public:
       explicit IndirectVSlamNode(const rclcpp::NodeOptions& options);
 
+      ~IndirectVSlamNode();
+
     private:
       enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
 
@@ -33,17 +36,27 @@ namespace vslam_components {
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
+      rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr keyframe_pub_;
 
       // for re-publishing the frame message without creating a copy
       std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
 
       State state_{State::init};
 
-      vslam_datastructure::Frame::SharedPtr current_keyframe_;
+      // vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
       cv::Mat load_camera_info();
 
       cv::Mat K_;
+
+      // Update the visualizer
+      vslam_datastructure::FrameQueue::SharedPtr frame_visual_queue_{
+          std::make_shared<vslam_datastructure::FrameQueue>()};
+
+      // Thread to update publish the updated keyframes
+      std::atomic_bool run_frame_visual_publisher_{true};
+      std::thread frame_queue_publisher_thread_;
+      void frame_visual_publisher_loop();
 
       // The previously calculated relative transformation for the initial guess in camera tracking
       cv::Mat T_c_p_{cv::Mat::eye(4, 4, CV_64F)};

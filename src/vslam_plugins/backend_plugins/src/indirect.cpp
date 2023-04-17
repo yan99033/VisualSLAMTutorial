@@ -43,6 +43,15 @@ namespace {
 
   cv::Point3d eigenVector3dToCvPoint3d(const Eigen::Vector3d& vec) { return cv::Point3d(vec.x(), vec.y(), vec.z()); }
 
+  double get_translational_distance(const cv::Mat& T1, const cv::Mat& T2) {
+    // Extract the translation vectors from the transformation matrices
+    cv::Mat translation1 = T1(cv::Range(0, 3), cv::Range(3, 4));
+    cv::Mat translation2 = T2(cv::Range(0, 3), cv::Range(3, 4));
+
+    // Calculate the Euclidean distance between the translation vectors
+    return cv::norm(translation1 - translation2);
+  }
+
 }  // namespace
 
 namespace vslam_backend_plugins {
@@ -55,7 +64,7 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Indirect::initialize(const cv::Mat& K, const FrameQueue::SharedPtr frame_queue) {
+  void Indirect::initialize(const cv::Mat& K, const vslam_datastructure::FrameQueue::SharedPtr frame_queue) {
     K_ = K;
     frame_queue_ = frame_queue;
     local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this);
@@ -99,7 +108,7 @@ namespace vslam_backend_plugins {
         continue;
       }
 
-      // run_local_ba(core_kfs, core_mps);
+      run_local_ba(core_kfs, core_mps);
 
       run_local_ba_ = false;
     }
@@ -112,7 +121,6 @@ namespace vslam_backend_plugins {
     CoreKfsSet core_keyframes;
     CoreMpsSet core_mappoints;
     auto kfs_it = keyframes_.rbegin();
-    // for (size_t i = 0; i < num_core_kfs_; i++) {
     while (kfs_it != keyframes_.rend() && core_keyframes.size() < num_core_kfs_) {
       auto kf = kfs_it->second;
 
@@ -122,7 +130,6 @@ namespace vslam_backend_plugins {
 
       core_keyframes.insert(kf.get());
 
-      // TODO: make it thread-safe
       for (auto pt : kf->get_points()) {
         if (pt->mappoint.get() && !pt->mappoint->is_outlier() && pt->mappoint->get_projections().size() > 1) {
           core_mappoints.insert(pt->mappoint.get());
@@ -155,10 +162,18 @@ namespace vslam_backend_plugins {
 
     constexpr float huber_kernel_delta{2.45};
 
+    // Get the element with the largest value
+    vslam_datastructure::Frame* latest_core_kf
+        = *std::max_element(core_keyframes.begin(), core_keyframes.end(),
+                            [](const vslam_datastructure::Frame* lhs, const vslam_datastructure::Frame* rhs) {
+                              return lhs->id() < rhs->id();
+                            });
+
     // Create vertices and edges
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
     std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame*> core_kf_vertices;
     std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
+    std::set<vslam_datastructure::Frame*> non_core_kfs;
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
     unsigned long int vertex_id{0};
     for (auto mp : core_mappoints) {
@@ -194,6 +209,7 @@ namespace vslam_backend_plugins {
             kf_vertex->setFixed(false);
           } else {
             // Non-core keyframes
+            non_core_kfs.insert(pt->frame);
             kf_vertex->setFixed(true);
           }
           optimizer.addVertex(kf_vertex);
@@ -207,8 +223,8 @@ namespace vslam_backend_plugins {
         e->setInformation(Eigen::Matrix2d::Identity());
 
         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-        e->setRobustKernel(rk);
         rk->setDelta(huber_kernel_delta);
+        e->setRobustKernel(rk);
 
         e->fx = K_.at<double>(0, 0);
         e->fy = K_.at<double>(1, 1);
@@ -220,56 +236,67 @@ namespace vslam_backend_plugins {
       }
     }
 
-    std::cout << "Num kf vertices: " << core_kf_vertices.size() << std::endl;
-    std::cout << "Num mp vertices: " << core_mp_vertices.size() << std::endl;
+    std::cout << "num core kfs: " << core_kf_vertices.size() << std::endl;
+    std::cout << "num non-core kfs: " << non_core_kfs.size() << std::endl;
 
     // optimize graph
     optimizer.initializeOptimization();
-    optimizer.optimize(10);
+    optimizer.optimize(30);
 
-    // // TODO: only update the core keyframes and map points
-    // // Update keyframes
-    // for (auto [kf_vertex, kf_p] : core_kf_vertices) {
-    //   auto pose = kf_vertex->estimate();
-    //   cv::Mat cv_pose = eigenRotationTranslationToCvMat(pose.rotation().toRotationMatrix(), pose.translation());
-    //   if (kf_p) {
-    //     kf_p->set_pose(cv_pose);
-    //   }
-    // }
+    // TODO: only update the core keyframes and map points
+    // Update keyframes
+    for (auto [kf_vertex, kf_p] : core_kf_vertices) {
+      auto pose = kf_vertex->estimate();
+      cv::Mat cv_pose = eigenRotationTranslationToCvMat(pose.rotation().toRotationMatrix(), pose.translation());
 
-    // for (auto e : all_edges) {
-    //   if (!e->isDepthPositive() || e->chi2() > 5.991) {
-    //     auto mp_vertex = static_cast<g2o::VertexPointXYZ*>(e->vertex(0));
-    //     auto mp_p = core_mp_vertices[mp_vertex];
+      if (kf_p) {
+        // std::cout << "kf: " << kf_p->id() << std::endl;
+        // std::cout << "diff before and after local ba optimization" << std::endl;
+        // std::cout << kf_p->get_pose().inv() * cv_pose << std::endl;
 
-    //     if (mp_p) {
-    //       mp_p->is_outlier = true;
-    //     }
-    //   }
-    // }
+        kf_p->set_pose(cv_pose);
+      }
+    }
 
-    // // Update map points
-    // for (auto [mp_vertex, mp_p] : core_mp_vertices) {
-    //   auto mp = mp_vertex->estimate();
-    //   if (mp.hasNaN()) {
-    //     continue;
-    //   }
+    for (auto e : all_edges) {
+      if (!e->isDepthPositive() || e->chi2() > 5.991) {
+        auto mp_vertex = static_cast<g2o::VertexPointXYZ*>(e->vertex(0));
+        auto mp_p = core_mp_vertices[mp_vertex];
 
-    //   if (mp_p && !mp_p->is_outlier) {
-    //     auto pt_3d = eigenVector3dToCvPoint3d(mp);
+        if (mp_p) {
+          mp_p->set_outlier();
+        }
+      }
+    }
 
-    //     // The difference before and after optimization cannot be too large
-    //     if (cv::norm(pt_3d - mp_p->pt_3d) < 1.5) {
-    //       mp_p->pt_3d = pt_3d;
-    //     }
+    // Update map points
+    int inlier_mappoints{0};
+    for (auto [mp_vertex, mp_p] : core_mp_vertices) {
+      auto mp = mp_vertex->estimate();
+      if (mp.hasNaN()) {
+        mp_p->set_outlier();
+        continue;
+      }
 
-    //     // std::cout << "before: " << mp_p->pt_3d.x << " " << mp_p->pt_3d.y << " " << mp_p->pt_3d.z << std::endl;
-    //     // std::cout << "after: " << mp.transpose() << std::endl;
-    //     // mp_p->pt_3d.x = mp.x();
-    //     // mp_p->pt_3d.y = mp.y();
-    //     // mp_p->pt_3d.z = mp.z();
-    //   }
-    // }
+      if (mp_p && !mp_p->is_outlier()) {
+        auto pt_3d = eigenVector3dToCvPoint3d(mp);
+
+        mp_p->set_mappoint(pt_3d);
+        inlier_mappoints++;
+
+        // // The difference before and after optimization cannot be too large
+        // if (cv::norm(pt_3d - mp_p->pt_3d) < 1.5) {
+        //   mp_p->pt_3d = pt_3d;
+        // }
+
+        // std::cout << "before: " << mp_p->pt_3d.x << " " << mp_p->pt_3d.y << " " << mp_p->pt_3d.z << std::endl;
+        // std::cout << "after: " << mp.transpose() << std::endl;
+        // mp_p->pt_3d.x = mp.x();
+        // mp_p->pt_3d.y = mp.y();
+        // mp_p->pt_3d.z = mp.z();
+      }
+    }
+    std::cout << "inlier mappoints BA: " << inlier_mappoints << "/" << core_mp_vertices.size() << std::endl;
   }
 
 }  // namespace vslam_backend_plugins

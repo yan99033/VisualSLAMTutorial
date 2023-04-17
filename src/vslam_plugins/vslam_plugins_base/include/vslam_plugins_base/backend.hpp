@@ -8,7 +8,8 @@
 namespace vslam_backend_base {
   class Backend {
   public:
-    virtual void initialize(const cv::Mat& K, const FrameQueue::SharedPtr frame_queue = nullptr) = 0;
+    virtual void initialize(const cv::Mat& K, const vslam_datastructure::FrameQueue::SharedPtr frame_queue = nullptr)
+        = 0;
 
     virtual void add_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
@@ -25,7 +26,7 @@ namespace vslam_backend_base {
     Backend() {}
 
     // frame_queue_ is used to add the updated keyframes so they can be updated visually
-    FrameQueue::SharedPtr frame_queue_;
+    vslam_datastructure::FrameQueue::SharedPtr frame_queue_;
   };
 }  // namespace vslam_backend_base
 

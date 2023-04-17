@@ -66,13 +66,22 @@ namespace vslam_components {
 
       // Back-end
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
-      backend_->initialize(K_);
+      backend_->initialize(K_, frame_visual_queue_);
 
-      // Frame subscriber and publisher
+      // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&IndirectVSlamNode::frame_callback, this, _1));
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
       captured_frame_pub_ = frame_pub_;
+      keyframe_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_keyframe", 10);
+
+      frame_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
+    }
+
+    IndirectVSlamNode::~IndirectVSlamNode() {
+      frame_visual_queue_->stop();
+      run_frame_visual_publisher_ = false;
+      frame_queue_publisher_thread_.join();
     }
 
     cv::Mat IndirectVSlamNode::load_camera_info() {
@@ -194,6 +203,12 @@ namespace vslam_components {
           current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
           current_frame->set_map_points(new_mps, get_second_indices(matched_index_pairs));
           backend_->add_keyframe(current_frame);
+
+          // Add the frame to visual update queue
+          vslam_msgs::msg::Frame kf_msg;
+          current_frame->to_msg(&kf_msg);
+          frame_visual_queue_->send(std::move(kf_msg));
+
           std::cout << "created a new keyframe " << std::endl;
         } else {
           std::cout << "didn't create a new keyframe" << std::endl;
@@ -202,7 +217,8 @@ namespace vslam_components {
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
-        current_frame->to_msg(frame_msg.get(), skip_loaded);
+        constexpr bool no_points = true;
+        current_frame->to_msg(frame_msg.get(), skip_loaded, no_points);
       } else {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;
@@ -224,6 +240,15 @@ namespace vslam_components {
       }
 
       return false;
+    }
+
+    void IndirectVSlamNode::frame_visual_publisher_loop() {
+      while (run_frame_visual_publisher_) {
+        auto keyframe_msg = frame_visual_queue_->receive();
+
+        keyframe_pub_->publish(keyframe_msg);
+      }
+      std::cout << "Terminated frame publisher loop" << std::endl;
     }
 
   }  // namespace vslam_nodes

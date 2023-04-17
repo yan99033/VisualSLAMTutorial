@@ -14,7 +14,7 @@ namespace vslam_backend_plugins {
   public:
     ~Indirect();
 
-    void initialize(const cv::Mat& K, const FrameQueue::SharedPtr frame_queue = nullptr) override;
+    void initialize(const cv::Mat& K, const vslam_datastructure::FrameQueue::SharedPtr frame_queue = nullptr) override;
 
     void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
@@ -43,7 +43,7 @@ namespace vslam_backend_plugins {
     void local_ba_loop();
     std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
     void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
-    size_t num_core_kfs_{5};
+    size_t num_core_kfs_{3};
 
     std::atomic_bool exit_thread_{false};
   };
