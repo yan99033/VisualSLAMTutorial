@@ -158,6 +158,7 @@ namespace vslam_datastructure {
 
       if (mp.get() && !mp->is_outlier()) {
         mp->update_mappoint(new_mp->get_mappoint());
+        (*mp_it)->copy_from(mp.get());
       } else {
         points_.at(i)->mappoint = new_mp;
       }

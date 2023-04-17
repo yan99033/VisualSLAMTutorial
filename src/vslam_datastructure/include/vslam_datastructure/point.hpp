@@ -16,6 +16,9 @@ namespace vslam_datastructure {
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
+    // Copy from another mappoint
+    void copy_from(MapPoint* other);
+
     void set_mappoint(const cv::Point3d& pt_3d);
 
     // Update the map point by getting the element-wise mean between the existing and new points
@@ -33,6 +36,8 @@ namespace vslam_datastructure {
 
     bool is_outlier() const { return is_outlier_; }
 
+    long unsigned int id() const { return id_; }
+
   private:
     std::mutex mutex_;
 
@@ -45,7 +50,7 @@ namespace vslam_datastructure {
      */
     std::set<Point*> projections_;
 
-    long unsigned int id{point_count++};
+    long unsigned int id_{point_count++};
 
     static long unsigned int point_count;
   };
