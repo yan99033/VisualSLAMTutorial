@@ -30,8 +30,9 @@ namespace vslam_datastructure {
     void from_msg(vslam_msgs::msg::Frame* frame_msg);
 
     // Set the id, timestamp, image, pose and points
-    // A flag to skip the loaded data (id, timestamp and image)
-    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false);
+    // skip_loaded flag to skip the loaded data (id, timestamp and image)
+    // no_points flag to skip the 2d keypoints and 3d map points
+    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false, const bool no_points = false);
 
     // Set the points
     void set_points(Points& points);

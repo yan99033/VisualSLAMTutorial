@@ -86,7 +86,7 @@ namespace vslam_datastructure {
     image_ = cv_mat.clone();
   }
 
-  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded) {
+  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded, const bool no_points) {
     if (frame_msg == nullptr) {
       return;
     }
@@ -106,6 +106,10 @@ namespace vslam_datastructure {
     }
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
+
+    if (no_points) {
+      return;
+    }
 
     for (const auto& pt : points_) {
       if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
