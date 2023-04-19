@@ -16,7 +16,7 @@ namespace vslam_datastructure {
 
   vslam_msgs::msg::Frame FrameQueue::receive() {
     std::unique_lock<std::mutex> lck(mutex_);
-    condition_.wait(lck, [this] { return !queue_.empty() || !exit_; });
+    condition_.wait(lck, [this] { return !queue_.empty() || exit_; });
 
     if (exit_) {
       queue_.clear();
