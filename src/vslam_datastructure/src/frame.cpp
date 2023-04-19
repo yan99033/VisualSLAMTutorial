@@ -86,7 +86,7 @@ namespace vslam_datastructure {
     image_ = cv_mat.clone();
   }
 
-  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded, const bool no_points) {
+  void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded, const bool no_mappoints) {
     if (frame_msg == nullptr) {
       return;
     }
@@ -107,21 +107,18 @@ namespace vslam_datastructure {
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
 
-    if (no_points) {
-      return;
-    }
-
     for (const auto& pt : points_) {
       if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
         frame_msg->keypoints_has_mp.push_back(true);
-
-        // 3D map points
-        vslam_msgs::msg::Vector3d pt_3d;
-        const auto mp_pt_3d = pt->mappoint->get_mappoint();
-        pt_3d.x = mp_pt_3d.x;
-        pt_3d.y = mp_pt_3d.y;
-        pt_3d.z = mp_pt_3d.z;
-        frame_msg->mappoints.push_back(pt_3d);
+        if (!no_mappoints) {
+          // 3D map points
+          vslam_msgs::msg::Vector3d pt_3d;
+          const auto mp_pt_3d = pt->mappoint->get_mappoint();
+          pt_3d.x = mp_pt_3d.x;
+          pt_3d.y = mp_pt_3d.y;
+          pt_3d.z = mp_pt_3d.z;
+          frame_msg->mappoints.push_back(pt_3d);
+        }
       } else {
         frame_msg->keypoints_has_mp.push_back(false);
       }
@@ -162,10 +159,12 @@ namespace vslam_datastructure {
 
       if (mp.get() && !mp->is_outlier()) {
         mp->update_mappoint(new_mp->get_mappoint());
-        (*mp_it)->copy_from(mp.get());
-      } else {
-        points_.at(i)->mappoint = new_mp;
-      }
+        new_mp->copy_from(mp.get());
+        // (*mp_it)->copy_from(mp.get());
+      }  // else {
+      //   points_.at(i)->mappoint = new_mp;
+      // }
+      points_.at(i)->mappoint = new_mp;
 
       mp_it++;
     }
