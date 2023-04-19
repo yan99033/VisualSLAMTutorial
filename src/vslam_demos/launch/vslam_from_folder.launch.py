@@ -47,7 +47,8 @@ def generate_launch_description():
                 parameters=[params],
                 remappings=[
                     ('/in_frame', '/raw_frame'),
-                    ('/out_frame', '/frame_w_features'),
+                    ('/out_frame', '/live_frame'),
+                    ('/out_keyframe', '/keyframe')
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
             ComposableNode(
@@ -55,7 +56,8 @@ def generate_launch_description():
                 plugin='vslam_components::visualization_nodes::RvizVisualNode',
                 name='rviz_visual_node',
                 remappings=[
-                    ('/in_frame', '/frame_w_features'),
+                    ('/in_frame', '/live_frame'),
+                    ('/update_frame', '/keyframe')
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
         ],

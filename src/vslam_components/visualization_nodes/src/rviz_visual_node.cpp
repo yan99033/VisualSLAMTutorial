@@ -22,8 +22,8 @@ namespace {
     throw std::runtime_error("Unsupported mat type");
   }
 
-  void calculateLivePoseMarkers(const geometry_msgs::msg::Pose &pose, visualization_msgs::msg::Marker &pose_marker,
-                                const Eigen::Matrix3d cam_axes_transform = Eigen::Matrix3d::Identity()) {
+  void calculatePoseMarker(const geometry_msgs::msg::Pose &pose, visualization_msgs::msg::Marker &pose_marker,
+                           const Eigen::Matrix3d cam_axes_transform = Eigen::Matrix3d::Identity()) {
     // Convert the pose to an Eigen matrix
     Eigen::Isometry3d eigen_transform;
     tf2::fromMsg(pose, eigen_transform);
@@ -149,14 +149,46 @@ namespace vslam_components {
 
       // TODO: publish tf transform so we can follow the camera trajectory
       visualization_msgs::msg::Marker pose_marker;
-      calculateLivePoseMarkers(frame_msg->pose, pose_marker, cam_axes_transform_);
-      pose_marker.id = cam_marker_id_++;
+      calculatePoseMarker(frame_msg->pose, pose_marker, cam_axes_transform_);
+      pose_marker.id = -1;
       pose_marker.ns = "live";
       live_frame_publisher_->publish(pose_marker);
     }
 
     void RvizVisualNode::update_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
+
+      // Add 3D map points to the marker message and publish
+      visualization_msgs::msg::Marker mps_marker;
+      mps_marker.header.frame_id = "map";
+      mps_marker.type = visualization_msgs::msg::Marker::POINTS;
+      mps_marker.action = visualization_msgs::msg::Marker::ADD;
+      constexpr double marker_scale = 0.05;
+      mps_marker.scale.x = marker_scale;
+      mps_marker.scale.y = marker_scale;
+      mps_marker.scale.z = marker_scale;
+      mps_marker.color.r = 1.0;
+      mps_marker.color.a = 1.0;
+      mps_marker.id = frame_msg->id;
+      mps_marker.ns = "keyframe";
+      for (const auto &mp : frame_msg->mappoints) {
+        Eigen::Vector3d mp_eigen(mp.x, mp.y, mp.z);
+        mp_eigen = cam_axes_transform_ * mp_eigen;
+
+        auto pt = geometry_msgs::msg::Point();
+        pt.x = mp_eigen.x();
+        pt.y = mp_eigen.y();
+        pt.z = mp_eigen.z();
+        mps_marker.points.push_back(pt);
+      }
+      mappoint_publisher_->publish(mps_marker);
+
+      // TODO: publish tf transform so we can follow the camera trajectory
+      visualization_msgs::msg::Marker pose_marker;
+      calculatePoseMarker(frame_msg->pose, pose_marker, cam_axes_transform_);
+      pose_marker.id = frame_msg->id;
+      pose_marker.ns = "keyframe";
+      live_frame_publisher_->publish(pose_marker);
     }
 
   }  // namespace visualization_nodes
