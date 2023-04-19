@@ -18,10 +18,14 @@ namespace vslam_datastructure {
     using SharedPtr = std::shared_ptr<Frame>;
     using WeakPtr = std::weak_ptr<Frame>;
 
+    Frame() = delete;
+
+    Frame(const cv::Mat& K);
+
     cv::Mat get_image() const;
 
     // Get the camera pose
-    cv::Mat get_pose();
+    cv::Mat T_f_w();
 
     // Set the camera pose
     void set_pose(const cv::Mat& T_f_w);
@@ -40,7 +44,7 @@ namespace vslam_datastructure {
     // Get points
     inline const Points& get_points() const { return points_; }
 
-    void set_map_points(const MapPoints mappoints, const std::vector<size_t> indices);
+    void set_map_points(MapPoints& mappoints, const std::vector<size_t> indices);
 
     // Get the numbe of map points
     size_t get_num_mps();
@@ -72,8 +76,11 @@ namespace vslam_datastructure {
     cv::Mat T_f_w_{cv::Mat::eye(4, 4, CV_64F)};  //!< Camera pose
     cv::Mat image_;                              //!< the image of the frame
     Points points_;                              //!< vector containing 2D and 3D points
+    cv::Mat K_;                                  //!< 3x3 camera matrix
     bool is_keyframe_{false};                    //!< a boolean to indicate if the frame is a keyframe
     std::mutex data_mutex_;                      //!< Mutex for synchronizing reading and writing frame data
+    static constexpr double max_reproj_err_{
+        8.0};  //!< max reprojection error in pixel to associate a map point with a keypoint
 
     // Constraints between current (key)frame and the adjacent keyframes
     // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)

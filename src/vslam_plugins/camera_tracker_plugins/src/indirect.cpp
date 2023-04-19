@@ -32,7 +32,7 @@ namespace {
         // Transform the 3d point in point1 to local
         cv::Point3d pt_3d_1 = match.point1->mappoint->get_mappoint();
 
-        cv::Mat T_1_w = match.point1->frame->get_pose();
+        cv::Mat T_1_w = match.point1->frame->T_f_w();
         cv::Matx33d R = T_1_w.rowRange(0, 3).colRange(0, 3);
         cv::Mat t = T_1_w.rowRange(0, 3).colRange(3, 4);
         pt_3d_1 = R * pt_3d_1 + cv::Point3d(t.at<double>(0), t.at<double>(1), t.at<double>(2));

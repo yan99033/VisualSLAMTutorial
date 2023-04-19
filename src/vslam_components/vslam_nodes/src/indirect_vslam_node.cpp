@@ -114,7 +114,7 @@ namespace vslam_components {
       auto points = feature_extractor_->extract_features(cv_mat);
 
       if (state_ == State::init) {
-        auto frame = std::make_shared<vslam_datastructure::Frame>();
+        auto frame = std::make_shared<vslam_datastructure::Frame>(K_);
         frame->from_msg(frame_msg.get());
         frame->set_points(points);
         frame->set_keyframe();
@@ -130,7 +130,7 @@ namespace vslam_components {
           return;
         }
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+        auto current_frame = std::make_shared<vslam_datastructure::Frame>(K_);
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
@@ -141,11 +141,11 @@ namespace vslam_components {
         T_c_p_ = T_c_p;
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe->get_pose();
+        cv::Mat T_p_w = current_keyframe->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
-        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);  // , true);
+        auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);  // , true);
         current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
 
         // write pose to the frame message
@@ -161,7 +161,9 @@ namespace vslam_components {
           return;
         }
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+        std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " to track" << std::endl;
+
+        auto current_frame = std::make_shared<vslam_datastructure::Frame>(K_);
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
@@ -176,7 +178,8 @@ namespace vslam_components {
           return;
         }
 
-        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points);
+        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, T_c_p_);
+        T_c_p_ = T_c_p;
 
         // Check the number of outliers in the calculating the camera pose
         if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_)) {
@@ -187,7 +190,7 @@ namespace vslam_components {
         }
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe->get_pose();
+        cv::Mat T_p_w = current_keyframe->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
@@ -199,7 +202,7 @@ namespace vslam_components {
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();
-          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
           current_frame->set_map_points(new_mps, get_second_indices(matched_index_pairs));
           backend_->add_keyframe(current_frame);
@@ -210,8 +213,6 @@ namespace vslam_components {
           frame_visual_queue_->send(std::move(kf_msg));
 
           std::cout << "created a new keyframe " << std::endl;
-        } else {
-          std::cout << "didn't create a new keyframe" << std::endl;
         }
         std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " map points" << std::endl;
 
@@ -247,6 +248,9 @@ namespace vslam_components {
         auto keyframe_msg = frame_visual_queue_->receive();
 
         keyframe_pub_->publish(keyframe_msg);
+
+        // Free CPU
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
