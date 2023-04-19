@@ -93,12 +93,20 @@ namespace vslam_camera_tracker_plugins {
     return to_transformation_matrix(R, t);
   }
 
-  cv::Mat Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points) {
+  cv::Mat Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, cv::Mat T_2_1_init) {
     auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
 
     cv::Mat rpy;
     cv::Mat t;
-    constexpr bool use_extrinsic_guess = false;
+    const bool use_extrinsic_guess = [&]() {
+      if (T_2_1_init.empty()) {
+        return false;
+      } else {
+        cv::Rodrigues(T_2_1_init.rowRange(0, 3).colRange(0, 3), rpy);
+        t = T_2_1_init.rowRange(0, 3).colRange(3, 4);
+        return true;
+      }
+    }();
     constexpr int num_iter = 100;
     constexpr float reproj_err_thresh = 8.0;
     constexpr double confidence = 0.99;
