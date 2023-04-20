@@ -130,15 +130,6 @@ namespace vslam_camera_tracker_plugins {
       points_3d_1_ptr[inliers.at<int>(i)]->set_inlier();
     }
 
-    int num_outliers = 0;
-    for (const auto& mp : points_3d_1_ptr) {
-      if (mp->is_outlier()) {
-        num_outliers++;
-      }
-    }
-    std::cout << "num outliers: " << num_outliers << " / " << points_3d_1_ptr.size() << std::endl;
-    std::cout << "num inliers: " << inliers.total() << std::endl;
-
     return to_transformation_matrix(R, t);
   }
 
