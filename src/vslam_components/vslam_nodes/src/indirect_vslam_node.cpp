@@ -22,21 +22,23 @@ namespace {
   }
 
   std::vector<size_t> get_first_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
-    std::vector<size_t> indices;
-    for (const auto& [idx, _] : indice_pairs) {
-      indices.push_back(idx);
+    std::vector<size_t> first_indices;
+    for (const auto& [idx1, _] : indice_pairs) {
+      first_indices.push_back(idx1);
     }
-    return indices;
+    return first_indices;
   }
 
-  std::vector<size_t> get_second_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
-    std::vector<size_t> indices;
-    for (const auto& [_, idx] : indice_pairs) {
-      indices.push_back(idx);
+  std::pair<std::vector<size_t>, std::vector<size_t>> get_first_and_second_indices(
+      const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
+    std::vector<size_t> first_indices;
+    std::vector<size_t> second_indices;
+    for (const auto& [idx1, idx2] : indice_pairs) {
+      first_indices.push_back(idx1);
+      second_indices.push_back(idx2);
     }
-    return indices;
+    return {first_indices, second_indices};
   }
-
 }  // namespace
 
 namespace vslam_components {
@@ -202,9 +204,11 @@ namespace vslam_components {
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();
-          auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
-          current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
-          current_frame->set_map_points(new_mps, get_second_indices(matched_index_pairs));
+          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
+          current_keyframe->set_map_points(new_mps, first_indices);
+          const auto new_old_mps = current_keyframe->get_map_points(first_indices);
+          current_frame->set_map_points(new_old_mps, second_indices);
           backend_->add_keyframe(current_frame);
 
           // Add the frame to visual update queue

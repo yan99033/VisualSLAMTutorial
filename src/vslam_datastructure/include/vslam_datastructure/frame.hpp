@@ -44,7 +44,10 @@ namespace vslam_datastructure {
     // Get points
     inline const Points& get_points() const { return points_; }
 
-    void set_map_points(MapPoints& mappoints, const std::vector<size_t> indices);
+    // Get map points
+    MapPoints get_map_points(const std::vector<size_t> point_indices);
+
+    void set_map_points(const MapPoints& mappoints, const std::vector<size_t> point_indices);
 
     // Get the numbe of map points
     size_t get_num_mps();

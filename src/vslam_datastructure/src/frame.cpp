@@ -152,33 +152,39 @@ namespace vslam_datastructure {
     }
   }
 
-  void Frame::set_map_points(MapPoints& mappoints, const std::vector<size_t> indices) {
+  MapPoints Frame::get_map_points(const std::vector<size_t> point_indices) {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+
+    MapPoints mappoints;
+    for (const auto i : point_indices) {
+      if (points_.at(i)->mappoint.get() && !points_.at(i)->mappoint->is_outlier()) {
+        mappoints.push_back(points_.at(i)->mappoint);
+      } else {
+        mappoints.push_back(nullptr);
+      }
+    }
+    return mappoints;
+  }
+
+  void Frame::set_map_points(const MapPoints& mappoints, const std::vector<size_t> indices) {
     assert(is_keyframe_);
     assert(mappoints.size() == indices.size());
 
     std::lock_guard<std::mutex> lck(data_mutex_);
 
-    auto mp_it = mappoints.begin();
-    for (const auto i : indices) {
-      auto mp = points_.at(i)->mappoint;
-      auto new_mp = *mp_it;
-
-      if (new_mp.get() == nullptr) {
-        mp_it++;
+    for (size_t idx = 0; idx < indices.size(); idx++) {
+      const auto i = indices.at(idx);
+      if (mappoints.at(idx).get() == nullptr) {
         continue;
       }
 
-      if (mp.get() && !mp->is_outlier()) {
-        mp->update_mappoint(new_mp->get_mappoint());
-        *mp_it = mp;
-        // new_mp->copy_from(mp.get());
-        // (*mp_it)->copy_from(mp.get());
+      if (points_.at(i)->mappoint.get() && !points_.at(i)->mappoint->is_outlier()) {
+        // Average the results
+        points_.at(i)->mappoint->update_mappoint(mappoints.at(idx)->get_mappoint());
       } else {
-        points_.at(i)->mappoint = new_mp;
+        // Create a new map point
+        points_.at(i)->mappoint = mappoints.at(idx);
       }
-      // points_.at(i)->mappoint = new_mp;
-
-      mp_it++;
     }
 
     set_mappoint_projections();
@@ -197,7 +203,7 @@ namespace vslam_datastructure {
 
   void Frame::set_keyframe() {
     std::lock_guard<std::mutex> lck(data_mutex_);
-    set_mappoint_projections();
+    // set_mappoint_projections();
     is_keyframe_ = true;
   }
 
@@ -217,8 +223,8 @@ namespace vslam_datastructure {
         // Project the map point to its 2D keypoint and see if it is an inlier
         const auto pt_2d = project_point_3d2d(pt->mappoint->get_mappoint(), K_, T_f_w_);
 
-        const auto dist = cv::norm(pt_2d - pt->keypoint.pt);
-        if (dist < max_reproj_err_) {
+        // Add projection if the reprojection error is low
+        if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_) {
           pt->mappoint->add_projection(pt.get());
         }
       }
