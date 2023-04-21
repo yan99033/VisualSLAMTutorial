@@ -77,11 +77,17 @@ namespace vslam_mapper_plugins {
       pt_3d /= pt_3d.at<double>(3, 0);
       // pt_3d *= normalize_scale;
 
-      // Replace NaNs with zeros so the point can be removed
+      // Check if NaN exists
+      bool nan_found{false};
       for (size_t j = 0; j < 3; j++) {
         if (std::isnan(pt_3d.at<double>(j, 0))) {
-          pt_3d.at<double>(j, 0) = 0;
+          nan_found = true;
+          break;
         }
+      }
+      if (nan_found) {
+        new_mps.push_back(nullptr);
+        continue;
       }
 
       // Remove points that have a large re-projection error
