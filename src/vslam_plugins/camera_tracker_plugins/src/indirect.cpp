@@ -127,7 +127,7 @@ namespace vslam_camera_tracker_plugins {
     cv::Rodrigues(rpy, R);
 
     for (size_t i = 0; i < inliers.total(); i++) {
-      points_3d_1_ptr[inliers.at<int>(i)]->set_inlier();
+      points_3d_1_ptr.at(inliers.at<int>(i))->set_inlier();
     }
 
     return to_transformation_matrix(R, t);

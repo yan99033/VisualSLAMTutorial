@@ -62,7 +62,7 @@ namespace vslam_feature_matcher_plugins {
   vslam_datastructure::Matches Orb::match_features(const vslam_datastructure::Points& points1,
                                                    const vslam_datastructure::Points& points2) {
     if (points1.empty() || points2.empty()) {
-      vslam_datastructure::MatchedPoints();
+      return {vslam_datastructure::MatchedPoints(), vslam_datastructure::MatchedIndexPairs()};
     }
 
     // Get keypoints and descriptors
