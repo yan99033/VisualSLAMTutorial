@@ -32,6 +32,9 @@ namespace vslam_backend_plugins {
     // The keyframe that is closest to the current camera pose
     vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
+    // Use it for reading and writing keyframes
+    std::mutex keyframe_mutex_;
+
     // Camera matrix
     cv::Mat K_;
 
@@ -43,7 +46,7 @@ namespace vslam_backend_plugins {
     void local_ba_loop();
     std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
     void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
-    size_t num_core_kfs_{3};
+    size_t num_core_kfs_{5};
 
     std::atomic_bool exit_thread_{false};
   };
