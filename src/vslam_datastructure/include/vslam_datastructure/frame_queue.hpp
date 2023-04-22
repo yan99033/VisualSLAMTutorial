@@ -1,7 +1,10 @@
 #ifndef VSLAM_DATASTRUCTURE__FRAME_QUEUE_HPP_
 #define VSLAM_DATASTRUCTURE__FRAME_QUEUE_HPP_
 
+#include <atomic>
+#include <condition_variable>
 #include <deque>
+#include <mutex>
 
 #include "vslam_msgs/msg/frame.hpp"
 

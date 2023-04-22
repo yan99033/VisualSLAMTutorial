@@ -199,8 +199,8 @@ namespace vslam_components {
         // Check if we need a new keyframe
         if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
           // Set constraints between adjacent keyframes
-          current_keyframe->add_T_this_next_kf(current_frame, T_c_p.inv());
-          current_frame->set_T_this_prev_kf(current_keyframe, T_c_p);
+          current_keyframe->add_T_this_next_kf(current_frame.get(), T_c_p.inv());
+          current_frame->set_T_this_prev_kf(current_keyframe.get(), T_c_p);
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();

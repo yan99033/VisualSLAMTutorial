@@ -1,6 +1,7 @@
 #ifndef VSLAM_DATASTRUCTURE__POINT_HPP_
 #define VSLAM_DATASTRUCTURE__POINT_HPP_
 
+#include <atomic>
 #include <opencv2/opencv.hpp>
 
 #include "vslam_datastructure/frame.hpp"

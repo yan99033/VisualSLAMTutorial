@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 project(vslam_backend_plugins)
 
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -29,7 +35,7 @@ set(sources
 
 
 add_library(${PROJECT_NAME} SHARED ${sources})
-target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::solver_cholmod g2o::solver_eigen Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::solver_eigen Eigen3::Eigen)
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

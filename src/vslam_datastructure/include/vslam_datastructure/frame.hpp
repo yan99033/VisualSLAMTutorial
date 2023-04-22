@@ -2,6 +2,7 @@
 #define VSLAM_DATASTRUCTURE__FRAME_HPP_
 
 #include <memory>
+#include <mutex>
 #include <opencv2/core/mat.hpp>
 
 #include "vslam_msgs/msg/frame.hpp"
@@ -16,7 +17,6 @@ namespace vslam_datastructure {
   class Frame {
   public:
     using SharedPtr = std::shared_ptr<Frame>;
-    using WeakPtr = std::weak_ptr<Frame>;
 
     Frame() = delete;
 
@@ -65,8 +65,8 @@ namespace vslam_datastructure {
     inline bool is_keyframe() const { return is_keyframe_; }
 
     // Set pose constraints between adjacent keyframes
-    void set_T_this_prev_kf(Frame::SharedPtr prev_kf, const cv::Mat& T_this_prev);
-    void add_T_this_next_kf(Frame::SharedPtr next_kf, const cv::Mat& T_this_next);
+    void set_T_this_prev_kf(const Frame* const prev_kf, const cv::Mat& T_this_prev);
+    void add_T_this_next_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
   private:
     // Iterate through the map points and set the projection constraints
@@ -87,8 +87,8 @@ namespace vslam_datastructure {
 
     // Constraints between current (key)frame and the adjacent keyframes
     // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
-    std::pair<Frame::WeakPtr, cv::Mat> T_this_prev_kf_;
-    std::vector<std::pair<Frame::WeakPtr, cv::Mat>> T_this_next_kf_;
+    std::pair<const Frame*, cv::Mat> T_this_prev_kf_;
+    std::vector<std::pair<const Frame*, cv::Mat>> T_this_next_kf_;
   };
 
 }  // namespace vslam_datastructure
