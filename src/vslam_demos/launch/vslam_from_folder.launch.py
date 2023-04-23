@@ -32,15 +32,6 @@ def generate_launch_description():
         executable='component_container_mt',
         composable_node_descriptions=[
             ComposableNode(
-                package='data_loader_nodes',
-                plugin='vslam_components::data_loader_nodes::LoadFromFolder',
-                name='camera_node',
-                parameters=[params],
-                remappings=[
-                    ('/out_frame', '/raw_frame'),
-                ],
-                extra_arguments=[{'use_intra_process_comms': True}],),
-            ComposableNode(
                 package='vslam_nodes',
                 plugin='vslam_components::vslam_nodes::IndirectVSlamNode',
                 name='indirect_vslam_node',
@@ -60,6 +51,15 @@ def generate_launch_description():
                     ('/update_frame', '/keyframe')
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
+            ComposableNode(
+                package='data_loader_nodes',
+                plugin='vslam_components::data_loader_nodes::LoadFromFolder',
+                name='camera_node',
+                parameters=[params],
+                remappings=[
+                    ('/out_frame', '/raw_frame'),
+                ],
+                extra_arguments=[{'use_intra_process_comms': True}],)
         ],
         output='screen',
     )
