@@ -1,9 +1,9 @@
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_datastructure {
-  long unsigned int Point::point_count = 0;
+  long unsigned int Point::point_count_ = 0;
 
-  long unsigned int MapPoint::point_count = 0;
+  long unsigned int MapPoint::point_count_ = 0;
 
   void MapPoint::copy_from(MapPoint* other) {
     if (this == other || other == nullptr) {
@@ -43,6 +43,11 @@ namespace vslam_datastructure {
   void MapPoint::add_projection(Point* point) {
     std::lock_guard<std::mutex> lck(mutex_);
     projections_.insert(point);
+  }
+
+  void MapPoint::set_host_keyframe(Frame* const host_keyframe) {
+    std::lock_guard<std::mutex> lck(mutex_);
+    host_keyframe_ = host_keyframe;
   }
 
 }  // namespace vslam_datastructure

@@ -39,6 +39,10 @@ namespace vslam_datastructure {
 
     long unsigned int id() const { return id_; }
 
+    void set_host_keyframe(Frame* const host_keyframe);
+
+    inline Frame* host_keyframe() const { return host_keyframe_; }
+
   private:
     std::mutex mutex_;
 
@@ -51,9 +55,12 @@ namespace vslam_datastructure {
      */
     std::set<Point*> projections_;
 
-    long unsigned int id_{point_count++};
+    long unsigned int id_{point_count_++};
 
-    static long unsigned int point_count;
+    static long unsigned int point_count_;
+
+    // The keyframe, a non-owning pointer, in which this point is created
+    Frame* host_keyframe_{nullptr};
   };
   using MapPoints = std::vector<MapPoint::SharedPtr>;
 
@@ -72,9 +79,9 @@ namespace vslam_datastructure {
 
     Frame* frame;  //!< non-owning frame pointer
 
-    long unsigned int id{point_count++};
+    long unsigned int id{point_count_++};
 
-    static long unsigned int point_count;
+    static long unsigned int point_count_;
   };
   using Points = std::vector<Point::SharedPtr>;
 
