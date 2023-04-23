@@ -12,7 +12,9 @@ namespace vslam_place_recognition_base {
       double score;
     };
 
-    virtual void initialize(int top_k = 1) = 0;
+    // The additional input coult be a vocabulary database or a trained deep neural network model
+    // used for place recognition
+    virtual void initialize(const int top_k = 1, const std::string& input = std::string()) = 0;
 
     // Add the visual features of the current frame to the database for future retrieval
     // Use cv::Mat to store your visual feature data, as it supports a variety of primitive types

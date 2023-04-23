@@ -16,11 +16,13 @@ find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
+find_package(DBoW3 REQUIRED)
 
 set(dependencies
   OpenCV
   pluginlib
   vslam_plugins_base
+  DBoW3
 )
 
 set(sources

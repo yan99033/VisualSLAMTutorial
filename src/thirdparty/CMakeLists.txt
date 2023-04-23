@@ -19,9 +19,19 @@ find_package(ament_cmake REQUIRED)
 include(../../cmake/CPM.cmake)
 
 CPMAddPackage(
+  NAME DBoW3
+  GIT_REPOSITORY https://github.com/yan99033/DBow3.git
+  GIT_TAG master
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+)
+
+CPMAddPackage(
   NAME g2o
   GIT_REPOSITORY https://github.com/RainerKuemmerle/g2o.git
   GIT_TAG e8df200 # 20230223_git
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
   OPTIONS "G2O_BUILD_APPS OFF" "G2O_BUILD_EXAMPLES OFF"
 )
 

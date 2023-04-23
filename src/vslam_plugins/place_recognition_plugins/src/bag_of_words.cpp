@@ -1,7 +1,12 @@
 #include "vslam_place_recognition_plugins/bag_of_words.hpp"
 
 namespace vslam_place_recognition_plugins {
-  void BagOfWords::initialize(int top_k) { top_k_ = top_k; }
+  void BagOfWords::initialize(const int top_k, const std::string& input) {
+    top_k_ = top_k;
+
+    vocab_ = DBoW3::Vocabulary(input);
+    database_ = std::make_unique<DBoW3::Database>(vocab_, false, 0);
+  }
 
   // Add the visual features of the current frame to the database for future retrieval
   void BagOfWords::add_to_database(long unsigned int kf_id, const cv::Mat& visual_features) {}
