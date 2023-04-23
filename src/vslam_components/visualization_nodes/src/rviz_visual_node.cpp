@@ -97,7 +97,7 @@ namespace vslam_components {
     }
 
     void RvizVisualNode::live_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
-      RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
+      RCLCPP_INFO(this->get_logger(), "Getting live frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
       cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
@@ -156,7 +156,7 @@ namespace vslam_components {
     }
 
     void RvizVisualNode::update_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
-      RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
+      RCLCPP_INFO(this->get_logger(), "Getting update frame %u", frame_msg->id);
 
       // Add 3D map points to the marker message and publish
       visualization_msgs::msg::Marker mps_marker;
