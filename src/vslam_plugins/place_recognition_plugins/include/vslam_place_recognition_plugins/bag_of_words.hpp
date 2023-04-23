@@ -19,7 +19,7 @@ namespace vslam_place_recognition_plugins {
   private:
     DBoW3::Vocabulary vocab_;
     std::unique_ptr<DBoW3::Database> database_;
-    std::unordered_map<long unsigned int, long unsigned int> keyframe_index_pairs_;
+    std::unordered_map<DBoW3::EntryId, long unsigned int> keyframe_index_pairs_;
   };
 }  // namespace vslam_place_recognition_plugins
 
