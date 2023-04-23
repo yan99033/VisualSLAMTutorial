@@ -304,11 +304,10 @@ namespace {
     return true;
   }
 
-  bool calculate_harris_response_and_octave(const CvMatPyr image_pyr, cv::KeyPoint& kp, const int nlevels,
+  bool calculate_harris_response_and_octave(const CvMatPyr image_pyr, cv::KeyPoint& kp, const size_t nlevels,
                                             const std::vector<double>& scale_factors, const int patch_size,
                                             const int harris_block_size, const float harris_k = 0.04) {
-    assert(!image_pyr.empty() && (static_cast<int>(image_pyr.size()) == nlevels)
-           && (static_cast<int>(scale_factors.size()) == nlevels));
+    assert(!image_pyr.empty() && (image_pyr.size() == nlevels) && (scale_factors.size() == nlevels));
 
     // Set the initial response to zero so that we can find a higher response later
     kp.response = 0;
@@ -423,7 +422,7 @@ namespace {
   }
 
   std::pair<Keypoints, Descriptors> calculate_keypoints_and_descriptors(
-      const cv::Mat& image, const std::vector<cv::Point2d>& corners, const int nlevels = 8,
+      const cv::Mat& image, const std::vector<cv::Point2d>& corners, const size_t nlevels = 8,
       const double scale_factor = 1.2, const int harris_block_size = 7, const int patch_size = 31,
       const int desc_size = 32) {
     assert((patch_size == 31) && (desc_size == 32));
@@ -432,7 +431,7 @@ namespace {
     CvMatPyr image_pyramid;
     std::vector<double> scale_factors;
     double curr_scale_factor = 1.0;
-    for (int i = 0; i < nlevels; i++) {
+    for (size_t i = 0; i < nlevels; i++) {
       scale_factors.push_back(curr_scale_factor);
       curr_scale_factor /= scale_factor;
       if (i == 0) {
@@ -475,11 +474,10 @@ namespace {
     // Pre-compute the pattern
     std::vector<cv::Point> pattern;
     const int npoints = 512;
-    cv::Point patternbuf[npoints];
     const cv::Point* pattern0 = (const cv::Point*)bit_pattern_31_;
     std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
 
-    for (int level = 0; level < nlevels; level++) {
+    for (size_t level = 0; level < nlevels; level++) {
       // preprocess the resized image
       cv::Mat working_mat = image_pyramid.at(level);
 

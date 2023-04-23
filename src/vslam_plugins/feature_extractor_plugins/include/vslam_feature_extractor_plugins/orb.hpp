@@ -24,7 +24,7 @@ namespace vslam_feature_extractor_plugins {
     double min_dist_{8};
 
     // ORB feature detector
-    int nlevels_{8};
+    size_t nlevels_{8};
     double scale_factor_{1.2};
     static constexpr int harris_block_size_{7};
     static constexpr int patch_size_{31};
