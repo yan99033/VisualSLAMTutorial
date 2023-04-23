@@ -70,7 +70,7 @@ namespace vslam_backend_plugins {
       current_keyframe_ = keyframe;
     }
 
-    {
+    if (!busy_) {
       std::lock_guard<std::mutex> lck(local_ba_mutex_);
       run_local_ba_ = true;
       local_ba_condition_.notify_one();
@@ -92,8 +92,10 @@ namespace vslam_backend_plugins {
   void Indirect::local_ba_loop() {
     while (!exit_thread_) {
       {
+        busy_ = false;
         std::unique_lock<std::mutex> lck(local_ba_mutex_);
         local_ba_condition_.wait(lck, [this] { return exit_thread_ || run_local_ba_; });
+        busy_ = true;
       }
 
       if (exit_thread_) {

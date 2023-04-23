@@ -125,23 +125,23 @@ namespace vslam_datastructure {
           // // Only visualize the map points that belong to the host
           // // FIXME: not working at the moment
           // // An alternative solution is to create a vector of type MapPoint::SharedPtr
-          // if (pt->mappoint->is_host(id_)) {
-          //   // 3D map points
-          //   vslam_msgs::msg::Vector3d pt_3d;
-          //   const auto mp_pt_3d = pt->mappoint->get_mappoint();
-          //   pt_3d.x = mp_pt_3d.x;
-          //   pt_3d.y = mp_pt_3d.y;
-          //   pt_3d.z = mp_pt_3d.z;
-          //   frame_msg->mappoints.push_back(pt_3d);
-          // }
+          if (pt->mappoint->is_host(id_)) {
+            // 3D map points
+            vslam_msgs::msg::Vector3d pt_3d;
+            const auto mp_pt_3d = pt->mappoint->get_mappoint();
+            pt_3d.x = mp_pt_3d.x;
+            pt_3d.y = mp_pt_3d.y;
+            pt_3d.z = mp_pt_3d.z;
+            frame_msg->mappoints.push_back(pt_3d);
+          }
 
-          // 3D map points
-          vslam_msgs::msg::Vector3d pt_3d;
-          const auto mp_pt_3d = pt->mappoint->get_mappoint();
-          pt_3d.x = mp_pt_3d.x;
-          pt_3d.y = mp_pt_3d.y;
-          pt_3d.z = mp_pt_3d.z;
-          frame_msg->mappoints.push_back(pt_3d);
+          // // 3D map points
+          // vslam_msgs::msg::Vector3d pt_3d;
+          // const auto mp_pt_3d = pt->mappoint->get_mappoint();
+          // pt_3d.x = mp_pt_3d.x;
+          // pt_3d.y = mp_pt_3d.y;
+          // pt_3d.z = mp_pt_3d.z;
+          // frame_msg->mappoints.push_back(pt_3d);
         }
       } else {
         frame_msg->keypoints_has_mp.push_back(false);
