@@ -27,23 +27,23 @@ namespace {
     return pt_projected.rowRange(0, 2);
   }
 
-  double find_median_depth(const cv::Mat& mat) {
-    // process the non-zero values only
-    cv::Mat mat_cpy = mat.clone();
-    mat_cpy = cv::max(mat_cpy, cv::Scalar(0));
-    const int nonzeros_count = cv::countNonZero(mat_cpy);
-    const int half_size = nonzeros_count / 2;
+  // double find_median_depth(const cv::Mat& mat) {
+  //   // process the non-zero values only
+  //   cv::Mat mat_cpy = mat.clone();
+  //   mat_cpy = cv::max(mat_cpy, cv::Scalar(0));
+  //   const int nonzeros_count = cv::countNonZero(mat_cpy);
+  //   const int half_size = nonzeros_count / 2;
 
-    // Copy elements to vector
-    std::vector<double> sorted(mat_cpy.rows * mat_cpy.cols * mat_cpy.channels());
-    assert(mat_cpy.isContinuous());
-    sorted.assign(mat_cpy.ptr<double>(0), mat_cpy.ptr<double>(0) + mat_cpy.total());
+  //   // Copy elements to vector
+  //   std::vector<double> sorted(mat_cpy.rows * mat_cpy.cols * mat_cpy.channels());
+  //   assert(mat_cpy.isContinuous());
+  //   sorted.assign(mat_cpy.ptr<double>(0), mat_cpy.ptr<double>(0) + mat_cpy.total());
 
-    // Calculate the median of the non-zero values
-    std::nth_element(sorted.begin(), sorted.begin() + half_size - 1, sorted.end(), std::greater<double>());
+  //   // Calculate the median of the non-zero values
+  //   std::nth_element(sorted.begin(), sorted.begin() + half_size - 1, sorted.end(), std::greater<double>());
 
-    return sorted.at(half_size);
-  }
+  //   return sorted.at(half_size);
+  // }
 }  // namespace
 
 namespace vslam_mapper_plugins {
@@ -63,19 +63,12 @@ namespace vslam_mapper_plugins {
     cv::Mat cv_points1_3d;
     cv::triangulatePoints(P1, P2, cv_points1, cv_points2, cv_points1_3d);
 
-    // // map scale
-    // if (normalize_depth) {
-    //   cv::Mat normalized_z = cv_points1_3d.row(2) / cv_points1_3d.row(3);
-    //   normalize_scale = 1.0 / find_median_depth(normalized_z);
-    // }
-
     // Create map points for the points
     vslam_datastructure::MapPoints new_mps;
     for (size_t i = 0; i < matched_points.size(); i++) {
       // Normalize and transform to the global coordinates
       auto pt_3d = cv_points1_3d.col(i);
       pt_3d /= pt_3d.at<double>(3, 0);
-      // pt_3d *= normalize_scale;
 
       // Check if NaN exists
       bool nan_found{false};
