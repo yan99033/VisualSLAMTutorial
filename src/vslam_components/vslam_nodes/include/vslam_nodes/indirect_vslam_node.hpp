@@ -17,6 +17,7 @@
 #include "vslam_plugins_base/feature_extractor.hpp"
 #include "vslam_plugins_base/feature_matcher.hpp"
 #include "vslam_plugins_base/mapper.hpp"
+#include "vslam_plugins_base/place_recognition.hpp"
 
 namespace vslam_components {
   namespace vslam_nodes {
@@ -94,6 +95,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_backend_base::Backend> backend_loader_{"vslam_plugins_base",
                                                                           "vslam_backend_base::Backend"};
       std::shared_ptr<vslam_backend_base::Backend> backend_;
+
+      // Place recognition plugin
+      pluginlib::ClassLoader<vslam_place_recognition_base::PlaceRecognition> place_recognition_loader_{
+          "vslam_plugins_base", "vslam_place_recognition_base::PlaceRecognition"};
+      std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

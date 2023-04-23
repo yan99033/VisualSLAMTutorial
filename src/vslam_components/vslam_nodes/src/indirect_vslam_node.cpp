@@ -70,6 +70,12 @@ namespace vslam_components {
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
       backend_->initialize(K_, frame_visual_queue_);
 
+      // Place-recognition
+      place_recognition_ = place_recognition_loader_.createSharedInstance(
+          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+      place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
+                                     declare_parameter("score_thresh", 0.9));
+
       // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
                                                                std::bind(&IndirectVSlamNode::frame_callback, this, _1));

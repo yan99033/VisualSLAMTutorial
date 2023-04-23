@@ -8,7 +8,8 @@
 namespace vslam_place_recognition_plugins {
   class BagOfWords : public vslam_place_recognition_base::PlaceRecognition {
   public:
-    void initialize(const int top_k = 1, const std::string& input = std::string()) override;
+    void initialize(const std::string& input = std::string(), const int top_k = 1,
+                    const double score_thresh = 0.9) override;
 
     // Add the visual features of the current frame to the database for future retrieval
     void add_to_database(long unsigned int kf_id, const cv::Mat& visual_features) override;

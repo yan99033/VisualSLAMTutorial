@@ -1,8 +1,11 @@
 #include "vslam_place_recognition_plugins/bag_of_words.hpp"
 
 namespace vslam_place_recognition_plugins {
-  void BagOfWords::initialize(const int top_k, const std::string& input) {
+
+  void BagOfWords::initialize(const std::string& input, const int top_k, const double score_thresh) {
     top_k_ = top_k;
+
+    score_thresh_ = score_thresh;
 
     vocab_ = DBoW3::Vocabulary(input);
     database_ = std::make_unique<DBoW3::Database>(vocab_, false, 0);
@@ -23,7 +26,9 @@ namespace vslam_place_recognition_plugins {
 
     std::vector<Result> results;
     for (const auto& res : database_results) {
-      results.emplace_back(Result{keyframe_index_pairs_.at(res.Id), res.Score});
+      if (res.Score > score_thresh_) {
+        results.emplace_back(Result{keyframe_index_pairs_.at(res.Id), res.Score});
+      }
     }
 
     return results;
