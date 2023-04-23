@@ -32,7 +32,7 @@ namespace vslam_components {
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
       // Check the goodness of the mapped points so far to determine the matching and tracking qualities
-      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const int goodness_thresh);
+      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh);
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;

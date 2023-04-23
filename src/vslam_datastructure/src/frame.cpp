@@ -117,11 +117,24 @@ namespace vslam_datastructure {
     }
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
-
     for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {  // && pt->mappoint->host_keyframe() == this) {
+
         frame_msg->keypoints_has_mp.push_back(true);
         if (!no_mappoints) {
+          // // Only visualize the map points that belong to the host
+          // // FIXME: not working at the moment
+          // // An alternative solution is to create a vector of type MapPoint::SharedPtr
+          // if (pt->mappoint->is_host(id_)) {
+          //   // 3D map points
+          //   vslam_msgs::msg::Vector3d pt_3d;
+          //   const auto mp_pt_3d = pt->mappoint->get_mappoint();
+          //   pt_3d.x = mp_pt_3d.x;
+          //   pt_3d.y = mp_pt_3d.y;
+          //   pt_3d.z = mp_pt_3d.z;
+          //   frame_msg->mappoints.push_back(pt_3d);
+          // }
+
           // 3D map points
           vslam_msgs::msg::Vector3d pt_3d;
           const auto mp_pt_3d = pt->mappoint->get_mappoint();
@@ -166,7 +179,7 @@ namespace vslam_datastructure {
     return mappoints;
   }
 
-  void Frame::set_map_points(const MapPoints& mappoints, const std::vector<size_t> indices) {
+  void Frame::set_map_points(const MapPoints& mappoints, const std::vector<size_t> indices, const bool set_host) {
     assert(is_keyframe_);
     assert(mappoints.size() == indices.size());
 
@@ -184,6 +197,10 @@ namespace vslam_datastructure {
       } else {
         // Create a new map point
         points_.at(i)->mappoint = mappoints.at(idx);
+
+        if (set_host) {
+          points_.at(i)->mappoint->set_host_keyframe_id(id_);
+        }
       }
     }
 
@@ -203,7 +220,6 @@ namespace vslam_datastructure {
 
   void Frame::set_keyframe() {
     std::lock_guard<std::mutex> lck(data_mutex_);
-    // set_mappoint_projections();
     is_keyframe_ = true;
   }
 

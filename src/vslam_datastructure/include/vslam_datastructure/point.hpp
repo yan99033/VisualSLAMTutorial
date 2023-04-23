@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <opencv2/opencv.hpp>
+#include <optional>
 
 #include "vslam_datastructure/frame.hpp"
 
@@ -39,9 +40,9 @@ namespace vslam_datastructure {
 
     long unsigned int id() const { return id_; }
 
-    void set_host_keyframe(Frame* const host_keyframe);
+    void set_host_keyframe_id(const long unsigned int host_keyframe_id);
 
-    inline Frame* host_keyframe() const { return host_keyframe_; }
+    bool is_host(const long unsigned int host_keyframe_id);
 
   private:
     std::mutex mutex_;
@@ -60,7 +61,7 @@ namespace vslam_datastructure {
     static long unsigned int point_count_;
 
     // The keyframe, a non-owning pointer, in which this point is created
-    Frame* host_keyframe_{nullptr};
+    std::optional<long unsigned int> host_keyframe_id_{std::nullopt};
   };
   using MapPoints = std::vector<MapPoint::SharedPtr>;
 

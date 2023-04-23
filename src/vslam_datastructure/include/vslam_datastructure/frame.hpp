@@ -47,7 +47,10 @@ namespace vslam_datastructure {
     // Get map points
     MapPoints get_map_points(const std::vector<size_t> point_indices);
 
-    void set_map_points(const MapPoints& mappoints, const std::vector<size_t> point_indices);
+    // Set map points to the existing points
+    // Use the set_host flag to make this frame as the host keyframe to the map points
+    void set_map_points(const MapPoints& mappoints, const std::vector<size_t> point_indices,
+                        const bool set_host = false);
 
     // Get the numbe of map points
     size_t get_num_mps();

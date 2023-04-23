@@ -148,7 +148,7 @@ namespace vslam_components {
         current_frame->set_pose(T_c_w);
 
         auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);  // , true);
-        current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs));
+        current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs), true);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
@@ -206,7 +206,7 @@ namespace vslam_components {
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-          current_keyframe->set_map_points(new_mps, first_indices);
+          current_keyframe->set_map_points(new_mps, first_indices, true);
           const auto new_old_mps = current_keyframe->get_map_points(first_indices);
           current_frame->set_map_points(new_old_mps, second_indices);
           backend_->add_keyframe(current_frame);
@@ -232,7 +232,7 @@ namespace vslam_components {
     }
 
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
-                                              const int goodness_thresh) {
+                                              const size_t goodness_thresh) {
       size_t num_mps{0};
       for (const auto& match : matched_points) {
         if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
@@ -251,7 +251,7 @@ namespace vslam_components {
       while (run_frame_visual_publisher_) {
         auto keyframe_msg = frame_visual_queue_->receive();
 
-        keyframe_pub_->publish(keyframe_msg);
+        keyframe_pub_->publish(std::move(keyframe_msg));
 
         // Free CPU
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
