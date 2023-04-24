@@ -67,9 +67,10 @@ namespace vslam_datastructure {
     // A boolean to indicate if the frame is a keyframe
     inline bool is_keyframe() const { return is_keyframe_; }
 
+    void set_parent_keyframe(Frame* const frame);
+
     // Set pose constraints between adjacent keyframes
-    void set_T_this_prev_kf(const Frame* const prev_kf, const cv::Mat& T_this_prev);
-    void add_T_this_next_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
+    void add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
   private:
     // Iterate through the map points and set the projection constraints
@@ -88,9 +89,11 @@ namespace vslam_datastructure {
     static constexpr double max_reproj_err_{
         8.0};  //!< max reprojection error in pixel to associate a map point with a keypoint
 
+    // The parent keyframe
+    Frame* parent_;
+
     // Constraints between current (key)frame and the adjacent keyframes
     // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
-    std::pair<const Frame*, cv::Mat> T_this_prev_kf_;
     std::vector<std::pair<const Frame*, cv::Mat>> T_this_next_kf_;
   };
 

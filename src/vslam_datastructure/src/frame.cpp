@@ -223,12 +223,12 @@ namespace vslam_datastructure {
     is_keyframe_ = true;
   }
 
-  void Frame::set_T_this_prev_kf(const Frame* const prev_kf, const cv::Mat& T_this_prev) {
+  void Frame::set_parent_keyframe(Frame* const frame) {
     std::lock_guard<std::mutex> lck(data_mutex_);
-    T_this_prev_kf_ = {prev_kf, T_this_prev};
+    parent_ = frame;
   }
 
-  void Frame::add_T_this_next_kf(const Frame* const next_kf, const cv::Mat& T_this_next) {
+  void Frame::add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next) {
     std::lock_guard<std::mutex> lck(data_mutex_);
     T_this_next_kf_.emplace_back(next_kf, T_this_next);
   }

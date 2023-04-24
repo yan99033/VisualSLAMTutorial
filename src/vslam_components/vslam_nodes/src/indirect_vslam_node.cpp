@@ -219,8 +219,9 @@ namespace vslam_components {
         if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
             || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
           // Set constraints between adjacent keyframes
-          current_keyframe->add_T_this_next_kf(current_frame.get(), T_c_p.inv());
-          current_frame->set_T_this_prev_kf(current_keyframe.get(), T_c_p);
+          current_keyframe->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
+          current_frame->add_T_this_other_kf(current_keyframe.get(), T_c_p);
+          current_frame->set_parent_keyframe(current_keyframe.get());
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();
