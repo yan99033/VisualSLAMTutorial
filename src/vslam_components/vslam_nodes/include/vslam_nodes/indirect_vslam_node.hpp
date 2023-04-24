@@ -33,7 +33,8 @@ namespace vslam_components {
       void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
 
       // Check the goodness of the mapped points so far to determine the matching and tracking qualities
-      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh);
+      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
+                             size_t& num_mps);
 
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
@@ -69,7 +70,10 @@ namespace vslam_components {
       size_t min_num_cam_tracking_inliers_{15};
 
       // Minimum number of map points needed for a keyframe
-      size_t min_num_kf_mps_{250};
+      size_t min_num_kf_mps_{350};
+
+      // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
+      double max_rotation_rad_{0.174533};
 
       // Feature extraction plugin
       pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_loader_{

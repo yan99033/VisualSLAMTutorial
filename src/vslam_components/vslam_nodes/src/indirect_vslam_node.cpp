@@ -39,6 +39,16 @@ namespace {
     }
     return {first_indices, second_indices};
   }
+
+  bool rotation_matrix_exceed_threshold(const cv::Mat& R, const double angle_threshold_rad) {
+    assert(R.rows == 3 && R.cols == 3);
+
+    // Calculate the angle component of the axis-angle representation
+    const double tr = R.at<double>(0, 0) + R.at<double>(1, 1) + R.at<double>(2, 2);
+    const double angle = acos((tr - 1) / 2);
+
+    return tr < angle_threshold_rad;
+  }
 }  // namespace
 
 namespace vslam_components {
@@ -70,11 +80,11 @@ namespace vslam_components {
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
       backend_->initialize(K_, frame_visual_queue_);
 
-      // Place-recognition
-      place_recognition_ = place_recognition_loader_.createSharedInstance(
-          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
-      place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
-                                     declare_parameter("score_thresh", 0.9));
+      // // Place recognition
+      // place_recognition_ = place_recognition_loader_.createSharedInstance(
+      //     declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+      // place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
+      //                                declare_parameter("score_thresh", 0.9));
 
       // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
@@ -179,9 +189,9 @@ namespace vslam_components {
             = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         // Check if we have enough map points for camera tracking
-        if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_)) {
-          std::cout << "Insufficient amount of points (" << current_keyframe->get_num_mps() << ") needed for tracking"
-                    << std::endl;
+        size_t num_matched_mps{0};
+        if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+          std::cout << "Insufficient amount of points (" << num_matched_mps << ") needed for tracking" << std::endl;
           state_ = State::relocalization;
           return;
         }
@@ -190,9 +200,10 @@ namespace vslam_components {
         T_c_p_ = T_c_p;
 
         // Check the number of outliers in the calculating the camera pose
-        if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_)) {
-          std::cout << "Insufficient amount of inlier points (" << current_keyframe->get_num_mps()
-                    << ") used for tracking" << std::endl;
+        size_t num_matched_inliers{0};
+        if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+          std::cout << "Insufficient amount of inlier points (" << num_matched_inliers << ") used for tracking"
+                    << std::endl;
           state_ = State::relocalization;
           return;
         }
@@ -203,7 +214,10 @@ namespace vslam_components {
         current_frame->set_pose(T_c_w);
 
         // Check if we need a new keyframe
-        if (!check_mps_quality(matched_points, min_num_kf_mps_)) {
+        const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+        size_t num_kf_mps{0};
+        if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
+            || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
           // Set constraints between adjacent keyframes
           current_keyframe->add_T_this_next_kf(current_frame.get(), T_c_p.inv());
           current_frame->set_T_this_prev_kf(current_keyframe.get(), T_c_p);
@@ -223,7 +237,10 @@ namespace vslam_components {
           frame_visual_queue_->send(std::move(kf_msg));
 
           std::cout << "created a new keyframe " << std::endl;
+        } else {
+          std::cout << "Didn't create a new keyframe. Currently tracking " << num_kf_mps << " map points" << std::endl;
         }
+
         std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " map points" << std::endl;
 
         // write pose to the frame message
@@ -238,8 +255,7 @@ namespace vslam_components {
     }
 
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
-                                              const size_t goodness_thresh) {
-      size_t num_mps{0};
+                                              const size_t goodness_thresh, size_t& num_mps) {
       for (const auto& match : matched_points) {
         if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
           num_mps++;
