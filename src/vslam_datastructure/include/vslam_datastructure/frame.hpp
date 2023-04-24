@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <opencv2/core/mat.hpp>
+#include <unordered_map>
 
 #include "vslam_msgs/msg/frame.hpp"
 
@@ -24,8 +25,11 @@ namespace vslam_datastructure {
 
     cv::Mat get_image() const;
 
+    // Get the camera pose (inversed)
+    cv::Mat T_f_w() const;
+
     // Get the camera pose
-    cv::Mat T_f_w();
+    cv::Mat T_w_f() const;
 
     // Set the camera pose
     void set_pose(const cv::Mat& T_f_w);
@@ -85,7 +89,7 @@ namespace vslam_datastructure {
     Points points_;                              //!< vector containing 2D and 3D points
     cv::Mat K_;                                  //!< 3x3 camera matrix
     bool is_keyframe_{false};                    //!< a boolean to indicate if the frame is a keyframe
-    std::mutex data_mutex_;                      //!< Mutex for synchronizing reading and writing frame data
+    mutable std::mutex data_mutex_;              //!< Mutex for synchronizing reading and writing frame data
     static constexpr double max_reproj_err_{
         8.0};  //!< max reprojection error in pixel to associate a map point with a keypoint
 
@@ -94,7 +98,7 @@ namespace vslam_datastructure {
 
     // Constraints between current (key)frame and the adjacent keyframes
     // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
-    std::vector<std::pair<const Frame*, cv::Mat>> T_this_next_kf_;
+    std::unordered_map<const Frame*, cv::Mat> T_this_other_kfs_;
   };
 
 }  // namespace vslam_datastructure

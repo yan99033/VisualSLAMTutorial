@@ -274,6 +274,19 @@ namespace vslam_backend_plugins {
       }
     }
 
+    // Add relative pose constraints among the core keyframes
+    for (auto kf1 : core_keyframes) {
+      for (auto kf2 : core_keyframes) {
+        if (kf1 == kf2) {
+          continue;
+        }
+
+        // Relative pose constraint
+        const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_f_w().inv();
+        kf1->add_T_this_other_kf(kf2, T_1_2);
+      }
+    }
+
     // Update visualizer
     for (auto [_, kf_p] : core_kf_vertices) {
       vslam_msgs::msg::Frame keyframe_msg;

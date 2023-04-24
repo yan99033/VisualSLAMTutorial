@@ -63,14 +63,20 @@ namespace {
 
     return pose;
   }
+
 }  // namespace
 
 namespace vslam_datastructure {
   Frame::Frame(const cv::Mat& K) : K_(K) {}
 
-  cv::Mat Frame::T_f_w() {
+  cv::Mat Frame::T_f_w() const {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return T_f_w_.clone();
+  }
+
+  cv::Mat Frame::T_w_f() const {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    return T_f_w_.inv();
   }
 
   void Frame::set_pose(const cv::Mat& T_f_w) {
@@ -153,6 +159,21 @@ namespace vslam_datastructure {
       pt_2d.y = pt->keypoint.pt.y;
       frame_msg->keypoints.push_back(pt_2d);
     }
+
+    // relative pose constraints
+    for (const auto& [frame, _] : T_this_other_kfs_) {
+      if (frame == nullptr) {
+        continue;
+
+        const auto T_w_other = frame->T_w_f();
+        const auto pos = T_w_other.rowRange(0, 3).colRange(3, 4);
+        vslam_msgs::msg::Vector3d pos_other;
+        pos_other.x = pos.at<double>(0, 0);
+        pos_other.y = pos.at<double>(1, 0);
+        pos_other.z = pos.at<double>(2, 0);
+        frame_msg->other_keyframes_pos.push_back(pos_other);
+      }
+    }
   }
 
   void Frame::set_points(Points& points) {
@@ -230,7 +251,7 @@ namespace vslam_datastructure {
 
   void Frame::add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next) {
     std::lock_guard<std::mutex> lck(data_mutex_);
-    T_this_next_kf_.emplace_back(next_kf, T_this_next);
+    T_this_other_kfs_[next_kf] = T_this_next;
   }
 
   void Frame::set_mappoint_projections() {
