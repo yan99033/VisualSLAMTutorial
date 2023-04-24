@@ -28,7 +28,7 @@ namespace vslam_components {
 
       int cam_marker_id_{1};
 
-      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr live_frame_publisher_;
+      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
 

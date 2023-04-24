@@ -91,7 +91,7 @@ namespace vslam_components {
           "in_frame", 10, std::bind(&RvizVisualNode::live_frame_callback, this, _1));
       update_frame_sub_ = create_subscription<vslam_msgs::msg::Frame>(
           "update_frame", 10, std::bind(&RvizVisualNode::update_frame_callback, this, _1));
-      live_frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 1);
+      frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 1);
       mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1);
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
     }
@@ -152,7 +152,7 @@ namespace vslam_components {
       calculatePoseMarker(frame_msg->pose, pose_marker, cam_axes_transform_);
       pose_marker.id = -1;
       pose_marker.ns = "live";
-      live_frame_publisher_->publish(pose_marker);
+      frame_publisher_->publish(pose_marker);
     }
 
     void RvizVisualNode::update_frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
@@ -188,7 +188,7 @@ namespace vslam_components {
       calculatePoseMarker(frame_msg->pose, pose_marker, cam_axes_transform_);
       pose_marker.id = frame_msg->id;
       pose_marker.ns = "keyframe";
-      live_frame_publisher_->publish(pose_marker);
+      frame_publisher_->publish(pose_marker);
     }
 
   }  // namespace visualization_nodes
