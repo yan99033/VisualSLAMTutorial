@@ -172,7 +172,19 @@ namespace vslam_backend_plugins {
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
     unsigned long int vertex_id{0};
     for (auto mp : core_mappoints) {
-      if (mp == nullptr || mp->is_outlier() || mp->get_projections().empty()) {
+      if (mp == nullptr || mp->is_outlier()) {
+        continue;
+      }
+
+      // Check if we have at least two valid projections
+      int num_valid_projections{0};
+      for (auto pt : mp->get_projections()) {
+        if (pt == nullptr || pt->frame == nullptr) {
+          continue;
+        }
+        num_valid_projections++;
+      }
+      if (num_valid_projections < 2) {
         continue;
       }
 
@@ -215,7 +227,7 @@ namespace vslam_backend_plugins {
         e->setVertex(0, mp_vertex);
         e->setVertex(1, kf_vertex);
         e->setMeasurement(Eigen::Vector2d(pt->keypoint.pt.x, pt->keypoint.pt.y));
-        e->setInformation(Eigen::Matrix2d::Identity());
+        e->setInformation(Eigen::Matrix2d::Identity());  // TODO: incorporate uncertainty
 
         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
         rk->setDelta(huber_kernel_delta);
@@ -233,16 +245,16 @@ namespace vslam_backend_plugins {
 
     // optimize graph
     optimizer.initializeOptimization();
-    optimizer.optimize(30);
+    optimizer.optimize(15);
 
     // TODO: only update the core keyframes and map points
     // Update keyframes
     for (auto [kf_vertex, kf_p] : core_kf_vertices) {
-      auto pose = kf_vertex->estimate();
-      cv::Mat cv_pose = eigenRotationTranslationToCvMat(pose.rotation().toRotationMatrix(), pose.translation());
+      auto T_f_w = kf_vertex->estimate();
+      cv::Mat cv_T_f_w = eigenRotationTranslationToCvMat(T_f_w.rotation().toRotationMatrix(), T_f_w.translation());
 
       if (kf_p) {
-        kf_p->set_pose(cv_pose);
+        kf_p->set_pose(cv_T_f_w);
       }
     }
 
