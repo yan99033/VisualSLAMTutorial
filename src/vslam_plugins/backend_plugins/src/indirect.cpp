@@ -89,6 +89,15 @@ namespace vslam_backend_plugins {
     return current_keyframe_;
   }
 
+  vslam_datastructure::Frame* Indirect::get_keyframe(const long unsigned int id) const {
+    std::lock_guard<std::mutex> lck(keyframe_mutex_);
+    if (keyframes_.find(id) != keyframes_.end()) {
+      return keyframes_.at(id).get();
+    } else {
+      return nullptr;
+    }
+  }
+
   void Indirect::local_ba_loop() {
     while (!exit_thread_) {
       {

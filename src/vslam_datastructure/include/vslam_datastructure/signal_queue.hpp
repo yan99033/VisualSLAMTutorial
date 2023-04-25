@@ -55,6 +55,7 @@ namespace vslam_datastructure {
   };
 
   using FrameMsgQueue = SignalQueue<vslam_msgs::msg::Frame>;
+  using FrameIdQueue = SignalQueue<long unsigned int>;
 
 }  // namespace vslam_datastructure
 #endif  // VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_

@@ -23,6 +23,9 @@ namespace vslam_backend_plugins {
 
     vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
 
+    // Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
+    vslam_datastructure::Frame* get_keyframe(const long unsigned int id) const override;
+
   private:
     using CoreKfsSet = std::set<vslam_datastructure::Frame*>;
     using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
@@ -34,7 +37,7 @@ namespace vslam_backend_plugins {
     vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
     // Use it for reading and writing keyframes
-    std::mutex keyframe_mutex_;
+    mutable std::mutex keyframe_mutex_;
 
     // Camera matrix
     cv::Mat K_;

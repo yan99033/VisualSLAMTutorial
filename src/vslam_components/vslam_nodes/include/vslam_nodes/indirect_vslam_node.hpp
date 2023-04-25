@@ -63,16 +63,20 @@ namespace vslam_components {
       // Minimum number of map points needed for a keyframe
       size_t min_num_kf_mps_{350};
 
-      // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
-      double max_rotation_rad_{0.174533};
+      // Maximum allowable relative rotation between two keyframes. Defaults to 30 degree
+      double max_rotation_rad_{0.52359878};
 
-      // Update the visualizer
+      // Signal queue for frame messages to update the visualizer
       vslam_datastructure::FrameMsgQueue::SharedPtr frame_visual_queue_{
           std::make_shared<vslam_datastructure::FrameMsgQueue>()};
 
       // Thread to update publish the updated keyframes
       std::thread frame_msg_queue_publisher_thread_;
       void frame_visual_publisher_loop();
+
+      // Signal queue for keyframes to update the visualizer
+      vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
+          std::make_shared<vslam_datastructure::FrameIdQueue>()};
 
       // loop-closure detection
       std::thread place_recognition_thread_;

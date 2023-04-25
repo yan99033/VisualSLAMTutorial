@@ -47,7 +47,18 @@ namespace {
     const double tr = R.at<double>(0, 0) + R.at<double>(1, 1) + R.at<double>(2, 2);
     const double angle = acos((tr - 1) / 2);
 
-    return tr < angle_threshold_rad;
+    return angle > angle_threshold_rad;
+  }
+
+  cv::Mat extract_descriptors(const vslam_datastructure::Points& points) {
+    std::vector<cv::Mat> descriptors_vec;
+    for (const auto& pt : points) {
+      descriptors_vec.push_back(pt->descriptor);
+    }
+    cv::Mat descriptors;
+    cv::vconcat(descriptors_vec, descriptors);
+
+    return descriptors;
   }
 }  // namespace
 
@@ -84,7 +95,7 @@ namespace vslam_components {
       place_recognition_ = place_recognition_loader_.createSharedInstance(
           declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
       place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
-                                     declare_parameter("score_thresh", 0.9));
+                                     declare_parameter("place_recognition.score_thresh", 0.9));
 
       // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
@@ -239,6 +250,10 @@ namespace vslam_components {
           current_keyframe->to_msg(&kf_msg);
           frame_visual_queue_->send(std::move(kf_msg));
 
+          // Add the keyframe id to find a potential loop
+          long unsigned int kf_id = current_frame->id();
+          keyframe_id_queue_->send(std::move(kf_id));
+
           std::cout << "created a new keyframe " << std::endl;
         } else {
           std::cout << "Didn't create a new keyframe. Currently tracking " << num_kf_mps << " map points" << std::endl;
@@ -284,7 +299,40 @@ namespace vslam_components {
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
 
-    void IndirectVSlamNode::place_recognition_loop() {}
+    void IndirectVSlamNode::place_recognition_loop() {
+      while (!exit_thread_) {
+        // Get a keyframe from the keyframe queue
+        auto kf_id = keyframe_id_queue_->receive();
+
+        // Get the keyframe from the backend
+        const auto kf1 = backend_->get_keyframe(kf_id);
+
+        if (kf1 == nullptr) {
+          std::cout << "kf1 is a nullptr" << std::endl;
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          continue;
+        }
+
+        // Query from database
+        cv::Mat visual_features = extract_descriptors(kf1->get_points());
+        auto results = place_recognition_->query(visual_features);
+
+        // Add visual features of the current frame to the database
+        place_recognition_->add_to_database(kf_id, visual_features);
+
+        // Verify any potential loops
+        if (results.size() > 0) {
+          for (const auto& [id, score] : results) {
+            std::cout << "found a potential loop: " << id << " | " << score
+                      << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                      << std::endl;
+          }
+        }
+
+        // Free CPU
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    }
 
   }  // namespace vslam_nodes
 }  // namespace vslam_components

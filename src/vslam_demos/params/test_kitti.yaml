@@ -16,7 +16,7 @@ indirect_vslam_node:
     place_recognition:
       input: "orbvoc.dbow3"
       top_k: 3
-      score_thresh: 0.9
+      score_thresh: 0.03
 
     # Plugins
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::Orb"

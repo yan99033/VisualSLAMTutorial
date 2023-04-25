@@ -21,6 +21,8 @@ namespace vslam_backend_base {
     // recognition method)
     virtual vslam_datastructure::Frame::SharedPtr get_current_keyframe() = 0;
 
+    virtual vslam_datastructure::Frame* get_keyframe(const long unsigned int id) const = 0;
+
     virtual ~Backend() {}
 
   protected:
