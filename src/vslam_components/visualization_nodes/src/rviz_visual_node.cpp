@@ -93,6 +93,7 @@ namespace vslam_components {
           "update_frame", 10, std::bind(&RvizVisualNode::update_frame_callback, this, _1));
       frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 1);
       mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1);
+      pose_constraint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("pose_constraints", 1);
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
     }
 
@@ -163,7 +164,7 @@ namespace vslam_components {
       mps_marker.header.frame_id = "map";
       mps_marker.type = visualization_msgs::msg::Marker::POINTS;
       mps_marker.action = visualization_msgs::msg::Marker::ADD;
-      constexpr double marker_scale = 0.05;
+      constexpr double marker_scale = 0.1;
       mps_marker.scale.x = marker_scale;
       mps_marker.scale.y = marker_scale;
       mps_marker.scale.z = marker_scale;
@@ -189,6 +190,41 @@ namespace vslam_components {
       pose_marker.id = frame_msg->id;
       pose_marker.ns = "keyframe";
       frame_publisher_->publish(pose_marker);
+
+      // Relative pose constraints
+      visualization_msgs::msg::Marker pose_constraint_marker;
+      pose_constraint_marker.header.frame_id = "map";
+      pose_constraint_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      pose_constraint_marker.action = visualization_msgs::msg::Marker::ADD;
+      constexpr double line_scale = 0.1;
+      pose_constraint_marker.scale.x = line_scale;
+      pose_constraint_marker.color.b = 1.0;
+      pose_constraint_marker.color.a = 1.0;
+      pose_constraint_marker.id = frame_msg->id;
+      pose_constraint_marker.ns = "keyframe";
+      Eigen::Vector3d curr_pos_eigen(frame_msg->pose.position.x, frame_msg->pose.position.y,
+                                     frame_msg->pose.position.z);
+      curr_pos_eigen = cam_axes_transform_ * curr_pos_eigen;
+      geometry_msgs::msg::Point curr_pos;
+      curr_pos.x = curr_pos_eigen.x();
+      curr_pos.y = curr_pos_eigen.y();
+      curr_pos.z = curr_pos_eigen.z();
+
+      std::cout << "num rel constraints: " << frame_msg->other_keyframes_pos.size() << std::endl;
+      for (const auto &pos : frame_msg->other_keyframes_pos) {
+        pose_constraint_marker.points.push_back(curr_pos);
+
+        Eigen::Vector3d other_pos_eigen(pos.x, pos.y, pos.z);
+        other_pos_eigen = cam_axes_transform_ * other_pos_eigen;
+
+        geometry_msgs::msg::Point other_pos;
+        other_pos.x = other_pos_eigen.x();
+        other_pos.y = other_pos_eigen.y();
+        other_pos.z = other_pos_eigen.z();
+        pose_constraint_marker.points.push_back(other_pos);
+      }
+
+      pose_constraint_publisher_->publish(pose_constraint_marker);
     }
 
   }  // namespace visualization_nodes

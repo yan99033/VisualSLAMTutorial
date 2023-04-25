@@ -30,6 +30,7 @@ namespace vslam_components {
 
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
+      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pose_constraint_publisher_;
       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
 
       static const Eigen::Matrix3d cam_axes_transform_;
