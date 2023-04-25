@@ -1,5 +1,5 @@
-#ifndef VSLAM_DATASTRUCTURE__FRAME_QUEUE_HPP_
-#define VSLAM_DATASTRUCTURE__FRAME_QUEUE_HPP_
+#ifndef VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_
+#define VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_
 
 #include <atomic>
 #include <condition_variable>
@@ -54,7 +54,7 @@ namespace vslam_datastructure {
     std::atomic_bool exit_{false};
   };
 
-  using FrameQueue = SignalQueue<vslam_msgs::msg::Frame>;
+  using FrameMsgQueue = SignalQueue<vslam_msgs::msg::Frame>;
 
 }  // namespace vslam_datastructure
-#endif  // VSLAM_DATASTRUCTURE__FRAME_QUEUE_HPP_
+#endif  // VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_

@@ -51,15 +51,6 @@ namespace vslam_components {
 
       cv::Mat K_;
 
-      // Update the visualizer
-      vslam_datastructure::FrameQueue::SharedPtr frame_visual_queue_{
-          std::make_shared<vslam_datastructure::FrameQueue>()};
-
-      // Thread to update publish the updated keyframes
-      std::atomic_bool run_frame_visual_publisher_{true};
-      std::thread frame_queue_publisher_thread_;
-      void frame_visual_publisher_loop();
-
       // The previously calculated relative transformation for the initial guess in camera tracking
       cv::Mat T_c_p_{cv::Mat::eye(4, 4, CV_64F)};
 
@@ -75,10 +66,19 @@ namespace vslam_components {
       // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
       double max_rotation_rad_{0.174533};
 
+      // Update the visualizer
+      vslam_datastructure::FrameMsgQueue::SharedPtr frame_visual_queue_{
+          std::make_shared<vslam_datastructure::FrameMsgQueue>()};
+
+      // Thread to update publish the updated keyframes
+      std::thread frame_msg_queue_publisher_thread_;
+      void frame_visual_publisher_loop();
+
       // loop-closure detection
       std::thread place_recognition_thread_;
       void place_recognition_loop();
 
+      // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
 
       // Feature extraction plugin

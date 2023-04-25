@@ -55,9 +55,9 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Indirect::initialize(const cv::Mat& K, const vslam_datastructure::FrameQueue::SharedPtr frame_queue) {
+  void Indirect::initialize(const cv::Mat& K, const vslam_datastructure::FrameMsgQueue::SharedPtr frame_msg_queue) {
     K_ = K;
-    frame_queue_ = frame_queue;
+    frame_msg_queue_ = frame_msg_queue;
     local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this);
   }
 
@@ -303,7 +303,7 @@ namespace vslam_backend_plugins {
     for (auto [_, kf_p] : core_kf_vertices) {
       vslam_msgs::msg::Frame keyframe_msg;
       kf_p->to_msg(&keyframe_msg);
-      frame_queue_->send(std::move(keyframe_msg));
+      frame_msg_queue_->send(std::move(keyframe_msg));
     }
   }
 

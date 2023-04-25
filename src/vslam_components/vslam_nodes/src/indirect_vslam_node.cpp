@@ -80,11 +80,11 @@ namespace vslam_components {
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
       backend_->initialize(K_, frame_visual_queue_);
 
-      // // Place recognition
-      // place_recognition_ = place_recognition_loader_.createSharedInstance(
-      //     declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
-      // place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
-      //                                declare_parameter("score_thresh", 0.9));
+      // Place recognition
+      place_recognition_ = place_recognition_loader_.createSharedInstance(
+          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+      place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
+                                     declare_parameter("score_thresh", 0.9));
 
       // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
@@ -93,13 +93,15 @@ namespace vslam_components {
       captured_frame_pub_ = frame_pub_;
       keyframe_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_keyframe", 10);
 
-      frame_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
+      frame_msg_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
+      place_recognition_thread_ = std::thread(&IndirectVSlamNode::place_recognition_loop, this);
     }
 
     IndirectVSlamNode::~IndirectVSlamNode() {
       frame_visual_queue_->stop();
-      run_frame_visual_publisher_ = false;
-      frame_queue_publisher_thread_.join();
+      exit_thread_ = true;
+      frame_msg_queue_publisher_thread_.join();
+      place_recognition_thread_.join();
     }
 
     cv::Mat IndirectVSlamNode::load_camera_info() {
@@ -271,7 +273,7 @@ namespace vslam_components {
     }
 
     void IndirectVSlamNode::frame_visual_publisher_loop() {
-      while (run_frame_visual_publisher_) {
+      while (!exit_thread_) {
         auto keyframe_msg = frame_visual_queue_->receive();
 
         keyframe_pub_->publish(std::move(keyframe_msg));
@@ -281,6 +283,8 @@ namespace vslam_components {
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
+
+    void IndirectVSlamNode::place_recognition_loop() {}
 
   }  // namespace vslam_nodes
 }  // namespace vslam_components
