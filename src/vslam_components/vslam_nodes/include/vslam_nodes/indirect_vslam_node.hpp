@@ -9,8 +9,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "vslam_datastructure/frame.hpp"
-#include "vslam_datastructure/frame_queue.hpp"
 #include "vslam_datastructure/point.hpp"
+#include "vslam_datastructure/signal_queue.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_plugins_base/backend.hpp"
 #include "vslam_plugins_base/camera_tracker.hpp"
@@ -74,6 +74,12 @@ namespace vslam_components {
 
       // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
       double max_rotation_rad_{0.174533};
+
+      // loop-closure detection
+      std::thread place_recognition_thread_;
+      void place_recognition_loop();
+
+      std::atomic_bool exit_thread_{false};
 
       // Feature extraction plugin
       pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_loader_{

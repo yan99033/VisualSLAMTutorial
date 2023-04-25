@@ -22,7 +22,6 @@ find_package(tf2_geometry_msgs REQUIRED)
 
 set(sources
   src/frame.cpp
-  src/frame_queue.cpp
   src/point.cpp)
 
 set(dependencies

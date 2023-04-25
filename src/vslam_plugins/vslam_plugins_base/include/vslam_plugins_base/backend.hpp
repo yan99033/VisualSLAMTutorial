@@ -2,8 +2,8 @@
 #define VSLAM_PLUGINS_BASE__BACKEND_HPP_
 
 #include "vslam_datastructure/frame.hpp"
-#include "vslam_datastructure/frame_queue.hpp"
 #include "vslam_datastructure/point.hpp"
+#include "vslam_datastructure/signal_queue.hpp"
 
 namespace vslam_backend_base {
   class Backend {
