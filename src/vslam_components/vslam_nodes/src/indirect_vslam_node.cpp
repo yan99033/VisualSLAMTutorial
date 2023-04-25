@@ -156,7 +156,7 @@ namespace vslam_components {
             = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
-        T_c_p_ = T_c_p;
+        // T_c_p_ = T_c_p;
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe->T_f_w();
@@ -196,8 +196,8 @@ namespace vslam_components {
           return;
         }
 
-        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, T_c_p_);
-        T_c_p_ = T_c_p;
+        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points);  //, T_c_p_);
+        // T_c_p_ = T_c_p;
 
         // Check the number of outliers in the calculating the camera pose
         size_t num_matched_inliers{0};
@@ -234,7 +234,7 @@ namespace vslam_components {
 
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame kf_msg;
-          current_frame->to_msg(&kf_msg);
+          current_keyframe->to_msg(&kf_msg);
           frame_visual_queue_->send(std::move(kf_msg));
 
           std::cout << "created a new keyframe " << std::endl;
