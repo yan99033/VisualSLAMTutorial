@@ -305,36 +305,81 @@ namespace vslam_components {
     void IndirectVSlamNode::place_recognition_loop() {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
-        auto kf_id = keyframe_id_queue_->receive();
+        auto curr_kf_id = keyframe_id_queue_->receive();
 
         // Get the keyframe from the backend
-        const auto kf1 = backend_->get_keyframe(kf_id);
+        const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
 
-        if (kf1 == nullptr) {
-          std::cout << "kf1 is a nullptr" << std::endl;
+        if (current_keyframe == nullptr) {
+          RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
           continue;
         }
 
         // Query from database
-        cv::Mat visual_features = extract_descriptors(kf1->get_points());
+        cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
         auto results = place_recognition_->query(visual_features);
 
         // Add visual features of the current frame to the database
-        place_recognition_->add_to_database(kf_id, visual_features);
+        place_recognition_->add_to_database(curr_kf_id, visual_features);
 
         // Verify any potential loops
         if (results.size() > 0) {
-          for (const auto& [id, score] : results) {
-            std::cout << "found a potential loop: " << id << " | " << score
-                      << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                      << std::endl;
+          for (const auto& [prev_kf_id, score] : results) {
+            const auto previous_keyframe = backend_->get_keyframe(prev_kf_id);
+
+            if (previous_keyframe == nullptr) {
+              RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
+              std::this_thread::sleep_for(std::chrono::milliseconds(10));
+              continue;
+            }
+
+            cv::Mat T_c_p;
+            if (verify_loop(current_keyframe, previous_keyframe, T_c_p)) {
+              std::cout << "found a potential loop between " << curr_kf_id << " and " << prev_kf_id << std::endl;
+              std::cout << T_c_p << std::endl;
+              std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+            }
           }
         }
 
         // Free CPU
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
+    }
+
+    bool IndirectVSlamNode::verify_loop(const vslam_datastructure::Frame* const current_keyframe,
+                                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p) {
+      if (current_keyframe == nullptr || previous_keyframe == nullptr) {
+        return false;
+      }
+
+      if (!current_keyframe->has_points() || !previous_keyframe->has_points()) {
+        RCLCPP_ERROR(this->get_logger(), "there is no point to track in verifying a potential loop");
+        return false;
+      }
+
+      auto [matched_points, matched_index_pairs]
+          = feature_matcher_->match_features(current_keyframe->get_points(), previous_keyframe->get_points());
+
+      // Check if we have enough map points for camera tracking
+      size_t num_matched_mps{0};
+      if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+        RCLCPP_INFO(this->get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
+        return false;
+      }
+
+      T_c_p = camera_tracker_->track_camera_3d2d(matched_points);
+
+      // Check the number of outliers in the calculating the camera pose
+      size_t num_matched_inliers{0};
+      if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+        RCLCPP_INFO(this->get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
+                    num_matched_inliers);
+        return false;
+      }
+
+      return true;
     }
 
   }  // namespace vslam_nodes

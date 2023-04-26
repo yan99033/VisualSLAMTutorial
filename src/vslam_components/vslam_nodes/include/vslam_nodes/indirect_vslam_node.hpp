@@ -81,6 +81,8 @@ namespace vslam_components {
       // loop-closure detection
       std::thread place_recognition_thread_;
       void place_recognition_loop();
+      bool verify_loop(const vslam_datastructure::Frame* const current_keyframe,
+                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p);
 
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
