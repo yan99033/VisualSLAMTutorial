@@ -8,8 +8,8 @@
 namespace vslam_place_recognition_plugins {
   class BagOfWords : public vslam_place_recognition_base::PlaceRecognition {
   public:
-    void initialize(const std::string& input = std::string(), const int top_k = 1,
-                    const double score_thresh = 0.9) override;
+    void initialize(const std::string& input = std::string(), const int top_k = 1, const double score_thresh = 0.9,
+                    const int ignore_last_n_keyframes = -1) override;
 
     // Add the visual features of the current frame to the database for future retrieval
     void add_to_database(long unsigned int kf_id, const cv::Mat& visual_features) override;
@@ -21,6 +21,8 @@ namespace vslam_place_recognition_plugins {
     DBoW3::Vocabulary vocab_;
     std::unique_ptr<DBoW3::Database> database_;
     std::unordered_map<DBoW3::EntryId, long unsigned int> keyframe_index_pairs_;
+
+    DBoW3::EntryId last_entry_id_{0};
   };
 }  // namespace vslam_place_recognition_plugins
 

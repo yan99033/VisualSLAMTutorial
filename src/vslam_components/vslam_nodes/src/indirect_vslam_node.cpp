@@ -95,7 +95,8 @@ namespace vslam_components {
       place_recognition_ = place_recognition_loader_.createSharedInstance(
           declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
       place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
-                                     declare_parameter("place_recognition.score_thresh", 0.9));
+                                     declare_parameter("place_recognition.score_thresh", 0.9),
+                                     declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
       // Frame subscriber and publishers
       frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,

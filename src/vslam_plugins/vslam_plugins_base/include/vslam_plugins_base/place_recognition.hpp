@@ -15,7 +15,7 @@ namespace vslam_place_recognition_base {
     // The additional input coult be a vocabulary database or a trained deep neural network model
     // used for place recognition
     virtual void initialize(const std::string& input = std::string(), const int top_k = 1,
-                            const double score_thresh = 0.9)
+                            const double score_thresh = 0.9, const int ignore_last_n_keyframes = -1)
         = 0;
 
     // Add the visual features of the current frame to the database for future retrieval
@@ -31,6 +31,10 @@ namespace vslam_place_recognition_base {
     PlaceRecognition() {}
 
     int top_k_{1};
+
+    // Filter the results within the last n keyframes
+    // -1 means no filtering is performed
+    int ignore_last_n_keyframes_{-1};
 
     double score_thresh_{0.9};
   };

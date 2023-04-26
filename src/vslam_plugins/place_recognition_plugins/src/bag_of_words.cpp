@@ -2,8 +2,11 @@
 
 namespace vslam_place_recognition_plugins {
 
-  void BagOfWords::initialize(const std::string& input, const int top_k, const double score_thresh) {
+  void BagOfWords::initialize(const std::string& input, const int top_k, const double score_thresh,
+                              const int ignore_last_n_keyframes) {
     top_k_ = top_k;
+
+    ignore_last_n_keyframes_ = ignore_last_n_keyframes;
 
     score_thresh_ = score_thresh;
 
@@ -16,13 +19,23 @@ namespace vslam_place_recognition_plugins {
     DBoW3::EntryId entry_id = database_->add(visual_features);
 
     keyframe_index_pairs_[entry_id] = kf_id;
+
+    last_entry_id_ = entry_id;
   }
 
   // Given the visual features, find the top_k matches
   std::vector<BagOfWords::Result> BagOfWords::query(const cv::Mat& visual_features) {
     DBoW3::QueryResults database_results;
 
-    database_->query(visual_features, database_results, top_k_);
+    const int max_id = [this] {
+      if (ignore_last_n_keyframes_ < 0) {
+        return ignore_last_n_keyframes_;
+      } else {
+        return static_cast<int>(last_entry_id_) - ignore_last_n_keyframes_;
+      }
+    }();
+
+    database_->query(visual_features, database_results, top_k_, max_id);
 
     std::vector<Result> results;
     for (const auto& res : database_results) {
