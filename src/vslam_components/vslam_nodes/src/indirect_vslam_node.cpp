@@ -111,6 +111,8 @@ namespace vslam_components {
 
     IndirectVSlamNode::~IndirectVSlamNode() {
       frame_visual_queue_->stop();
+      keyframe_id_queue_->stop();
+
       exit_thread_ = true;
       frame_msg_queue_publisher_thread_.join();
       place_recognition_thread_.join();
