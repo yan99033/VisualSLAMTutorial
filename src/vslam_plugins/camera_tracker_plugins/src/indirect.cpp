@@ -3,15 +3,15 @@
 #include <cmath>
 #include <iostream>
 
-using cvPoint2dVec = std::vector<cv::Point2d>;
-using cvPoint3dVec = std::vector<cv::Point3d>;
+using CvPoint2dVec = std::vector<cv::Point2d>;
+using CvPoint3dVec = std::vector<cv::Point3d>;
 using PointPtrVec = std::vector<vslam_datastructure::MapPoint::SharedPtr>;
 
 namespace {
-  std::pair<cvPoint2dVec, cvPoint2dVec> get_2d2d_correspondences(
+  std::pair<CvPoint2dVec, CvPoint2dVec> get_2d2d_correspondences(
       const vslam_datastructure::MatchedPoints& matched_points) {
-    cvPoint2dVec cv_points_2d_1;
-    cvPoint2dVec cv_points_2d_2;
+    CvPoint2dVec cv_points_2d_1;
+    CvPoint2dVec cv_points_2d_2;
     for (const auto& match : matched_points) {
       cv_points_2d_1.push_back(match.point1->keypoint.pt);
       cv_points_2d_2.push_back(match.point2->keypoint.pt);
@@ -20,10 +20,10 @@ namespace {
     return {cv_points_2d_1, cv_points_2d_2};
   }
 
-  std::tuple<PointPtrVec, cvPoint3dVec, cvPoint2dVec> get_3d2d_correspondences(
+  std::tuple<PointPtrVec, CvPoint3dVec, CvPoint2dVec> get_3d2d_correspondences(
       const vslam_datastructure::MatchedPoints& matched_points) {
-    cvPoint3dVec cv_points_3d_1;
-    cvPoint2dVec cv_points_2d_2;
+    CvPoint3dVec cv_points_3d_1;
+    CvPoint2dVec cv_points_2d_2;
     PointPtrVec points_3d_1_ptr;
     for (const auto& match : matched_points) {
       if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
@@ -35,7 +35,7 @@ namespace {
         cv::Mat T_1_w = match.point1->frame->T_f_w();
         cv::Matx33d R = T_1_w.rowRange(0, 3).colRange(0, 3);
         cv::Mat t = T_1_w.rowRange(0, 3).colRange(3, 4);
-        pt_3d_1 = R * pt_3d_1 + cv::Point3d(t.at<double>(0), t.at<double>(1), t.at<double>(2));
+        pt_3d_1 = R * pt_3d_1 + cv::Point3d(t);
 
         cv_points_3d_1.push_back(pt_3d_1);
         cv_points_2d_2.push_back(match.point2->keypoint.pt);
