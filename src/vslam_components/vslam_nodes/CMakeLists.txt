@@ -22,6 +22,9 @@ find_package(vslam_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 # find_package(Sophus REQUIRED)
 
+set(sources
+  src/indirect_vslam_node.cpp
+  src/utils.cpp)
 
 set(dependencies
   rclcpp
@@ -35,8 +38,7 @@ set(dependencies
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
-add_library(${PROJECT_NAME} SHARED
-  src/indirect_vslam_node.cpp)
+add_library(${PROJECT_NAME} SHARED ${sources})
 # target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")

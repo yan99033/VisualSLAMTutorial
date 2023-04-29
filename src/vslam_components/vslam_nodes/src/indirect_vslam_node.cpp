@@ -4,6 +4,7 @@
 
 #include "vslam_msgs/msg/vector2d.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
+#include "vslam_nodes/utils.h"
 
 using std::placeholders::_1;
 
@@ -38,6 +39,40 @@ namespace {
       second_indices.push_back(idx2);
     }
     return {first_indices, second_indices};
+  }
+
+  std::vector<std::pair<cv::Point3d, cv::Point3d>> get_mappoint_correspondences(
+      const vslam_datastructure::MatchedPoints& matched_points, const vslam_datastructure::Frame* const frame1,
+      const vslam_datastructure::Frame* const frame2) {
+    std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_pairs;
+
+    if (frame1 == nullptr || frame2 == nullptr) {
+      return mappoint_pairs;
+    }
+
+    const cv::Mat T_1_w = frame1->T_f_w();
+    cv::Matx33d R_1_w = T_1_w.rowRange(0, 3).colRange(0, 3);
+    cv::Mat t_1_w = T_1_w.rowRange(0, 3).colRange(3, 4);
+    cv::Point3d t_1_w_pt = cv::Point3d(t_1_w);
+
+    const cv::Mat T_2_w = frame2->T_f_w();
+    cv::Matx33d R_2_w = T_2_w.rowRange(0, 3).colRange(0, 3);
+    cv::Mat t_2_w = T_2_w.rowRange(0, 3).colRange(3, 4);
+    cv::Point3d t_2_w_pt = cv::Point3d(t_2_w);
+
+    for (const auto& match : matched_points) {
+      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier() && match.point2->mappoint.get()
+          && !match.point2->mappoint->is_outlier()) {
+        cv::Point3d mp1 = match.point1->mappoint->get_mappoint();
+        mp1 = R_1_w * mp1 + t_1_w_pt;
+
+        cv::Point3d mp2 = match.point2->mappoint->get_mappoint();
+        mp2 = R_2_w * mp2 + t_2_w_pt;
+        mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
+      }
+    }
+
+    return mappoint_pairs;
   }
 
   bool rotation_matrix_exceed_threshold(const cv::Mat& R, const double angle_threshold_rad) {
@@ -334,10 +369,11 @@ namespace vslam_components {
               continue;
             }
 
-            cv::Mat T_c_p;
-            if (verify_loop(current_keyframe, previous_keyframe, T_c_p)) {
+            cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
+            double scale{0.0};
+            if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale)) {
               std::cout << "found a potential loop between " << curr_kf_id << " and " << prev_kf_id << std::endl;
-              std::cout << T_c_p << std::endl;
+              std::cout << T_p_c << std::endl;
               std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
             }
           }
@@ -349,7 +385,8 @@ namespace vslam_components {
     }
 
     bool IndirectVSlamNode::verify_loop(const vslam_datastructure::Frame* const current_keyframe,
-                                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p) {
+                                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_p_c,
+                                        double& scale) {
       if (current_keyframe == nullptr || previous_keyframe == nullptr) {
         return false;
       }
@@ -369,7 +406,7 @@ namespace vslam_components {
         return false;
       }
 
-      T_c_p = camera_tracker_->track_camera_3d2d(matched_points);
+      T_p_c = camera_tracker_->track_camera_3d2d(matched_points);
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};
@@ -379,7 +416,29 @@ namespace vslam_components {
         return false;
       }
 
-      return true;
+      // Calculate the scale
+      // 1. find the 3D point correspondences within the match
+      // 2. Transform the points in the current and previous keyframes to their coordinate frame
+      // 3. Calculate the scale of the transformation
+      const auto mappoint_pairs = get_mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
+      scale = utils::calculate_sim3_scale(mappoint_pairs, T_p_c);
+
+      // DEBUG
+      cv::Matx33d R = T_p_c.rowRange(0, 3).colRange(0, 3);
+      cv::Mat t = T_p_c.rowRange(0, 3).colRange(3, 4);
+      cv::Point3d t_pt = cv::Point3d(t);
+      for (const auto& [mp1, mp2] : mappoint_pairs) {
+        const auto mp2_prime = R * mp1 * scale + t_pt;
+        std::cout << "scale: " << scale << std::endl;
+        std::cout << "mp2: " << mp2.x << " " << mp2.y << " " << mp2.z << std::endl;
+        std::cout << "mp2': " << mp2_prime.x << " " << mp2_prime.y << " " << mp2_prime.z << std::endl;
+      }
+
+      if (scale == 0) {
+        return false;
+      } else {
+        return true;
+      }
     }
 
   }  // namespace vslam_nodes
