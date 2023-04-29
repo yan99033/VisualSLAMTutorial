@@ -315,7 +315,7 @@ namespace vslam_backend_plugins {
         }
 
         // Relative pose constraint
-        const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_f_w().inv();
+        const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_w_f();
         kf1->add_T_this_other_kf(kf2, T_1_2);
       }
     }
@@ -371,13 +371,15 @@ namespace vslam_backend_plugins {
     for (const auto& [kf_id, kf] : keyframes_) {
       g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
       v_sim3->setId(vertex_edge_id++);
-      v_sim3->setEstimate(cvMatToSim3(kf->T_f_w(), 1.0));
+      v_sim3->setEstimate(cvMatToSim3(kf->T_f_w(), 1.0).inverse());
       v_sim3->setFixed(kf_id == first_kf_id);
       v_sim3->setMarginalized(false);
+      optimizer.addVertex(v_sim3);
+
+      kf_vertices[kf_id] = v_sim3;
     }
 
     // Create edges
-    std::unordered_map<g2o::EdgeSim3*, std::pair<vslam_datastructure::Frame*, vslam_datastructure::Frame*>> all_edges;
     for (const auto& [kf_id, kf] : keyframes_) {
       auto v_sim3_this = kf_vertices.at(kf_id);
 
@@ -386,9 +388,9 @@ namespace vslam_backend_plugins {
 
         g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
         e_sim3->setId(vertex_edge_id++);
-        e_sim3->setMeasurement(cvMatToSim3(T_this_other, 1.0));
         e_sim3->setVertex(0, v_sim3_this);
         e_sim3->setVertex(1, v_sim3_other);
+        e_sim3->setMeasurement(cvMatToSim3(T_this_other, 1.0));
         e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
         optimizer.addEdge(e_sim3);
@@ -400,9 +402,9 @@ namespace vslam_backend_plugins {
     auto v_sim3_2 = kf_vertices.at(kf_id_2);
     g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
     e_sim3->setId(vertex_edge_id++);
-    e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale));
     e_sim3->setVertex(0, v_sim3_1);
     e_sim3->setVertex(1, v_sim3_2);
+    e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale));
     e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
     optimizer.addEdge(e_sim3);
@@ -411,18 +413,45 @@ namespace vslam_backend_plugins {
     optimizer.initializeOptimization();
     optimizer.optimize(30);
 
-    // Recalculate SE(3) poses and map points in their host keyframe
+    // // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
       // calculate the pose and scale
-      const auto S_f_w = kf_vertex->estimate();
+      const auto S_f_w = kf_vertex->estimate().inverse();
       const cv::Mat cv_T_f_w
           = eigenRotationTranslationToCvMat(S_f_w.rotation().toRotationMatrix(), S_f_w.translation());
       const double scale = S_f_w.scale();
+
+      auto kf = keyframes_.at(kf_id);
+      kf->update_sim3_pose_and_mps(cv_T_f_w, scale);
+
+      // std::cout << "old T_f_w" << std::endl;
+      // std::cout << kf->T_f_w() << std::endl;
+
+      // std::cout << "T_f_w" << std::endl;
+      // std::cout << cv_T_f_w << std::endl;
+      // std::cout << "scale: " << scale << std::endl;
     }
 
     // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
+    for (auto [_, this_kf] : keyframes_) {
+      for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
+        // std::cout << "old T_this_other" << std::endl;
+        // std::cout << old_T_this_other << std::endl;
+        const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
 
-    // Add the updated keyframes to visual queue
+        // std::cout << "T_this_other" << std::endl;
+        // std::cout << T_this_other << std::endl;
+
+        this_kf->add_T_this_other_kf(other_kf, T_this_other);
+      }
+    }
+
+    // Update visualizer
+    for (auto [_, kf] : keyframes_) {
+      vslam_msgs::msg::Frame keyframe_msg;
+      kf->to_msg(&keyframe_msg);
+      frame_msg_queue_->send(std::move(keyframe_msg));
+    }
   }
 
 }  // namespace vslam_backend_plugins

@@ -79,6 +79,34 @@ namespace vslam_datastructure {
     return T_f_w_.inv();
   }
 
+  void Frame::update_sim3_pose_and_mps(const cv::Mat& new_T_f_w, const double scale) {
+    cv::Mat new_T_w_f = new_T_f_w.inv();
+    cv::Matx33d new_R_w_f = new_T_f_w.rowRange(0, 3).colRange(0, 3);
+    cv::Mat new_t_w_f = new_T_f_w.rowRange(0, 3).colRange(3, 4);
+    cv::Point3d new_t_w_f_pt(new_t_w_f);
+
+    cv::Matx33d old_R_f_w = T_f_w_.rowRange(0, 3).colRange(0, 3);
+    cv::Mat old_t_f_w = T_f_w_.rowRange(0, 3).colRange(3, 4);
+    cv::Point3d old_t_f_w_pt(old_t_f_w);
+
+    std::lock_guard<std::mutex> lck(data_mutex_);
+
+    // Iterate through the map points with this keyframe being the host and update their global position
+    for (auto& pt : points_) {
+      if (pt->mappoint.get() && pt->mappoint->is_host(id_)) {
+        // Transform to this frame
+        auto mp = pt->mappoint->get_mappoint();
+        mp = old_R_f_w * mp + old_t_f_w_pt;
+
+        // Transform to the new pos in the world coordinate frame
+        mp = new_R_w_f * mp * scale + new_t_w_f_pt;
+        pt->mappoint->set_mappoint(mp);
+      }
+    }
+
+    T_f_w_ = new_T_f_w;
+  }
+
   void Frame::set_pose(const cv::Mat& T_f_w) {
     std::lock_guard<std::mutex> lck(data_mutex_);
     T_f_w_ = T_f_w.clone();
@@ -186,7 +214,7 @@ namespace vslam_datastructure {
     }
   }
 
-  MapPoints Frame::get_map_points(const std::vector<size_t> point_indices) {
+  MapPoints Frame::get_mappoints(const std::vector<size_t> point_indices) {
     std::lock_guard<std::mutex> lck(data_mutex_);
 
     MapPoints mappoints;
@@ -200,7 +228,7 @@ namespace vslam_datastructure {
     return mappoints;
   }
 
-  void Frame::set_map_points(const MapPoints& mappoints, const std::vector<size_t> indices, const bool set_host) {
+  void Frame::set_mappoints(const MapPoints& mappoints, const std::vector<size_t> indices, const bool set_host) {
     assert(is_keyframe_);
     assert(mappoints.size() == indices.size());
 

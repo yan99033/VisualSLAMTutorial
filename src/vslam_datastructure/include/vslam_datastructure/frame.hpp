@@ -26,11 +26,15 @@ namespace vslam_datastructure {
 
     cv::Mat get_image() const;
 
-    // Get the camera pose (inversed)
+    // Get the camera pose
     cv::Mat T_f_w() const;
 
-    // Get the camera pose
+    // Get the camera pose (inversed)
     cv::Mat T_w_f() const;
+
+    // Transform the map points to the this frame and apply sim3 transformation to them
+    // Then update the camera pose
+    void update_sim3_pose_and_mps(const cv::Mat& T_f_w, const double scale);
 
     // Set the camera pose
     void set_pose(const cv::Mat& T_f_w);
@@ -50,12 +54,12 @@ namespace vslam_datastructure {
     inline const Points& get_points() const { return points_; }
 
     // Get map points
-    MapPoints get_map_points(const std::vector<size_t> point_indices);
+    MapPoints get_mappoints(const std::vector<size_t> point_indices);
 
     // Set map points to the existing points
     // Use the set_host flag to make this frame as the host keyframe to the map points
-    void set_map_points(const MapPoints& mappoints, const std::vector<size_t> point_indices,
-                        const bool set_host = false);
+    void set_mappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices,
+                       const bool set_host = false);
 
     // Get the numbe of map points
     size_t get_num_mps();

@@ -215,7 +215,7 @@ namespace vslam_components {
         current_frame->set_pose(T_c_w);
 
         auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
-        current_keyframe->set_map_points(new_mps, get_first_indices(matched_index_pairs), true);
+        current_keyframe->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
@@ -278,9 +278,9 @@ namespace vslam_components {
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-          current_keyframe->set_map_points(new_mps, first_indices, true);
-          const auto new_old_mps = current_keyframe->get_map_points(first_indices);
-          current_frame->set_map_points(new_old_mps, second_indices);
+          current_keyframe->set_mappoints(new_mps, first_indices, true);
+          const auto new_old_mps = current_keyframe->get_mappoints(first_indices);
+          current_frame->set_mappoints(new_old_mps, second_indices);
           backend_->add_keyframe(current_frame);
 
           // Add the frame to visual update queue
@@ -372,9 +372,7 @@ namespace vslam_components {
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
             if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale)) {
-              std::cout << "found a potential loop between " << curr_kf_id << " and " << prev_kf_id << std::endl;
-              std::cout << T_p_c << std::endl;
-              std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+              backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
             }
           }
         }
@@ -417,22 +415,8 @@ namespace vslam_components {
       }
 
       // Calculate the scale
-      // 1. find the 3D point correspondences within the match
-      // 2. Transform the points in the current and previous keyframes to their coordinate frame
-      // 3. Calculate the scale of the transformation
       const auto mappoint_pairs = get_mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
       scale = utils::calculate_sim3_scale(mappoint_pairs, T_p_c);
-
-      // DEBUG
-      cv::Matx33d R = T_p_c.rowRange(0, 3).colRange(0, 3);
-      cv::Mat t = T_p_c.rowRange(0, 3).colRange(3, 4);
-      cv::Point3d t_pt = cv::Point3d(t);
-      for (const auto& [mp1, mp2] : mappoint_pairs) {
-        const auto mp2_prime = R * mp1 * scale + t_pt;
-        std::cout << "scale: " << scale << std::endl;
-        std::cout << "mp2: " << mp2.x << " " << mp2.y << " " << mp2.z << std::endl;
-        std::cout << "mp2': " << mp2_prime.x << " " << mp2_prime.y << " " << mp2_prime.z << std::endl;
-      }
 
       if (scale == 0) {
         return false;
