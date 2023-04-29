@@ -35,7 +35,7 @@ set(sources
 
 
 add_library(${PROJECT_NAME} SHARED ${sources})
-target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::solver_eigen Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::types_sim3 g2o::solver_eigen Eigen3::Eigen)
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

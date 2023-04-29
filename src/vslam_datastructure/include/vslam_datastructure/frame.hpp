@@ -18,6 +18,7 @@ namespace vslam_datastructure {
   class Frame {
   public:
     using SharedPtr = std::shared_ptr<Frame>;
+    using KeyframeConstraintsMap = std::unordered_map<const Frame*, cv::Mat>;
 
     Frame() = delete;
 
@@ -76,6 +77,8 @@ namespace vslam_datastructure {
     // Set pose constraints between adjacent keyframes
     void add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
+    inline const KeyframeConstraintsMap& get_T_this_other_kfs() const { return T_this_other_kfs_; }
+
   private:
     // Iterate through the map points and set the projection constraints
     void set_mappoint_projections();
@@ -98,7 +101,7 @@ namespace vslam_datastructure {
 
     // Constraints between current (key)frame and the adjacent keyframes
     // A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
-    std::unordered_map<const Frame*, cv::Mat> T_this_other_kfs_;
+    KeyframeConstraintsMap T_this_other_kfs_;
   };
 
 }  // namespace vslam_datastructure

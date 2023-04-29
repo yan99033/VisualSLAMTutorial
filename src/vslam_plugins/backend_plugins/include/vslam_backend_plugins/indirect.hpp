@@ -26,6 +26,9 @@ namespace vslam_backend_plugins {
     // Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
     vslam_datastructure::Frame* get_keyframe(const long unsigned int id) const override;
 
+    void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
+                             const double sim3_scale) override;
+
   private:
     using CoreKfsSet = std::set<vslam_datastructure::Frame*>;
     using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
@@ -52,6 +55,10 @@ namespace vslam_backend_plugins {
     std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
     void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
     size_t num_core_kfs_{3};
+
+    std::atomic_bool loop_optimization_running_{false};
+    void run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                     const cv::Mat& T_1_2, const double sim3_scale);
 
     std::atomic_bool exit_thread_{false};
   };

@@ -8,6 +8,7 @@
 #include <g2o/solvers/eigen/linear_solver_eigen.h>
 #include <g2o/types/sba/types_sba.h>
 #include <g2o/types/sba/types_six_dof_expmap.h>
+#include <g2o/types/sim3/types_seven_dof_expmap.h>
 
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
@@ -29,6 +30,16 @@ namespace {
     Eigen::Vector3d t(pose.at<double>(0, 3), pose.at<double>(1, 3), pose.at<double>(2, 3));
 
     return g2o::SE3Quat(R, t);
+  }
+
+  g2o::Sim3 cvMatToSim3(const cv::Mat& pose, const double scale) {
+    Eigen::Matrix3d R;
+    R << pose.at<double>(0, 0), pose.at<double>(0, 1), pose.at<double>(0, 2), pose.at<double>(1, 0),
+        pose.at<double>(1, 1), pose.at<double>(1, 2), pose.at<double>(2, 0), pose.at<double>(2, 1),
+        pose.at<double>(2, 2);
+    Eigen::Vector3d t(pose.at<double>(0, 3), pose.at<double>(1, 3), pose.at<double>(2, 3));
+
+    return g2o::Sim3(R, t, scale);
   }
 
   cv::Mat eigenRotationTranslationToCvMat(const Eigen::Matrix3d& rotation, const Eigen::Vector3d& translation) {
@@ -179,7 +190,7 @@ namespace vslam_backend_plugins {
     std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
     std::set<vslam_datastructure::Frame*> non_core_kfs;
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
-    unsigned long int vertex_id{0};
+    unsigned long int vertex_edge_id{0};
     for (auto mp : core_mappoints) {
       if (mp == nullptr || mp->is_outlier()) {
         continue;
@@ -200,7 +211,7 @@ namespace vslam_backend_plugins {
       g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
       core_mp_vertices[mp_vertex] = mp;
       mp_vertex->setEstimate(cvPoint3dToEigenVector3d(mp->get_mappoint()));
-      mp_vertex->setId(vertex_id++);
+      mp_vertex->setId(vertex_edge_id++);
       mp_vertex->setMarginalized(true);
       optimizer.addVertex(mp_vertex);
 
@@ -218,7 +229,7 @@ namespace vslam_backend_plugins {
           kf_vertex = new g2o::VertexSE3Expmap();
           existing_kf_vertices[pt->frame] = kf_vertex;
           kf_vertex->setEstimate(cvMatToSE3Quat(pt->frame->T_f_w()));
-          kf_vertex->setId(vertex_id++);
+          kf_vertex->setId(vertex_edge_id++);
           if (core_keyframes.find(pt->frame) != core_keyframes.end()) {
             // Core keyframes
             core_kf_vertices[kf_vertex] = pt->frame;
@@ -233,6 +244,7 @@ namespace vslam_backend_plugins {
 
         // Projection
         g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
+        e->setId(vertex_edge_id++);
         e->setVertex(0, mp_vertex);
         e->setVertex(1, kf_vertex);
         e->setMeasurement(Eigen::Vector2d(pt->keypoint.pt.x, pt->keypoint.pt.y));
@@ -314,6 +326,103 @@ namespace vslam_backend_plugins {
       kf_p->to_msg(&keyframe_msg);
       frame_msg_queue_->send(std::move(keyframe_msg));
     }
+  }
+
+  void Indirect::add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                     const cv::Mat& T_1_2, const double sim3_scale) {
+    if (loop_optimization_running_) {
+      return;
+    }
+
+    // Check if the keyframes exist
+    {
+      std::lock_guard<std::mutex> lck(keyframe_mutex_);
+      if ((keyframes_.find(kf_id_1) == keyframes_.end()) || (keyframes_.find(kf_id_2) == keyframes_.end())) {
+        return;
+      }
+    }
+
+    loop_optimization_running_ = true;
+
+    run_pose_graph_optimization(kf_id_1, kf_id_2, T_1_2, sim3_scale);
+
+    loop_optimization_running_ = false;
+  }
+
+  void Indirect::run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                             const cv::Mat& T_1_2, const double sim3_scale) {
+    // Setup optimizer
+    g2o::SparseOptimizer optimizer;
+    optimizer.setVerbose(false);
+    typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 7>> BlockSolverType;
+    typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(
+        g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+    optimizer.setAlgorithm(solver);
+
+    // Lock it as we are going to modify the whole graph
+    std::lock_guard<std::mutex> lck(keyframe_mutex_);
+
+    const auto first_kf_id = keyframes_.begin()->first;
+
+    // Create vertices
+    unsigned long int vertex_edge_id{0};
+    std::map<long unsigned int, g2o::VertexSim3Expmap*> kf_vertices;
+    for (const auto& [kf_id, kf] : keyframes_) {
+      g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
+      v_sim3->setId(vertex_edge_id++);
+      v_sim3->setEstimate(cvMatToSim3(kf->T_f_w(), 1.0));
+      v_sim3->setFixed(kf_id == first_kf_id);
+      v_sim3->setMarginalized(false);
+    }
+
+    // Create edges
+    std::unordered_map<g2o::EdgeSim3*, std::pair<vslam_datastructure::Frame*, vslam_datastructure::Frame*>> all_edges;
+    for (const auto& [kf_id, kf] : keyframes_) {
+      auto v_sim3_this = kf_vertices.at(kf_id);
+
+      for (const auto& [other_kf, T_this_other] : kf->get_T_this_other_kfs()) {
+        auto v_sim3_other = kf_vertices.at(other_kf->id());
+
+        g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+        e_sim3->setId(vertex_edge_id++);
+        e_sim3->setMeasurement(cvMatToSim3(T_this_other, 1.0));
+        e_sim3->setVertex(0, v_sim3_this);
+        e_sim3->setVertex(1, v_sim3_other);
+        e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+        optimizer.addEdge(e_sim3);
+      }
+    }
+
+    // The loop edge
+    auto v_sim3_1 = kf_vertices.at(kf_id_1);
+    auto v_sim3_2 = kf_vertices.at(kf_id_2);
+    g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+    e_sim3->setId(vertex_edge_id++);
+    e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale));
+    e_sim3->setVertex(0, v_sim3_1);
+    e_sim3->setVertex(1, v_sim3_2);
+    e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+    optimizer.addEdge(e_sim3);
+
+    // Optimize pose graph
+    optimizer.initializeOptimization();
+    optimizer.optimize(30);
+
+    // Recalculate SE(3) poses and map points in their host keyframe
+    for (const auto [kf_id, kf_vertex] : kf_vertices) {
+      // calculate the pose and scale
+      const auto S_f_w = kf_vertex->estimate();
+      const cv::Mat cv_T_f_w
+          = eigenRotationTranslationToCvMat(S_f_w.rotation().toRotationMatrix(), S_f_w.translation());
+      const double scale = S_f_w.scale();
+    }
+
+    // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
+
+    // Add the updated keyframes to visual queue
   }
 
 }  // namespace vslam_backend_plugins
