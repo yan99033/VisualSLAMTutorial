@@ -43,15 +43,6 @@ def generate_launch_description():
                 ],
                 extra_arguments=[{'use_intra_process_comms': True}],),
             ComposableNode(
-                package='visualization_nodes',
-                plugin='vslam_components::visualization_nodes::RvizVisualNode',
-                name='rviz_visual_node',
-                remappings=[
-                    ('/in_frame', '/live_frame'),
-                    ('/update_frame', '/keyframe')
-                ],
-                extra_arguments=[{'use_intra_process_comms': True}],),
-            ComposableNode(
                 package='data_loader_nodes',
                 plugin='vslam_components::data_loader_nodes::LoadFromFolder',
                 name='camera_node',
