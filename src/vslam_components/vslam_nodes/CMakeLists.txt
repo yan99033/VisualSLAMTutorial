@@ -16,6 +16,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
 find_package(vslam_msgs REQUIRED)
@@ -30,6 +32,8 @@ set(dependencies
   rclcpp
   rclcpp_components
   pluginlib
+  visualization_msgs
+  tf2_eigen
   vslam_datastructure
   vslam_plugins_base
   vslam_msgs

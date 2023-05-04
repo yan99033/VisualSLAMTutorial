@@ -20,6 +20,13 @@ namespace vslam_datastructure {
       condition_.notify_one();
     }
 
+    void send_front(T &&msg) {
+      std::lock_guard<std::mutex> lck(mutex_);
+      queue_.push_front(std::move(msg));
+
+      condition_.notify_one();
+    }
+
     void stop() {
       // Unblock the condition variable
       exit_ = true;

@@ -1,7 +1,7 @@
 camera_node:
   ros__parameters:
     frame_rate_hz: 10
-    image_folder: "/Users/sy/kitti/00/image_2"
+    image_folder: "/path/to/kitti/dataset/image/folder"
     
 indirect_vslam_node:
   ros__parameters:
@@ -17,7 +17,7 @@ indirect_vslam_node:
       input: "orbvoc.dbow3"
       top_k: 3
       ignore_last_n_keyframes: 10
-      score_thresh: 0.015
+      score_thresh: 0.02
 
     # Plugins
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::Orb"

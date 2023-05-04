@@ -2,6 +2,7 @@
 
 #include <g2o/core/block_solver.h>
 #include <g2o/core/optimization_algorithm_factory.h>
+#include <g2o/core/optimization_algorithm_gauss_newton.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/core/robust_kernel_impl.h>
 #include <g2o/core/sparse_optimizer.h>
@@ -42,14 +43,9 @@ namespace {
     return g2o::Sim3(R, t, scale);
   }
 
-  cv::Mat eigenRotationTranslationToCvMat(const Eigen::Matrix3d& rotation, const Eigen::Vector3d& translation) {
-    Eigen::Affine3d transformation_matrix = Eigen::Affine3d::Identity();
-    transformation_matrix.translate(translation);
-    transformation_matrix.rotate(rotation);
-    cv::Mat cv_transformation_matrix = cv::Mat::eye(4, 4, CV_64F);
-    cv::eigen2cv(transformation_matrix.matrix(), cv_transformation_matrix);
-
-    return cv_transformation_matrix;
+  cv::Mat eigenRotationTranslationToCvMat(const Eigen::Matrix3d& R, const Eigen::Vector3d& t) {
+    return (cv::Mat_<double>(4, 4) << R.coeff(0, 0), R.coeff(0, 1), R.coeff(0, 2), t.x(), R.coeff(1, 0), R.coeff(1, 1),
+            R.coeff(1, 2), t.y(), R.coeff(2, 0), R.coeff(2, 1), R.coeff(2, 2), t.z(), 0.0, 0.0, 0.0, 1.0);
   }
 
   cv::Point3d eigenVector3dToCvPoint3d(const Eigen::Vector3d& vec) { return cv::Point3d(vec.x(), vec.y(), vec.z()); }
@@ -127,7 +123,7 @@ namespace vslam_backend_plugins {
         continue;
       }
 
-      run_local_ba(core_kfs, core_mps);
+      // run_local_ba(core_kfs, core_mps);
 
       run_local_ba_ = false;
     }
@@ -159,6 +155,13 @@ namespace vslam_backend_plugins {
       kfs_it++;
     }
 
+    // if (kfs_it->second.get() != nullptr) {
+    //   // Make the nearest keyfame outside the core keyframes as the non-core keyfames in local BA
+    //   max_non_core_kf_id = kfs_it->second->id();
+    // }
+
+    // std::cout << "max_non_core_kf_id: " << max_non_core_kf_id << std::endl;
+
     return {core_keyframes, core_mappoints};
   }
 
@@ -182,7 +185,7 @@ namespace vslam_backend_plugins {
 
     constexpr float huber_kernel_delta{2.45};  // sqrt(5.99)
 
-    const auto first_kf_id = keyframes_.begin()->first;
+    const auto fixed_kf_id = current_keyframe_->id();
 
     // Create vertices and edges
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
@@ -199,7 +202,7 @@ namespace vslam_backend_plugins {
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr) {
+        if (pt == nullptr || pt->frame == nullptr || pt->frame->id() < max_non_core_kf_id) {
           continue;
         }
         num_valid_projections++;
@@ -217,7 +220,7 @@ namespace vslam_backend_plugins {
 
       // Projections
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr) {
+        if (pt == nullptr || pt->frame == nullptr || pt->frame->id() < max_non_core_kf_id) {
           continue;
         }
 
@@ -233,7 +236,7 @@ namespace vslam_backend_plugins {
           if (core_keyframes.find(pt->frame) != core_keyframes.end()) {
             // Core keyframes
             core_kf_vertices[kf_vertex] = pt->frame;
-            kf_vertex->setFixed(pt->frame->id() == first_kf_id);
+            kf_vertex->setFixed(pt->frame->id() == fixed_kf_id);
           } else {
             // Non-core keyframes
             non_core_kfs.insert(pt->frame);
@@ -354,16 +357,13 @@ namespace vslam_backend_plugins {
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
-    typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 7>> BlockSolverType;
+    typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 3>> BlockSolverType;
     typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
-    auto solver = new g2o::OptimizationAlgorithmLevenberg(
+    auto solver = new g2o::OptimizationAlgorithmGaussNewton(  // OptimizationAlgorithmLevenberg(
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     optimizer.setAlgorithm(solver);
 
-    // Lock it as we are going to modify the whole graph
-    std::lock_guard<std::mutex> lck(keyframe_mutex_);
-
-    const auto first_kf_id = keyframes_.begin()->first;
+    const auto fixed_kf_id = current_keyframe_->id();
 
     // Create vertices
     unsigned long int vertex_edge_id{0};
@@ -371,12 +371,16 @@ namespace vslam_backend_plugins {
     for (const auto& [kf_id, kf] : keyframes_) {
       g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
       v_sim3->setId(vertex_edge_id++);
-      v_sim3->setEstimate(cvMatToSim3(kf->T_f_w(), 1.0).inverse());
-      v_sim3->setFixed(kf_id == first_kf_id);
+      v_sim3->setEstimate(cvMatToSim3(kf->T_f_w(), 1.0));
+      v_sim3->setFixed(kf_id == fixed_kf_id);
       v_sim3->setMarginalized(false);
       optimizer.addVertex(v_sim3);
 
       kf_vertices[kf_id] = v_sim3;
+
+      if (kf_id >= fixed_kf_id) {
+        break;
+      }
     }
 
     // Create edges
@@ -384,16 +388,24 @@ namespace vslam_backend_plugins {
       auto v_sim3_this = kf_vertices.at(kf_id);
 
       for (const auto& [other_kf, T_this_other] : kf->get_T_this_other_kfs()) {
+        if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
+          continue;
+        }
+
         auto v_sim3_other = kf_vertices.at(other_kf->id());
 
         g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
         e_sim3->setId(vertex_edge_id++);
         e_sim3->setVertex(0, v_sim3_this);
         e_sim3->setVertex(1, v_sim3_other);
-        e_sim3->setMeasurement(cvMatToSim3(T_this_other, 1.0));
+        e_sim3->setMeasurement(cvMatToSim3(T_this_other, 1.0).inverse());
         e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
         optimizer.addEdge(e_sim3);
+      }
+
+      if (kf_id >= fixed_kf_id) {
+        break;
       }
     }
 
@@ -404,8 +416,10 @@ namespace vslam_backend_plugins {
     e_sim3->setId(vertex_edge_id++);
     e_sim3->setVertex(0, v_sim3_1);
     e_sim3->setVertex(1, v_sim3_2);
-    e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale));
+    e_sim3->setMeasurement(cvMatToSim3(T_1_2, 1.0).inverse());  // sim3_scale
     e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+    std::cout << "sim3 scale: " << sim3_scale << std::endl;
 
     optimizer.addEdge(e_sim3);
 
@@ -416,41 +430,47 @@ namespace vslam_backend_plugins {
     // // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
       // calculate the pose and scale
-      const auto S_f_w = kf_vertex->estimate().inverse();
+      const auto S_f_w = kf_vertex->estimate();
       const cv::Mat cv_T_f_w
           = eigenRotationTranslationToCvMat(S_f_w.rotation().toRotationMatrix(), S_f_w.translation());
       const double scale = S_f_w.scale();
 
       auto kf = keyframes_.at(kf_id);
-      kf->update_sim3_pose_and_mps(cv_T_f_w, scale);
 
-      // std::cout << "old T_f_w" << std::endl;
+      // std::cout << "old T_f_w: " << kf_id << " " << kf->id() << std::endl;
       // std::cout << kf->T_f_w() << std::endl;
 
       // std::cout << "T_f_w" << std::endl;
       // std::cout << cv_T_f_w << std::endl;
       // std::cout << "scale: " << scale << std::endl;
+
+      kf->update_sim3_pose_and_mps(cv_T_f_w, scale);
     }
+    std::cout << "updated poses and map points" << std::endl;
 
     // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
-    for (auto [_, this_kf] : keyframes_) {
-      for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
-        // std::cout << "old T_this_other" << std::endl;
-        // std::cout << old_T_this_other << std::endl;
-        const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
+    // for (auto [_, this_kf] : keyframes_) {
+    //   for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
+    //     // std::cout << "old T_this_other" << std::endl;
+    //     // std::cout << old_T_this_other << std::endl;
+    //     const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
 
-        // std::cout << "T_this_other" << std::endl;
-        // std::cout << T_this_other << std::endl;
+    //     // std::cout << "T_this_other" << std::endl;
+    //     // std::cout << T_this_other << std::endl;
 
-        this_kf->add_T_this_other_kf(other_kf, T_this_other);
-      }
-    }
+    //     this_kf->add_T_this_other_kf(other_kf, T_this_other);
+    //   }
+    // }
 
     // Update visualizer
-    for (auto [_, kf] : keyframes_) {
+    auto kfs_it = keyframes_.find(fixed_kf_id);
+    while (kfs_it != keyframes_.begin()) {
+      auto kf = kfs_it->second;
       vslam_msgs::msg::Frame keyframe_msg;
       kf->to_msg(&keyframe_msg);
       frame_msg_queue_->send(std::move(keyframe_msg));
+
+      kfs_it--;
     }
   }
 

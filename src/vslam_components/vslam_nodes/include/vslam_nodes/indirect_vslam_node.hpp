@@ -3,11 +3,13 @@
 #ifndef VSLAM_NODES__VSLAM_NODE_HPP_
 #define VSLAM_NODES__VSLAM_NODE_HPP_
 
+#include <Eigen/Dense>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <pluginlib/class_loader.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
-#include "rclcpp/rclcpp.hpp"
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_datastructure/signal_queue.hpp"
@@ -30,22 +32,31 @@ namespace vslam_components {
     private:
       enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
 
-      void frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg);
+      void frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg);
 
       // Check the goodness of the mapped points so far to determine the matching and tracking qualities
       bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
                              size_t& num_mps);
 
-      rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_sub_;
-      rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
-      rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr keyframe_pub_;
+      rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
+      rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
+      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
+
+      // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
+      // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr keyframe_pub_;
 
       // for re-publishing the frame message without creating a copy
-      std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
+      // std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
+
+      std::string frame_id_{"map"};
+
+      double marker_scale_{10.0};
+
+      double line_thickness_{1.0};
 
       State state_{State::init};
 
-      // vslam_datastructure::Frame::SharedPtr current_keyframe_;
+      vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
       cv::Mat load_camera_info();
 
@@ -116,6 +127,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_place_recognition_base::PlaceRecognition> place_recognition_loader_{
           "vslam_plugins_base", "vslam_place_recognition_base::PlaceRecognition"};
       std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition_;
+
+      // Convert the camera coordinate frame (x: right, y: down, z: forward) to the `map` coordinate frame (x: forward,
+      // y: left, z: up)
+      // @sa https://www.ros.org/reps/rep-0105.html
+      static const Eigen::Matrix3d cam_axes_transform_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

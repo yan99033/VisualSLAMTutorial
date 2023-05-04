@@ -55,6 +55,7 @@ namespace vslam_backend_plugins {
     std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
     void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
     size_t num_core_kfs_{3};
+    long unsigned int max_non_core_kf_id{0};
 
     std::atomic_bool loop_optimization_running_{false};
     void run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,

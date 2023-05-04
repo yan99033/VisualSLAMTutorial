@@ -9,19 +9,6 @@
 using std::placeholders::_1;
 
 namespace {
-  int encoding2mat_type(const std::string& encoding) {
-    if (encoding == "mono8") {
-      return CV_8UC1;
-    } else if (encoding == "bgr8") {
-      return CV_8UC3;
-    } else if (encoding == "mono16") {
-      return CV_16SC1;
-    } else if (encoding == "rgba8") {
-      return CV_8UC4;
-    }
-    throw std::runtime_error("Unsupported mat type");
-  }
-
   std::vector<size_t> get_first_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
     std::vector<size_t> first_indices;
     for (const auto& [idx1, _] : indice_pairs) {
@@ -101,6 +88,9 @@ namespace vslam_components {
 
   namespace vslam_nodes {
 
+    const Eigen::Matrix3d IndirectVSlamNode::cam_axes_transform_
+        = (Eigen::Matrix3d() << 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished();
+
     IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options)
         : Node("vslam_node", options), K_{load_camera_info()} {
       // Feature extractor
@@ -134,11 +124,15 @@ namespace vslam_components {
                                      declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
       // Frame subscriber and publishers
-      frame_sub_ = create_subscription<vslam_msgs::msg::Frame>("in_frame", 10,
-                                                               std::bind(&IndirectVSlamNode::frame_callback, this, _1));
-      frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
-      captured_frame_pub_ = frame_pub_;
-      keyframe_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_keyframe", 10);
+      frame_subscriber_ = create_subscription<vslam_msgs::msg::Frame>(
+          "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));
+
+      image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
+      frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 1000);
+
+      // frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
+      // captured_frame_pub_ = frame_pub_;
+      // keyframe_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_keyframe", 1000);
 
       frame_msg_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
       place_recognition_thread_ = std::thread(&IndirectVSlamNode::place_recognition_loop, this);
@@ -166,18 +160,18 @@ namespace vslam_components {
       return (cv::Mat_<double>(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
     }
 
-    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::UniquePtr frame_msg) {
-      auto pub_ptr = captured_frame_pub_.lock();
-      if (!pub_ptr) {
-        RCLCPP_WARN(this->get_logger(), "unable to lock the publisher\n");
-        return;
-      }
+    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
+      // auto pub_ptr = captured_frame_pub_.lock();
+      // if (!pub_ptr) {
+      //   RCLCPP_WARN(this->get_logger(), "unable to lock the publisher\n");
+      //   return;
+      // }
 
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
-      cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
-                     frame_msg->image.data.data());
+      cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
+                     utils::encoding2mat_type(frame_msg->image.encoding), frame_msg->image.data.data());
 
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);
@@ -189,12 +183,14 @@ namespace vslam_components {
         frame->set_keyframe();
 
         backend_->add_keyframe(frame);
+        current_keyframe_ = frame;
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
-        auto current_keyframe = backend_->get_current_keyframe();
-        if (!current_keyframe->has_points() || points.empty()) {
-          backend_->remove_keyframe(current_keyframe);
+        // auto current_keyframe = backend_->get_current_keyframe();
+        if (!current_keyframe_->has_points() || points.empty()) {
+          backend_->remove_keyframe(current_keyframe_);
+          current_keyframe_ = nullptr;
           state_ = State::init;
           return;
         }
@@ -204,18 +200,18 @@ namespace vslam_components {
         current_frame->set_points(points);
 
         auto [matched_points, matched_index_pairs]
-            = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
+            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
         // T_c_p_ = T_c_p;
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe->T_f_w();
+        cv::Mat T_p_w = current_keyframe_->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
         auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
-        current_keyframe->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
+        current_keyframe_->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
@@ -223,21 +219,21 @@ namespace vslam_components {
 
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
-        auto current_keyframe = backend_->get_current_keyframe();
-        if (!current_keyframe->has_points() || points.empty()) {
+        // auto current_keyframe = backend_->get_current_keyframe();
+        if (!current_keyframe_->has_points() || points.empty()) {
           std::cout << "Current frame has no point to track" << std::endl;
           state_ = State::relocalization;
           return;
         }
 
-        std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " to track" << std::endl;
+        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " to track" << std::endl;
 
         auto current_frame = std::make_shared<vslam_datastructure::Frame>(K_);
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
         auto [matched_points, matched_index_pairs]
-            = feature_matcher_->match_features(current_keyframe->get_points(), current_frame->get_points());
+            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
         // Check if we have enough map points for camera tracking
         size_t num_matched_mps{0};
@@ -260,7 +256,7 @@ namespace vslam_components {
         }
 
         // Camera pose
-        cv::Mat T_p_w = current_keyframe->T_f_w();
+        cv::Mat T_p_w = current_keyframe_->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
@@ -270,23 +266,24 @@ namespace vslam_components {
         if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
             || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
           // Set constraints between adjacent keyframes
-          current_keyframe->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
-          current_frame->add_T_this_other_kf(current_keyframe.get(), T_c_p);
-          current_frame->set_parent_keyframe(current_keyframe.get());
+          current_keyframe_->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
+          current_frame->add_T_this_other_kf(current_keyframe_.get(), T_c_p);
+          current_frame->set_parent_keyframe(current_keyframe_.get());
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-          current_keyframe->set_mappoints(new_mps, first_indices, true);
-          const auto new_old_mps = current_keyframe->get_mappoints(first_indices);
+          current_keyframe_->set_mappoints(new_mps, first_indices, true);
+          const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
           current_frame->set_mappoints(new_old_mps, second_indices);
           backend_->add_keyframe(current_frame);
+          current_keyframe_ = current_frame;
 
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame kf_msg;
-          current_keyframe->to_msg(&kf_msg);
-          frame_visual_queue_->send(std::move(kf_msg));
+          current_keyframe_->to_msg(&kf_msg);
+          frame_visual_queue_->send_front(std::move(kf_msg));
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -297,7 +294,7 @@ namespace vslam_components {
           std::cout << "Didn't create a new keyframe. Currently tracking " << num_kf_mps << " map points" << std::endl;
         }
 
-        std::cout << "current keyframe has " << current_keyframe->get_num_mps() << " map points" << std::endl;
+        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " map points" << std::endl;
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
@@ -307,7 +304,15 @@ namespace vslam_components {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;
       }
-      pub_ptr->publish(std::move(frame_msg));
+      // pub_ptr->publish(std::move(frame_msg));
+      // Publish frame markers
+      visualization::add_keypoints_to_image_frame_msg(*frame_msg);
+      image_publisher_->publish(frame_msg->image);
+
+      auto pose_marker
+          = visualization::calculate_pose_marker(frame_msg->pose, frame_id_, marker_scale_, line_thickness_, "live", -1,
+                                                 {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
+      frame_publisher_->publish(std::move(pose_marker));
     }
 
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
@@ -327,12 +332,17 @@ namespace vslam_components {
 
     void IndirectVSlamNode::frame_visual_publisher_loop() {
       while (!exit_thread_) {
-        auto keyframe_msg = frame_visual_queue_->receive();
+        auto frame_msg = frame_visual_queue_->receive();
 
-        keyframe_pub_->publish(std::move(keyframe_msg));
+        auto pose_marker = visualization::calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_,
+                                                                line_thickness_, "keyframe", frame_msg.id, {0, 1, 0},
+                                                                cam_axes_transform_, rclcpp::Duration({0}));
+        frame_publisher_->publish(std::move(pose_marker));
 
-        // Free CPU
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // keyframe_pub_->publish(std::move(keyframe_msg));
+
+        // Make sure the sleep time is reasonable so we don't overwhelm the publisher queue
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
@@ -372,7 +382,11 @@ namespace vslam_components {
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
             if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale)) {
-              backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
+              std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
+                        << std::endl;
+              std::cout << T_p_c << std::endl;
+              std::cout << "scale: " << scale << std::endl;
+              backend_->add_loop_constraint(curr_kf_id, prev_kf_id, T_p_c, scale);
             }
           }
         }
@@ -390,7 +404,7 @@ namespace vslam_components {
       }
 
       if (!current_keyframe->has_points() || !previous_keyframe->has_points()) {
-        RCLCPP_ERROR(this->get_logger(), "there is no point to track in verifying a potential loop");
+        RCLCPP_INFO(this->get_logger(), "there is no point to track in verifying a potential loop");
         return false;
       }
 

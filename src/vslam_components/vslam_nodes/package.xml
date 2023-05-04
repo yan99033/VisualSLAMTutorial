@@ -11,8 +11,9 @@
 
   <depend>pluginlib</depend>
   <depend>vslam_plugins_base</depend>
-  
+  <depend>visualization_msgs</depend>
   <depend>vslam_msgs</depend>
+  <depend>tf2_eigen</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

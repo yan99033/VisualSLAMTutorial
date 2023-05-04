@@ -80,9 +80,9 @@ namespace vslam_datastructure {
   }
 
   void Frame::update_sim3_pose_and_mps(const cv::Mat& new_T_f_w, const double scale) {
-    cv::Mat new_T_w_f = new_T_f_w.inv();
-    cv::Matx33d new_R_w_f = new_T_f_w.rowRange(0, 3).colRange(0, 3);
-    cv::Mat new_t_w_f = new_T_f_w.rowRange(0, 3).colRange(3, 4);
+    cv::Mat new_T_w_f = new_T_f_w.clone().inv();
+    cv::Matx33d new_R_w_f = new_T_w_f.rowRange(0, 3).colRange(0, 3);
+    cv::Mat new_t_w_f = new_T_w_f.rowRange(0, 3).colRange(3, 4);
     cv::Point3d new_t_w_f_pt(new_t_w_f);
 
     cv::Matx33d old_R_f_w = T_f_w_.rowRange(0, 3).colRange(0, 3);
@@ -104,7 +104,7 @@ namespace vslam_datastructure {
       }
     }
 
-    T_f_w_ = new_T_f_w;
+    T_f_w_ = new_T_f_w.clone();
   }
 
   void Frame::set_pose(const cv::Mat& T_f_w) {
@@ -137,8 +137,9 @@ namespace vslam_datastructure {
     }
     std::lock_guard<std::mutex> lck(data_mutex_);
 
+    frame_msg->id = id_;
+
     if (!skip_loaded) {
-      frame_msg->id = id_;
       frame_msg->header.stamp.sec = ros_timestamp_sec_;
       frame_msg->header.stamp.nanosec = ros_timestamp_nanosec_;
 
