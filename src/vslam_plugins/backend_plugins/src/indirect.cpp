@@ -123,7 +123,7 @@ namespace vslam_backend_plugins {
         continue;
       }
 
-      // run_local_ba(core_kfs, core_mps);
+      run_local_ba(core_kfs, core_mps);
 
       run_local_ba_ = false;
     }
@@ -322,13 +322,6 @@ namespace vslam_backend_plugins {
         kf1->add_T_this_other_kf(kf2, T_1_2);
       }
     }
-
-    // Update visualizer
-    for (auto [_, kf_p] : core_kf_vertices) {
-      vslam_msgs::msg::Frame keyframe_msg;
-      kf_p->to_msg(&keyframe_msg);
-      frame_msg_queue_->send(std::move(keyframe_msg));
-    }
   }
 
   void Indirect::add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
@@ -416,7 +409,7 @@ namespace vslam_backend_plugins {
     e_sim3->setId(vertex_edge_id++);
     e_sim3->setVertex(0, v_sim3_1);
     e_sim3->setVertex(1, v_sim3_2);
-    e_sim3->setMeasurement(cvMatToSim3(T_1_2, 1.0).inverse());  // sim3_scale
+    e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale).inverse());
     e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
     std::cout << "sim3 scale: " << sim3_scale << std::endl;
@@ -430,21 +423,27 @@ namespace vslam_backend_plugins {
     // // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
       // calculate the pose and scale
-      const auto S_f_w = kf_vertex->estimate();
-      const cv::Mat cv_T_f_w
-          = eigenRotationTranslationToCvMat(S_f_w.rotation().toRotationMatrix(), S_f_w.translation());
-      const double scale = S_f_w.scale();
+      const auto g2o_S_f_w = kf_vertex->estimate();
+      const cv::Mat temp_T_f_w
+          = eigenRotationTranslationToCvMat(g2o_S_f_w.rotation().toRotationMatrix(), g2o_S_f_w.translation());
+      const double scale = g2o_S_f_w.scale();
+
+      cv::Mat T_f_w = temp_T_f_w.clone();
+      T_f_w.rowRange(0, 3).colRange(3, 4) /= scale;
+      cv::Mat S_f_w = temp_T_f_w.clone();
+      S_f_w.rowRange(0, 3).colRange(0, 3) *= scale;
 
       auto kf = keyframes_.at(kf_id);
 
       // std::cout << "old T_f_w: " << kf_id << " " << kf->id() << std::endl;
       // std::cout << kf->T_f_w() << std::endl;
 
-      // std::cout << "T_f_w" << std::endl;
-      // std::cout << cv_T_f_w << std::endl;
-      // std::cout << "scale: " << scale << std::endl;
+      // std::cout << "new T_f_w" << std::endl;
+      // std::cout << T_f_w << std::endl;
+      // // std::cout << cv_T_f_w << std::endl;
+      // // std::cout << "scale: " << scale << std::endl;
 
-      kf->update_sim3_pose_and_mps(cv_T_f_w, scale);
+      kf->update_sim3_pose_and_mps(S_f_w, T_f_w);
     }
     std::cout << "updated poses and map points" << std::endl;
 

@@ -79,11 +79,11 @@ namespace vslam_datastructure {
     return T_f_w_.inv();
   }
 
-  void Frame::update_sim3_pose_and_mps(const cv::Mat& new_T_f_w, const double scale) {
-    cv::Mat new_T_w_f = new_T_f_w.clone().inv();
-    cv::Matx33d new_R_w_f = new_T_w_f.rowRange(0, 3).colRange(0, 3);
-    cv::Mat new_t_w_f = new_T_w_f.rowRange(0, 3).colRange(3, 4);
-    cv::Point3d new_t_w_f_pt(new_t_w_f);
+  void Frame::update_sim3_pose_and_mps(const cv::Mat& S_f_w, const cv::Mat& T_f_w) {
+    cv::Mat S_w_f = S_f_w.inv();
+    cv::Matx33d sR_w_f = S_w_f.rowRange(0, 3).colRange(0, 3);
+    cv::Mat st_w_f = S_w_f.rowRange(0, 3).colRange(3, 4);
+    cv::Point3d st_w_f_pt(st_w_f);
 
     cv::Matx33d old_R_f_w = T_f_w_.rowRange(0, 3).colRange(0, 3);
     cv::Mat old_t_f_w = T_f_w_.rowRange(0, 3).colRange(3, 4);
@@ -99,12 +99,12 @@ namespace vslam_datastructure {
         mp = old_R_f_w * mp + old_t_f_w_pt;
 
         // Transform to the new pos in the world coordinate frame
-        mp = new_R_w_f * mp * scale + new_t_w_f_pt;
+        mp = sR_w_f * mp + st_w_f_pt;
         pt->mappoint->set_mappoint(mp);
       }
     }
 
-    T_f_w_ = new_T_f_w.clone();
+    T_f_w_ = T_f_w.clone();
   }
 
   void Frame::set_pose(const cv::Mat& T_f_w) {
@@ -168,6 +168,7 @@ namespace vslam_datastructure {
             pt_3d.y = mp_pt_3d.y;
             pt_3d.z = mp_pt_3d.z;
             frame_msg->mappoints.push_back(pt_3d);
+            std::cout << "added a map point belonged to the host kf" << std::endl;
           }
 
           // // 3D map points

@@ -41,6 +41,7 @@ namespace vslam_components {
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
+      rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
 
       // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
       // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr keyframe_pub_;
@@ -50,7 +51,7 @@ namespace vslam_components {
 
       std::string frame_id_{"map"};
 
-      double marker_scale_{10.0};
+      double marker_scale_{2.5};
 
       double line_thickness_{1.0};
 
@@ -77,6 +78,9 @@ namespace vslam_components {
       // Maximum allowable relative rotation between two keyframes. Defaults to 30 degree
       double max_rotation_rad_{0.52359878};
 
+      // Minimum number of map point correspondences required for calculating Sim(3) scale
+      size_t min_num_mps_sim3_scale_{10};
+
       // Signal queue for frame messages to update the visualizer
       vslam_datastructure::FrameMsgQueue::SharedPtr frame_visual_queue_{
           std::make_shared<vslam_datastructure::FrameMsgQueue>()};
@@ -85,7 +89,7 @@ namespace vslam_components {
       std::thread frame_msg_queue_publisher_thread_;
       void frame_visual_publisher_loop();
 
-      // Signal queue for keyframes to update the visualizer
+      // Signal queue for keyframes to find potential loop
       vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
           std::make_shared<vslam_datastructure::FrameIdQueue>()};
 
@@ -94,6 +98,7 @@ namespace vslam_components {
       void place_recognition_loop();
       bool verify_loop(const vslam_datastructure::Frame* const current_keyframe,
                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale);
+      long unsigned int last_kf_loop_found_{0};
 
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};

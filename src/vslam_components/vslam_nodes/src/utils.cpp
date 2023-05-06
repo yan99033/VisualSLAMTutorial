@@ -1,5 +1,6 @@
 #include "vslam_nodes/utils.h"
 
+#include <limits>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <random>
@@ -55,13 +56,22 @@ namespace vslam_components {
           }();
 
           // calculate the fitting error
-          double fitting_error{0.0};
-          for (const auto& [mp1, mp2] : point_pairs) {
-            fitting_error += cv::norm(R * mp1 + t_pt - mp2);
-          }
+          const double fitting_error = [&] {
+            if (scale <= 0) {
+              return std::numeric_limits<double>::max();
+            } else {
+              double total_error{0.0};
+              for (const auto& [mp1, mp2] : point_pairs) {
+                const auto mp2_prime = scale * R * mp1 + t_pt;
+                const double err = cv::norm(mp2_prime - mp2);
+                total_error += err;
+              }
+              return total_error;
+            }
+          }();
 
           // if the error smaller than the smallest error
-          if (fitting_error < smallest_err && scale != 0) {
+          if (fitting_error < smallest_err && scale > 0) {
             best_scale = scale;
             smallest_err = fitting_error;
           }
@@ -202,6 +212,8 @@ namespace vslam_components {
           pt.z = mp_eigen.z();
           mps_marker.points.push_back(pt);
         }
+
+        return mps_marker;
       }
 
     }  // namespace visualization

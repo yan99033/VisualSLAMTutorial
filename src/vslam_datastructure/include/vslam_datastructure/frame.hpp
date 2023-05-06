@@ -34,7 +34,9 @@ namespace vslam_datastructure {
 
     // Transform the map points to the this frame and apply sim3 transformation to them
     // Then update the camera pose
-    void update_sim3_pose_and_mps(const cv::Mat& T_f_w, const double scale);
+    // S_f_w is the optimized Sim(3) pose from the pose graph optimization
+    // T_f_w is the scaled SE(3) pose from S_f_w
+    void update_sim3_pose_and_mps(const cv::Mat& S_f_w, const cv::Mat& T_f_w);
 
     // Set the camera pose
     void set_pose(const cv::Mat& T_f_w);

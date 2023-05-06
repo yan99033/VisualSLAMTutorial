@@ -129,6 +129,7 @@ namespace vslam_components {
 
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
       frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 1000);
+      mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1000);
 
       // frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
       // captured_frame_pub_ = frame_pub_;
@@ -280,10 +281,17 @@ namespace vslam_components {
           backend_->add_keyframe(current_frame);
           current_keyframe_ = current_frame;
 
+          for (const auto& pt : current_keyframe_->get_points()) {
+            if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
+              std::cout << "mp kf host: " << pt->mappoint->host_kf_id() << " == " << current_keyframe_->id()
+                        << std::endl;
+            }
+          }
+
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame kf_msg;
           current_keyframe_->to_msg(&kf_msg);
-          frame_visual_queue_->send_front(std::move(kf_msg));
+          frame_visual_queue_->send(std::move(kf_msg));
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -339,10 +347,13 @@ namespace vslam_components {
                                                                 cam_axes_transform_, rclcpp::Duration({0}));
         frame_publisher_->publish(std::move(pose_marker));
 
-        // keyframe_pub_->publish(std::move(keyframe_msg));
+        auto mps_marker = visualization::calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_,
+                                                                    "keyfame", frame_msg.id, {0, 0, 0},
+                                                                    cam_axes_transform_, rclcpp::Duration({0}));
+        mappoint_publisher_->publish(std::move(mps_marker));
 
-        // Make sure the sleep time is reasonable so we don't overwhelm the publisher queue
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        // Make sure the sleep time is reasonable so we don't overwhelm the publisher
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
@@ -351,6 +362,18 @@ namespace vslam_components {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
         auto curr_kf_id = keyframe_id_queue_->receive();
+
+        // Skip if a loop has already closed 10 frames ago
+        constexpr const long unsigned int skip_last_n{10};
+        if (curr_kf_id > last_kf_loop_found_) {
+          if (curr_kf_id - last_kf_loop_found_ < skip_last_n) {
+            continue;
+          }
+        } else {
+          if (last_kf_loop_found_ - curr_kf_id < skip_last_n) {
+            continue;
+          }
+        }
 
         // Get the keyframe from the backend
         const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
@@ -386,7 +409,8 @@ namespace vslam_components {
                         << std::endl;
               std::cout << T_p_c << std::endl;
               std::cout << "scale: " << scale << std::endl;
-              backend_->add_loop_constraint(curr_kf_id, prev_kf_id, T_p_c, scale);
+              backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
+              last_kf_loop_found_ = curr_kf_id;
             }
           }
         }
@@ -430,9 +454,17 @@ namespace vslam_components {
 
       // Calculate the scale
       const auto mappoint_pairs = get_mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
+
+      if (mappoint_pairs.size() < min_num_mps_sim3_scale_) {
+        RCLCPP_INFO(this->get_logger(),
+                    "Insufficient amount of map point correspondences(%lu) for calculating Sim(3) scale",
+                    mappoint_pairs.size());
+        return false;
+      }
+
       scale = utils::calculate_sim3_scale(mappoint_pairs, T_p_c);
 
-      if (scale == 0) {
+      if (scale <= 0) {
         return false;
       } else {
         return true;

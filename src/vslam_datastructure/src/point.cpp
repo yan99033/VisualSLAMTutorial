@@ -50,17 +50,13 @@ namespace vslam_datastructure {
     host_keyframe_id_ = host_keyframe_id;
   }
 
-  bool MapPoint::is_host(const long unsigned int host_keyframe_id) {
+  bool MapPoint::is_host(const long unsigned int keyframe_id) {
     std::lock_guard<std::mutex> lck(mutex_);
 
-    if (!host_keyframe_id_.has_value()) {
+    if (!host_keyframe_id_.has_value() || host_keyframe_id_.value() != keyframe_id) {
       return false;
-    }
-
-    if (host_keyframe_id_.value() == host_keyframe_id) {
-      return true;
     } else {
-      return false;
+      return true;
     }
   }
 

@@ -2,6 +2,7 @@
 #define VSLAM_DATASTRUCTURE__POINT_HPP_
 
 #include <atomic>
+#include <limits>
 #include <opencv2/opencv.hpp>
 #include <optional>
 
@@ -36,13 +37,21 @@ namespace vslam_datastructure {
 
     inline void set_outlier() { is_outlier_ = true; }
 
-    bool is_outlier() const { return is_outlier_; }
+    inline bool is_outlier() const { return is_outlier_; }
 
-    long unsigned int id() const { return id_; }
+    inline long unsigned int id() const { return id_; }
 
     void set_host_keyframe_id(const long unsigned int host_keyframe_id);
 
     bool is_host(const long unsigned int host_keyframe_id);
+
+    inline long unsigned int host_kf_id() const {
+      if (host_keyframe_id_.has_value()) {
+        return host_keyframe_id_.value();
+      } else {
+        return std::numeric_limits<long unsigned int>::max();
+      }
+    }
 
   private:
     std::mutex mutex_;
