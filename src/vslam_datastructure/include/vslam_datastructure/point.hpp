@@ -45,13 +45,7 @@ namespace vslam_datastructure {
 
     bool is_host(const long unsigned int host_keyframe_id);
 
-    inline long unsigned int host_kf_id() const {
-      if (host_keyframe_id_.has_value()) {
-        return host_keyframe_id_.value();
-      } else {
-        return std::numeric_limits<long unsigned int>::max();
-      }
-    }
+    inline bool has_host() const { return host_keyframe_id_.has_value(); }
 
   private:
     std::mutex mutex_;
@@ -69,7 +63,7 @@ namespace vslam_datastructure {
 
     static long unsigned int point_count_;
 
-    // The keyframe, a non-owning pointer, in which this point is created
+    // The host keyframe id
     std::optional<long unsigned int> host_keyframe_id_{std::nullopt};
   };
   using MapPoints = std::vector<MapPoint::SharedPtr>;

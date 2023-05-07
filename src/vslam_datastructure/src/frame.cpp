@@ -249,7 +249,7 @@ namespace vslam_datastructure {
         // Create a new map point
         points_.at(i)->mappoint = mappoints.at(idx);
 
-        if (set_host) {
+        if (set_host && !points_.at(i)->mappoint->has_host()) {
           points_.at(i)->mappoint->set_host_keyframe_id(id_);
         }
       }

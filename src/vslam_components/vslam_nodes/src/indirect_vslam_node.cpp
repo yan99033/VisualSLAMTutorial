@@ -204,7 +204,6 @@ namespace vslam_components {
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
         const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
-        // T_c_p_ = T_c_p;
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->T_f_w();
@@ -275,18 +274,11 @@ namespace vslam_components {
           current_frame->set_keyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-          current_keyframe_->set_mappoints(new_mps, first_indices, true);
+          current_keyframe_->set_mappoints(new_mps, first_indices);
           const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
-          current_frame->set_mappoints(new_old_mps, second_indices);
+          current_frame->set_mappoints(new_old_mps, second_indices, true);
           backend_->add_keyframe(current_frame);
           current_keyframe_ = current_frame;
-
-          for (const auto& pt : current_keyframe_->get_points()) {
-            if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
-              std::cout << "mp kf host: " << pt->mappoint->host_kf_id() << " == " << current_keyframe_->id()
-                        << std::endl;
-            }
-          }
 
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame kf_msg;
