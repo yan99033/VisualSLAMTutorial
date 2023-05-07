@@ -14,6 +14,7 @@ namespace vslam_datastructure {
   class MapPoint;
   using Points = std::vector<std::shared_ptr<Point>>;
   using MapPoints = std::vector<std::shared_ptr<MapPoint>>;
+  using MappointIndexPairs = std::vector<std::pair<size_t, std::shared_ptr<MapPoint>>>;
 
   class Frame {
   public:
@@ -62,6 +63,9 @@ namespace vslam_datastructure {
     // Use the set_host flag to make this frame as the host keyframe to the map points
     void set_mappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices,
                        const bool set_host = false);
+
+    // Replace the old map points with the provided new map points
+    void replace_mappoints(const MappointIndexPairs& mappoint_index_pairs);
 
     // Get the numbe of map points
     size_t get_num_mps();

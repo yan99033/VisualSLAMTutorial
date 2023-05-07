@@ -62,6 +62,26 @@ namespace {
     return mappoint_pairs;
   }
 
+  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> get_mappooint_index_pairs(
+      const vslam_datastructure::MatchedPoints& matched_points,
+      const vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
+    assert(matched_points.size() == matched_index_pairs.size());
+
+    std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
+
+    for (size_t i = 0; i < matched_points.size(); i++) {
+      if (matched_points.at(i).point2->mappoint.get() == nullptr
+          || matched_points.at(i).point2->mappoint->is_outlier()) {
+        continue;
+      }
+
+      mappoint_index_pairs.emplace_back(
+          std::make_pair(matched_index_pairs.at(i).first, matched_points.at(i).point2->mappoint));
+    }
+
+    return mappoint_index_pairs;
+  }
+
   bool rotation_matrix_exceed_threshold(const cv::Mat& R, const double angle_threshold_rad) {
     assert(R.rows == 3 && R.cols == 3);
 
@@ -345,7 +365,7 @@ namespace vslam_components {
         mappoint_publisher_->publish(std::move(mps_marker));
 
         // Make sure the sleep time is reasonable so we don't overwhelm the publisher
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
@@ -354,18 +374,6 @@ namespace vslam_components {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
         auto curr_kf_id = keyframe_id_queue_->receive();
-
-        // Skip if a loop has already closed 10 frames ago
-        constexpr const long unsigned int skip_last_n{10};
-        if (curr_kf_id > last_kf_loop_found_) {
-          if (curr_kf_id - last_kf_loop_found_ < skip_last_n) {
-            continue;
-          }
-        } else {
-          if (last_kf_loop_found_ - curr_kf_id < skip_last_n) {
-            continue;
-          }
-        }
 
         // Get the keyframe from the backend
         const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
@@ -396,13 +404,19 @@ namespace vslam_components {
 
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
-            if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale)) {
+            std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
+            if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale, mappoint_index_pairs)) {
               std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
                         << std::endl;
               std::cout << T_p_c << std::endl;
               std::cout << "scale: " << scale << std::endl;
+
+              // Run pose-graph optimization
               backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
               last_kf_loop_found_ = curr_kf_id;
+
+              // Replace the matched new map points with the existing ones
+              current_keyframe->replace_mappoints(mappoint_index_pairs);
             }
           }
         }
@@ -412,9 +426,10 @@ namespace vslam_components {
       }
     }
 
-    bool IndirectVSlamNode::verify_loop(const vslam_datastructure::Frame* const current_keyframe,
-                                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_p_c,
-                                        double& scale) {
+    bool IndirectVSlamNode::verify_loop(
+        const vslam_datastructure::Frame* const current_keyframe,
+        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_p_c, double& scale,
+        std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs) {
       if (current_keyframe == nullptr || previous_keyframe == nullptr) {
         return false;
       }
@@ -459,6 +474,7 @@ namespace vslam_components {
       if (scale <= 0) {
         return false;
       } else {
+        mappoint_index_pairs = get_mappooint_index_pairs(matched_points, matched_index_pairs);
         return true;
       }
     }

@@ -51,7 +51,7 @@ namespace vslam_components {
 
       std::string frame_id_{"map"};
 
-      double marker_scale_{2.5};
+      double marker_scale_{0.25};
 
       double line_thickness_{1.0};
 
@@ -73,13 +73,13 @@ namespace vslam_components {
       size_t min_num_cam_tracking_inliers_{15};
 
       // Minimum number of map points needed for a keyframe
-      size_t min_num_kf_mps_{350};
+      size_t min_num_kf_mps_{400};
 
-      // Maximum allowable relative rotation between two keyframes. Defaults to 30 degree
-      double max_rotation_rad_{0.52359878};
+      // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
+      double max_rotation_rad_{0.174533};
 
       // Minimum number of map point correspondences required for calculating Sim(3) scale
-      size_t min_num_mps_sim3_scale_{10};
+      size_t min_num_mps_sim3_scale_{50};
 
       // Signal queue for frame messages to update the visualizer
       vslam_datastructure::FrameMsgQueue::SharedPtr frame_visual_queue_{
@@ -97,7 +97,8 @@ namespace vslam_components {
       std::thread place_recognition_thread_;
       void place_recognition_loop();
       bool verify_loop(const vslam_datastructure::Frame* const current_keyframe,
-                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale);
+                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
+                       std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
       long unsigned int last_kf_loop_found_{0};
 
       // Flag to exit the frame visual publisher and place recognition threads

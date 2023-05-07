@@ -157,9 +157,7 @@ namespace vslam_datastructure {
 
         frame_msg->keypoints_has_mp.push_back(true);
         if (!no_mappoints) {
-          // // Only visualize the map points that belong to the host
-          // // FIXME: not working at the moment
-          // // An alternative solution is to create a vector of type MapPoint::SharedPtr
+          // Only visualize and update the map points that belong to the host
           if (pt->mappoint->is_host(id_)) {
             // 3D map points
             vslam_msgs::msg::Vector3d pt_3d;
@@ -168,16 +166,7 @@ namespace vslam_datastructure {
             pt_3d.y = mp_pt_3d.y;
             pt_3d.z = mp_pt_3d.z;
             frame_msg->mappoints.push_back(pt_3d);
-            std::cout << "added a map point belonged to the host kf" << std::endl;
           }
-
-          // // 3D map points
-          // vslam_msgs::msg::Vector3d pt_3d;
-          // const auto mp_pt_3d = pt->mappoint->get_mappoint();
-          // pt_3d.x = mp_pt_3d.x;
-          // pt_3d.y = mp_pt_3d.y;
-          // pt_3d.z = mp_pt_3d.z;
-          // frame_msg->mappoints.push_back(pt_3d);
         }
       } else {
         frame_msg->keypoints_has_mp.push_back(false);
@@ -256,6 +245,20 @@ namespace vslam_datastructure {
     }
 
     set_mappoint_projections();
+  }
+
+  void Frame::replace_mappoints(const MappointIndexPairs& mappoint_index_pairs) {
+    assert(is_keyframe_);
+
+    std::lock_guard<std::mutex> lck(data_mutex_);
+
+    for (const auto& [idx, mappoint] : mappoint_index_pairs) {
+      // Replace the map point
+      points_.at(idx)->mappoint = mappoint;
+
+      // Add projection
+      points_.at(idx)->mappoint->add_projection(points_.at(idx).get());
+    }
   }
 
   size_t Frame::get_num_mps() {
