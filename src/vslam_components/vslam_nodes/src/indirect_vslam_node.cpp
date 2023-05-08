@@ -148,8 +148,8 @@ namespace vslam_components {
           "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));
 
       image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
-      frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 1000);
-      mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 1000);
+      frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 5000);
+      mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 5000);
 
       // frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
       // captured_frame_pub_ = frame_pub_;
@@ -301,9 +301,18 @@ namespace vslam_components {
           current_keyframe_ = current_frame;
 
           // Add the frame to visual update queue
-          vslam_msgs::msg::Frame kf_msg;
-          current_keyframe_->to_msg(&kf_msg);
-          frame_visual_queue_->send(std::move(kf_msg));
+          vslam_msgs::msg::Frame keyframe_msg;
+          current_keyframe_->to_msg(&keyframe_msg);
+
+          auto pose_marker = visualization::calculate_pose_marker(
+              keyframe_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe", keyframe_msg.id, {0, 1, 0},
+              cam_axes_transform_, rclcpp::Duration({0}));
+          frame_publisher_->publish(std::move(pose_marker));
+
+          auto mps_marker = visualization::calculate_mappoints_marker(keyframe_msg.mappoints, frame_id_, marker_scale_,
+                                                                      "keyfame", keyframe_msg.id, {0, 0, 0},
+                                                                      cam_axes_transform_, rclcpp::Duration({0}));
+          mappoint_publisher_->publish(std::move(mps_marker));
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -330,7 +339,7 @@ namespace vslam_components {
       image_publisher_->publish(frame_msg->image);
 
       auto pose_marker
-          = visualization::calculate_pose_marker(frame_msg->pose, frame_id_, marker_scale_, line_thickness_, "live", -1,
+          = visualization::calculate_pose_marker(frame_msg->pose, frame_id_, 10.0, line_thickness_, "live", -1,
                                                  {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
       frame_publisher_->publish(std::move(pose_marker));
     }
@@ -365,7 +374,7 @@ namespace vslam_components {
         mappoint_publisher_->publish(std::move(mps_marker));
 
         // Make sure the sleep time is reasonable so we don't overwhelm the publisher
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
       }
       std::cout << "Terminated frame publisher loop" << std::endl;
     }
