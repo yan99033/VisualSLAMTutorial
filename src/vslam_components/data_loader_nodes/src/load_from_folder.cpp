@@ -70,6 +70,12 @@ namespace vslam_components {
     }
 
     void LoadFromFolder::on_timer() {
+      // Stop at the end of the sequence
+      if (count_ >= files_.size() - 1) {
+        RCLCPP_INFO_ONCE(this->get_logger(), "Reached the end of the sequence. Stop publishing new frames \n");
+        return;
+      }
+
       // Load image
       cv::Mat image = cv::imread(files_.at(count_ % files_.size()), cv::IMREAD_COLOR);
       sensor_msgs::msg::Image im_msg;
@@ -88,7 +94,6 @@ namespace vslam_components {
       msg->header.stamp = now();
 
       // Put the message into a queue to be processed by the middleware.
-      // This call is non-blocking.
       frame_pub_->publish(std::move(msg));
     }
   }  // namespace data_loader_nodes
