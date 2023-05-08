@@ -155,13 +155,6 @@ namespace vslam_backend_plugins {
       kfs_it++;
     }
 
-    // if (kfs_it->second.get() != nullptr) {
-    //   // Make the nearest keyfame outside the core keyframes as the non-core keyfames in local BA
-    //   max_non_core_kf_id = kfs_it->second->id();
-    // }
-
-    // std::cout << "max_non_core_kf_id: " << max_non_core_kf_id << std::endl;
-
     return {core_keyframes, core_mappoints};
   }
 
@@ -202,7 +195,7 @@ namespace vslam_backend_plugins {
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr || pt->frame->id() < max_non_core_kf_id) {
+        if (pt == nullptr || pt->frame == nullptr) {
           continue;
         }
         num_valid_projections++;
@@ -220,7 +213,7 @@ namespace vslam_backend_plugins {
 
       // Projections
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr || pt->frame->id() < max_non_core_kf_id) {
+        if (pt == nullptr || pt->frame == nullptr) {
           continue;
         }
 
@@ -447,26 +440,18 @@ namespace vslam_backend_plugins {
     }
     std::cout << "updated poses and map points" << std::endl;
 
-    // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
-    // for (auto [_, this_kf] : keyframes_) {
-    //   for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
-    //     // std::cout << "old T_this_other" << std::endl;
-    //     // std::cout << old_T_this_other << std::endl;
-    //     const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
-
-    //     // std::cout << "T_this_other" << std::endl;
-    //     // std::cout << T_this_other << std::endl;
-
-    //     this_kf->add_T_this_other_kf(other_kf, T_this_other);
-    //   }
-    // }
-
-    // Update visualizer
     auto kfs_it = keyframes_.find(fixed_kf_id);
     while (kfs_it != keyframes_.begin()) {
-      auto kf = kfs_it->second;
+      auto this_kf = kfs_it->second;
+      // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
+      for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
+        const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
+        this_kf->add_T_this_other_kf(other_kf, T_this_other);
+      }
+
+      // Update visualizer
       vslam_msgs::msg::Frame keyframe_msg;
-      kf->to_msg(&keyframe_msg);
+      this_kf->to_msg(&keyframe_msg);
       frame_msg_queue_->send(std::move(keyframe_msg));
 
       kfs_it--;
