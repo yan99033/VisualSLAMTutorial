@@ -27,10 +27,16 @@ namespace vslam_backend_base {
                                      const cv::Mat& T_1_2, const double sim3_scale)
         = 0;
 
+    // Convert all the keyframes to frame msgs to refresh the visualizer
+    std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const;
+
     virtual ~Backend() {}
 
   protected:
     Backend() {}
+
+    // All keyframes (can be looked up using their id)
+    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
 
     // frame_msg_queue_ is used to add the updated keyframes so they can be updated visually
     vslam_datastructure::FrameMsgQueue::SharedPtr frame_msg_queue_;

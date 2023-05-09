@@ -33,9 +33,6 @@ namespace vslam_backend_plugins {
     using CoreKfsSet = std::set<vslam_datastructure::Frame*>;
     using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
 
-    // All keyframes (can be looked up using their id)
-    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
-
     // The keyframe that is closest to the current camera pose
     vslam_datastructure::Frame::SharedPtr current_keyframe_;
 

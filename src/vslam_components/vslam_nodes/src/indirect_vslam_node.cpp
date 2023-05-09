@@ -414,6 +414,9 @@ namespace vslam_components {
 
               // Fuse the matched new map points with the existing ones
               current_keyframe->fuse_mappoints(mappoint_index_pairs);
+
+              // Refresh the display
+              const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
             }
           }
         }

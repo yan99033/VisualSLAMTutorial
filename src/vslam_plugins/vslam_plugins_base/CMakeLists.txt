@@ -13,12 +13,41 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(vslam_datastructure REQUIRED)
+find_package(vslam_msgs REQUIRED)
+
+set(dependencies
+  rclcpp
+  OpenCV
+  vslam_datastructure
+  vslam_msgs
+)
+
+set(sources
+  src/backend.cpp
+)
+
+add_library(${PROJECT_NAME} SHARED ${sources})
+target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  ${PROJECT_NAME}
+  ${dependencies}
+)
 
 install(
   DIRECTORY include/
   DESTINATION include
+)
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 if(BUILD_TESTING)
@@ -35,6 +64,10 @@ endif()
 
 ament_export_include_directories(
   include
+)
+
+ament_export_libraries(
+  ${PROJECT_NAME}
 )
 
 ament_package()
