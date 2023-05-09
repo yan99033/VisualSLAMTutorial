@@ -143,6 +143,10 @@ namespace vslam_components {
                                      declare_parameter("place_recognition.score_thresh", 0.9),
                                      declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
+      // Visualizer
+      visualizer_ = visualizer_loader_.createSharedInstance(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
+      visualizer_->initialize();
+
       // Frame subscriber and publishers
       frame_subscriber_ = create_subscription<vslam_msgs::msg::Frame>(
           "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));

@@ -20,6 +20,7 @@
 #include "vslam_plugins_base/feature_matcher.hpp"
 #include "vslam_plugins_base/mapper.hpp"
 #include "vslam_plugins_base/place_recognition.hpp"
+#include "vslam_plugins_base/visualizer.hpp"
 
 namespace vslam_components {
   namespace vslam_nodes {
@@ -138,6 +139,11 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_place_recognition_base::PlaceRecognition> place_recognition_loader_{
           "vslam_plugins_base", "vslam_place_recognition_base::PlaceRecognition"};
       std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition_;
+
+      // Visualizer plugin
+      pluginlib::ClassLoader<vslam_visualizer_base::Visualizer> visualizer_loader_{"vslam_plugins_base",
+                                                                                   "vslam_visualizer_base::Visualizer"};
+      std::shared_ptr<vslam_visualizer_base::Visualizer> visualizer_;
 
       // Convert the camera coordinate frame (x: right, y: down, z: forward) to the `map` coordinate frame (x: forward,
       // y: left, z: up)
