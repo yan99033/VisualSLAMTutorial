@@ -64,8 +64,8 @@ namespace vslam_datastructure {
     void set_mappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices,
                        const bool set_host = false);
 
-    // Replace the old map points with the provided new map points
-    void replace_mappoints(const MappointIndexPairs& mappoint_index_pairs);
+    // Fuse the old map points with the provided new map points
+    void fuse_mappoints(const MappointIndexPairs& mappoint_index_pairs);
 
     // Get the numbe of map points
     size_t get_num_mps();

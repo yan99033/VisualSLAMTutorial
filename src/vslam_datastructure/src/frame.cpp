@@ -1,5 +1,6 @@
 #include "vslam_datastructure/frame.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <opencv2/calib3d.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -247,17 +248,27 @@ namespace vslam_datastructure {
     set_mappoint_projections();
   }
 
-  void Frame::replace_mappoints(const MappointIndexPairs& mappoint_index_pairs) {
+  void Frame::fuse_mappoints(const MappointIndexPairs& mappoint_index_pairs) {
     assert(is_keyframe_);
 
     std::lock_guard<std::mutex> lck(data_mutex_);
 
     for (const auto& [idx, mappoint] : mappoint_index_pairs) {
-      // Replace the map point
-      points_.at(idx)->mappoint = mappoint;
+      assert(mappoint != nullptr);
 
-      // Add projection
-      points_.at(idx)->mappoint->add_projection(points_.at(idx).get());
+      if (points_.at(idx)->mappoint.get() == nullptr) {
+        // Associate the old map point with the new point
+        mappoint->add_projection(points_.at(idx).get());
+        points_.at(idx)->mappoint = mappoint;
+      } else {
+        // Add new projections to the map point
+        for (auto point : points_.at(idx)->mappoint->get_projections()) {
+          mappoint->add_projection(point);
+        }
+
+        // Replace the map point
+        points_.at(idx)->mappoint = mappoint;
+      }
     }
   }
 

@@ -101,6 +101,11 @@ namespace vslam_components {
                        std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
       long unsigned int last_kf_loop_found_{0};
 
+      // Skip detecting loop after one has been found for n frames
+      // This is to ensure we are not flooding the visualizer with frame marker messages.
+      // Could be removed with a different visualizer
+      long unsigned int skip_n_after_loop_found_{10};
+
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
 

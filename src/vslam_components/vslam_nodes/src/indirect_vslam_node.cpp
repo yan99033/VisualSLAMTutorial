@@ -401,7 +401,7 @@ namespace vslam_components {
         place_recognition_->add_to_database(curr_kf_id, visual_features);
 
         // Verify any potential loops
-        if (results.size() > 0) {
+        if (results.size() > 0 && (curr_kf_id - last_kf_loop_found_) > skip_n_after_loop_found_) {
           for (const auto& [prev_kf_id, score] : results) {
             const auto previous_keyframe = backend_->get_keyframe(prev_kf_id);
 
@@ -414,6 +414,8 @@ namespace vslam_components {
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
+            // TODO:
+            //   reject a loop if the translation is too large;
             if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale, mappoint_index_pairs)) {
               std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
                         << std::endl;
@@ -424,8 +426,8 @@ namespace vslam_components {
               backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
               last_kf_loop_found_ = curr_kf_id;
 
-              // Replace the matched new map points with the existing ones
-              current_keyframe->replace_mappoints(mappoint_index_pairs);
+              // Fuse the matched new map points with the existing ones
+              current_keyframe->fuse_mappoints(mappoint_index_pairs);
             }
           }
         }
