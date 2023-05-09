@@ -155,10 +155,6 @@ namespace vslam_components {
       frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 5000);
       mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 5000);
 
-      // frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
-      // captured_frame_pub_ = frame_pub_;
-      // keyframe_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_keyframe", 1000);
-
       frame_msg_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
       place_recognition_thread_ = std::thread(&IndirectVSlamNode::place_recognition_loop, this);
     }
@@ -308,15 +304,7 @@ namespace vslam_components {
           vslam_msgs::msg::Frame keyframe_msg;
           current_keyframe_->to_msg(&keyframe_msg);
 
-          auto pose_marker = visualization::calculate_pose_marker(
-              keyframe_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe", keyframe_msg.id, {0, 1, 0},
-              cam_axes_transform_, rclcpp::Duration({0}));
-          frame_publisher_->publish(std::move(pose_marker));
-
-          auto mps_marker = visualization::calculate_mappoints_marker(keyframe_msg.mappoints, frame_id_, marker_scale_,
-                                                                      "keyfame", keyframe_msg.id, {0, 0, 0},
-                                                                      cam_axes_transform_, rclcpp::Duration({0}));
-          mappoint_publisher_->publish(std::move(mps_marker));
+          visualizer_->add_keyframe(keyframe_msg);
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -337,15 +325,9 @@ namespace vslam_components {
         // State::relocalization
         std::cout << "Relocalization state. unimplemented!" << std::endl;
       }
-      // pub_ptr->publish(std::move(frame_msg));
-      // Publish frame markers
-      visualization::add_keypoints_to_image_frame_msg(*frame_msg);
-      image_publisher_->publish(frame_msg->image);
 
-      auto pose_marker
-          = visualization::calculate_pose_marker(frame_msg->pose, frame_id_, 10.0, line_thickness_, "live", -1,
-                                                 {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
-      frame_publisher_->publish(std::move(pose_marker));
+      // Publish frame markers
+      visualizer_->add_live_frame(*frame_msg);
     }
 
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,

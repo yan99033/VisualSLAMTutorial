@@ -19,6 +19,7 @@ find_package(pluginlib REQUIRED)
 find_package(visualization_msgs REQUIRED) 
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(tf2_eigen REQUIRED)
 
 set(dependencies
   rclcpp
@@ -27,6 +28,7 @@ set(dependencies
   visualization_msgs
   vslam_plugins_base
   vslam_msgs
+  tf2_eigen
 )
 
 set(sources
