@@ -3,7 +3,13 @@
 namespace vslam_visualizer_plugins {
   RViz::~RViz() {}
 
-  void RViz::initialize() {}
+  void RViz::initialize() {
+    node_ = std::make_shared<rclcpp::Node>("visualizer_node", "vslam");
+
+    image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("live_image", 1);
+    live_frame_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 10);
+    keyframe_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("keyframe_marker", 10);
+  }
 
   void RViz::add_live_frame(const vslam_msgs::msg::Frame& frame_msg) {}
 

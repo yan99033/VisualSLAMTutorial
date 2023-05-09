@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>pluginlib</depend>    
-
+  <depend>visualization_msgs</depend>
   <depend>vslam_plugins_base</depend>
   <depend>vslam_msgs</depend>
 

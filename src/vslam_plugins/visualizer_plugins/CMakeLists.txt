@@ -13,14 +13,18 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(visualization_msgs REQUIRED) 
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_msgs REQUIRED)
 
 set(dependencies
+  rclcpp
   OpenCV
   pluginlib
+  visualization_msgs
   vslam_plugins_base
   vslam_msgs
 )
