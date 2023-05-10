@@ -9,20 +9,20 @@
 namespace vslam_components {
   namespace vslam_nodes {
     namespace utils {
-      double calculate_sim3_scale(const PointPairs& point_pairs, const cv::Mat& T_2_1, const int ransac_iters,
+      double calculate_sim3_scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters,
                                   size_t ransac_n) {
         // Rotation and translation
         cv::Matx33d R = T_2_1.rowRange(0, 3).colRange(0, 3);
         cv::Mat t = T_2_1.rowRange(0, 3).colRange(3, 4);
         cv::Point3d t_pt = cv::Point3d(t);
 
-        // Cap the data point to a max of half the size of point_pairs
-        ransac_n = std::min(ransac_n, static_cast<size_t>(point_pairs.size() / 2));
+        // Cap the data point to a max of half the size of mappoint_pairs
+        ransac_n = std::min(ransac_n, static_cast<size_t>(mappoint_pairs.size() / 2));
 
         // random number generator
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, static_cast<int>(point_pairs.size() - 1));
+        std::uniform_int_distribution<> dis(0, static_cast<int>(mappoint_pairs.size() - 1));
 
         double smallest_err{std::numeric_limits<double>::max()};
         double best_scale{0.0};
@@ -38,8 +38,8 @@ namespace vslam_components {
           double numerator = 0;
           double denominator = 0;
           for (const auto& idx : indices) {
-            const auto mp1 = point_pairs.at(idx).first;
-            const auto mp2 = point_pairs.at(idx).second;
+            const auto mp1 = mappoint_pairs.at(idx).first;
+            const auto mp2 = mappoint_pairs.at(idx).second;
 
             const auto vec1 = R * mp1;
             const auto vec2 = mp2 - t_pt;
@@ -61,7 +61,7 @@ namespace vslam_components {
               return std::numeric_limits<double>::max();
             } else {
               double total_error{0.0};
-              for (const auto& [mp1, mp2] : point_pairs) {
+              for (const auto& [mp1, mp2] : mappoint_pairs) {
                 const auto mp2_prime = scale * R * mp1 + t_pt;
                 const double err = cv::norm(mp2_prime - mp2);
                 total_error += err;
@@ -75,6 +75,24 @@ namespace vslam_components {
             best_scale = scale;
             smallest_err = fitting_error;
           }
+        }
+
+        // Check the percentage of outlier points
+        double num_outliers{0};
+        for (const auto& [mp1, mp2] : mappoint_pairs) {
+          const auto mp2_prime = best_scale * R * mp1 + t_pt;
+          const double err = cv::norm(mp2_prime - mp2);
+
+          // outlier if the magnitude of the error is greater than 15 % of the length
+          if (err > cv::norm(mp2) * 0.15) {
+            num_outliers += 1.0;
+          }
+        }
+
+        if (num_outliers / static_cast<double>(mappoint_pairs.size()) > 0.3) {
+          std::cout << "num outliers: " << num_outliers << " / " << mappoint_pairs.size() << std::endl;
+
+          return 0.0;
         }
 
         return best_scale;
