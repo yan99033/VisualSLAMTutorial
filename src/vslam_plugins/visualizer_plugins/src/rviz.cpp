@@ -137,6 +137,14 @@ namespace {
 
     return mps_marker;
   }
+
+  void combine_markers(const visualization_msgs::msg::Marker& new_marker,
+                       visualization_msgs::msg::Marker& existing_markers) {
+    for (const auto& pt : new_marker.points) {
+      existing_markers.points.push_back(pt);
+    }
+  }
+
 }  // namespace
 
 namespace vslam_visualizer_plugins {
@@ -158,24 +166,62 @@ namespace vslam_visualizer_plugins {
     add_keypoints_to_image_frame_msg(frame_msg_cpy);
     image_publisher_->publish(frame_msg_cpy.image);
 
-    auto pose_marker = calculate_pose_marker(frame_msg_cpy.pose, frame_id_, 10.0, line_thickness_, "live", -1,
-                                             {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
+    const auto pose_marker = calculate_pose_marker(frame_msg_cpy.pose, frame_id_, 10.0, line_thickness_, "live", -1,
+                                                   {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
     live_frame_publisher_->publish(std::move(pose_marker));
   }
 
   void RViz::add_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
-    auto pose_marker = calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe_pose",
-                                             frame_msg.id, {0, 1, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+    const auto pose_marker
+        = calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe_pose",
+                                frame_msg.id, {0, 1, 0}, cam_axes_transform_, rclcpp::Duration({0}));
     keyframe_publisher_->publish(std::move(pose_marker));
 
-    auto mps_marker = calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, "keyfame_mps",
-                                                 frame_msg.id, {0, 0, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+    const auto mps_marker
+        = calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, "keyfame_mps", frame_msg.id,
+                                     {0, 0, 0}, cam_axes_transform_, rclcpp::Duration({0}));
     keyframe_publisher_->publish(std::move(mps_marker));
   }
 
   void RViz::remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) {}
 
-  void RViz::replace_all_keyframes(const FrameVec& frame_msgs) {}
+  void RViz::replace_all_keyframes(const FrameVec& frame_msgs) {
+    if (frame_msgs.empty()) {
+      return;
+    }
+
+    // Remove the old markers
+    visualization_msgs::msg::Marker del_marker;
+    del_marker.header.frame_id = frame_id_;
+    del_marker.action = visualization_msgs::msg::Marker::DELETEALL;
+    keyframe_publisher_->publish(std::move(del_marker));
+
+    // Combine the new markers and publish them
+    visualization_msgs::msg::Marker combined_pose_markers;
+    visualization_msgs::msg::Marker combined_mps_markers;
+    for (size_t i = 0; i < frame_msgs.size(); i++) {
+      const auto frame_msg = frame_msgs[i];
+
+      const auto pose_marker
+          = calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe_pose",
+                                  frame_msg.id, {0, 1, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+
+      const auto mps_marker
+          = calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, "keyfame_mps", frame_msg.id,
+                                       {0, 0, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+
+      if (i == 0) {
+        combined_pose_markers = pose_marker;
+        combined_mps_markers = mps_marker;
+      } else {
+        combine_markers(pose_marker, combined_pose_markers);
+        combine_markers(mps_marker, combined_mps_markers);
+      }
+    }
+
+    keyframe_publisher_->publish(combined_pose_markers);
+    keyframe_publisher_->publish(combined_mps_markers);
+  }
 
 }  // namespace vslam_visualizer_plugins
 
