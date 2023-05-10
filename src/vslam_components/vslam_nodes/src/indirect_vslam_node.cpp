@@ -337,9 +337,15 @@ namespace vslam_components {
         // Get the keyframe from the backend
         const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
 
+        if (curr_kf_id - last_kf_loop_found_ < skip_n_after_loop_found_) {
+          cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
+          place_recognition_->add_to_database(curr_kf_id, visual_features);
+
+          continue;
+        }
+
         if (current_keyframe == nullptr) {
           RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
           continue;
         }
 
@@ -357,15 +363,12 @@ namespace vslam_components {
 
             if (previous_keyframe == nullptr) {
               RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
-              std::this_thread::sleep_for(std::chrono::milliseconds(10));
               continue;
             }
 
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
-            // TODO:
-            //   reject a loop if the translation is too large;
             if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale, mappoint_index_pairs)) {
               std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
                         << std::endl;
