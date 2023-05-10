@@ -44,18 +44,6 @@ namespace vslam_components {
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
 
-      // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
-      // rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr keyframe_pub_;
-
-      // for re-publishing the frame message without creating a copy
-      // std::weak_ptr<std::remove_pointer<decltype(frame_pub_.get())>::type> captured_frame_pub_;
-
-      std::string frame_id_{"map"};
-
-      double marker_scale_{0.25};
-
-      double line_thickness_{1.0};
-
       State state_{State::init};
 
       vslam_datastructure::Frame::SharedPtr current_keyframe_;
@@ -81,14 +69,6 @@ namespace vslam_components {
 
       // Minimum number of map point correspondences required for calculating Sim(3) scale
       size_t min_num_mps_sim3_scale_{50};
-
-      // Signal queue for frame messages to update the visualizer
-      vslam_datastructure::FrameMsgQueue::SharedPtr frame_visual_queue_{
-          std::make_shared<vslam_datastructure::FrameMsgQueue>()};
-
-      // Thread to update publish the updated keyframes
-      std::thread frame_msg_queue_publisher_thread_;
-      void frame_visual_publisher_loop();
 
       // Signal queue for keyframes to find potential loop
       vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
@@ -144,11 +124,6 @@ namespace vslam_components {
       pluginlib::ClassLoader<vslam_visualizer_base::Visualizer> visualizer_loader_{"vslam_plugins_base",
                                                                                    "vslam_visualizer_base::Visualizer"};
       std::shared_ptr<vslam_visualizer_base::Visualizer> visualizer_;
-
-      // Convert the camera coordinate frame (x: right, y: down, z: forward) to the `map` coordinate frame (x: forward,
-      // y: left, z: up)
-      // @sa https://www.ros.org/reps/rep-0105.html
-      static const Eigen::Matrix3d cam_axes_transform_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

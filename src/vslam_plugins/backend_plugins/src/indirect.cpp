@@ -14,12 +14,6 @@
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
 
-// #if defined G2O_HAVE_CHOLMOD
-// G2O_USE_OPTIMIZATION_LIBRARY(cholmod);
-// #else
-// G2O_USE_OPTIMIZATION_LIBRARY(eigen);
-// #endif
-
 namespace {
   Eigen::Vector3d cvPoint3dToEigenVector3d(const cv::Point3d& pt) { return Eigen::Vector3d(pt.x, pt.y, pt.z); }
 
@@ -62,9 +56,8 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Indirect::initialize(const cv::Mat& K, const vslam_datastructure::FrameMsgQueue::SharedPtr frame_msg_queue) {
+  void Indirect::initialize(const cv::Mat& K) {
     K_ = K;
-    frame_msg_queue_ = frame_msg_queue;
     local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this);
   }
 
@@ -167,14 +160,6 @@ namespace vslam_backend_plugins {
     g2o::OptimizationAlgorithmLevenberg* solver
         = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
     optimizer.setAlgorithm(solver);
-    // std::string solver_name;
-    // // #ifdef G2O_HAVE_CHOLMOD
-    // //     solver_name = "lm_fix6_3_cholmod";
-    // // #else
-    // solver_name = "lm_fix6_3";
-    // // #endif;
-    // g2o::OptimizationAlgorithmProperty solver_property;
-    // optimizer.setAlgorithm(g2o::OptimizationAlgorithmFactory::instance()->construct(solver_name, solver_property));
 
     constexpr float huber_kernel_delta{2.45};  // sqrt(5.99)
 
@@ -264,7 +249,6 @@ namespace vslam_backend_plugins {
     optimizer.initializeOptimization();
     optimizer.optimize(15);
 
-    // TODO: only update the core keyframes and map points
     // Update keyframes
     for (auto [kf_vertex, kf_p] : core_kf_vertices) {
       auto T_f_w = kf_vertex->estimate();
@@ -428,17 +412,8 @@ namespace vslam_backend_plugins {
 
       auto kf = keyframes_.at(kf_id);
 
-      // std::cout << "old T_f_w: " << kf_id << " " << kf->id() << std::endl;
-      // std::cout << kf->T_f_w() << std::endl;
-
-      // std::cout << "new T_f_w" << std::endl;
-      // std::cout << T_f_w << std::endl;
-      // // std::cout << cv_T_f_w << std::endl;
-      // // std::cout << "scale: " << scale << std::endl;
-
       kf->update_sim3_pose_and_mps(S_f_w, T_f_w);
     }
-    std::cout << "updated poses and map points" << std::endl;
 
     auto kfs_it = keyframes_.find(fixed_kf_id);
     while (kfs_it != keyframes_.begin()) {
@@ -448,11 +423,6 @@ namespace vslam_backend_plugins {
         const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
         this_kf->add_T_this_other_kf(other_kf, T_this_other);
       }
-
-      // Update visualizer
-      vslam_msgs::msg::Frame keyframe_msg;
-      this_kf->to_msg(&keyframe_msg);
-      frame_msg_queue_->send(std::move(keyframe_msg));
 
       kfs_it--;
     }

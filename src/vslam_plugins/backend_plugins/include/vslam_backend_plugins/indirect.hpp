@@ -14,8 +14,7 @@ namespace vslam_backend_plugins {
   public:
     ~Indirect();
 
-    void initialize(const cv::Mat& K,
-                    const vslam_datastructure::FrameMsgQueue::SharedPtr frame_msg_queue = nullptr) override;
+    void initialize(const cv::Mat& K) override;
 
     void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 

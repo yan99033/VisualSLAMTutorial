@@ -107,10 +107,6 @@ namespace {
 namespace vslam_components {
 
   namespace vslam_nodes {
-
-    const Eigen::Matrix3d IndirectVSlamNode::cam_axes_transform_
-        = (Eigen::Matrix3d() << 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished();
-
     IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options)
         : Node("vslam_node", options), K_{load_camera_info()} {
       // Feature extractor
@@ -134,12 +130,13 @@ namespace vslam_components {
 
       // Back-end
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
-      backend_->initialize(K_, frame_visual_queue_);
+      backend_->initialize(K_);
 
       // Place recognition
       place_recognition_ = place_recognition_loader_.createSharedInstance(
           declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
-      place_recognition_->initialize(declare_parameter("place_recognition.input", ""), declare_parameter("top_k", 3),
+      place_recognition_->initialize(declare_parameter("place_recognition.input", ""),
+                                     declare_parameter("place_recognition.top_k", 3),
                                      declare_parameter("place_recognition.score_thresh", 0.9),
                                      declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
@@ -151,20 +148,13 @@ namespace vslam_components {
       frame_subscriber_ = create_subscription<vslam_msgs::msg::Frame>(
           "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));
 
-      image_publisher_ = create_publisher<sensor_msgs::msg::Image>("live_image", 1);
-      frame_publisher_ = create_publisher<visualization_msgs::msg::Marker>("frame_marker", 5000);
-      mappoint_publisher_ = create_publisher<visualization_msgs::msg::Marker>("mappoints", 5000);
-
-      frame_msg_queue_publisher_thread_ = std::thread(&IndirectVSlamNode::frame_visual_publisher_loop, this);
       place_recognition_thread_ = std::thread(&IndirectVSlamNode::place_recognition_loop, this);
     }
 
     IndirectVSlamNode::~IndirectVSlamNode() {
-      frame_visual_queue_->stop();
       keyframe_id_queue_->stop();
 
       exit_thread_ = true;
-      frame_msg_queue_publisher_thread_.join();
       place_recognition_thread_.join();
     }
 
@@ -182,12 +172,6 @@ namespace vslam_components {
     }
 
     void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
-      // auto pub_ptr = captured_frame_pub_.lock();
-      // if (!pub_ptr) {
-      //   RCLCPP_WARN(this->get_logger(), "unable to lock the publisher\n");
-      //   return;
-      // }
-
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
@@ -345,26 +329,6 @@ namespace vslam_components {
       return false;
     }
 
-    void IndirectVSlamNode::frame_visual_publisher_loop() {
-      while (!exit_thread_) {
-        auto frame_msg = frame_visual_queue_->receive();
-
-        auto pose_marker = visualization::calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_,
-                                                                line_thickness_, "keyframe", frame_msg.id, {0, 1, 0},
-                                                                cam_axes_transform_, rclcpp::Duration({0}));
-        frame_publisher_->publish(std::move(pose_marker));
-
-        auto mps_marker = visualization::calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_,
-                                                                    "keyfame", frame_msg.id, {0, 0, 0},
-                                                                    cam_axes_transform_, rclcpp::Duration({0}));
-        mappoint_publisher_->publish(std::move(mps_marker));
-
-        // Make sure the sleep time is reasonable so we don't overwhelm the publisher
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-      }
-      std::cout << "Terminated frame publisher loop" << std::endl;
-    }
-
     void IndirectVSlamNode::place_recognition_loop() {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
@@ -387,7 +351,7 @@ namespace vslam_components {
         place_recognition_->add_to_database(curr_kf_id, visual_features);
 
         // Verify any potential loops
-        if (results.size() > 0 && (curr_kf_id - last_kf_loop_found_) > skip_n_after_loop_found_) {
+        if (results.size() > 0) {
           for (const auto& [prev_kf_id, score] : results) {
             const auto previous_keyframe = backend_->get_keyframe(prev_kf_id);
 
@@ -417,6 +381,7 @@ namespace vslam_components {
 
               // Refresh the display
               const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
+              visualizer_->replace_all_keyframes(keyframe_msgs);
             }
           }
         }
