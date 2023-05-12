@@ -44,7 +44,6 @@ namespace vslam_backend_plugins {
     // Local BA
     std::condition_variable local_ba_condition_;
     std::atomic_bool run_local_ba_{false};
-    std::atomic_bool busy_{false};  //!< A flag to indicate if keyframes are being optimized
     std::mutex local_ba_mutex_;
     std::thread local_ba_thread_;
     void local_ba_loop();
