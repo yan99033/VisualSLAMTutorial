@@ -14,6 +14,7 @@
 #include "vslam_datastructure/point.hpp"
 #include "vslam_datastructure/signal_queue.hpp"
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_nodes/plugin_loader.hpp"
 #include "vslam_plugins_base/backend.hpp"
 #include "vslam_plugins_base/camera_tracker.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
@@ -68,7 +69,7 @@ namespace vslam_components {
       double max_rotation_rad_{0.174533};
 
       // Minimum number of map point correspondences required for calculating Sim(3) scale
-      size_t min_num_mps_sim3_scale_{50};
+      size_t min_num_mps_sim3_scale_{100};
 
       // Signal queue for keyframes to find potential loop
       vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
@@ -83,46 +84,34 @@ namespace vslam_components {
       long unsigned int last_kf_loop_found_{0};
 
       // Skip detecting loop after one has been found for n frames
-      // This is to ensure we are not flooding the visualizer with frame marker messages.
-      // Could be removed with a different visualizer
-      long unsigned int skip_n_after_loop_found_{10};
+      // Having too many loops in close vicinity would lag the optimization
+      long unsigned int skip_n_after_loop_found_{50};
 
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
 
+      // Plugin loader
+      vslam_plugins::Loader plugin_loader_;
+
       // Feature extraction plugin
-      pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_loader_{
-          "vslam_plugins_base", "vslam_feature_extractor_base::FeatureExtractor"};
       std::shared_ptr<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_;
 
       // Feature matcher plugin
-      pluginlib::ClassLoader<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_loader_{
-          "vslam_plugins_base", "vslam_feature_matcher_base::FeatureMatcher"};
       std::shared_ptr<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_;
 
       // Camera tracker plugin
-      pluginlib::ClassLoader<vslam_camera_tracker_base::CameraTracker> camera_tracker_loader_{
-          "vslam_plugins_base", "vslam_camera_tracker_base::CameraTracker"};
       std::shared_ptr<vslam_camera_tracker_base::CameraTracker> camera_tracker_;
 
       // Mapper plugin
-      pluginlib::ClassLoader<vslam_mapper_base::Mapper> mapper_loader_{"vslam_plugins_base",
-                                                                       "vslam_mapper_base::Mapper"};
       std::shared_ptr<vslam_mapper_base::Mapper> mapper_;
 
       // Back-end plugin
-      pluginlib::ClassLoader<vslam_backend_base::Backend> backend_loader_{"vslam_plugins_base",
-                                                                          "vslam_backend_base::Backend"};
       std::shared_ptr<vslam_backend_base::Backend> backend_;
 
       // Place recognition plugin
-      pluginlib::ClassLoader<vslam_place_recognition_base::PlaceRecognition> place_recognition_loader_{
-          "vslam_plugins_base", "vslam_place_recognition_base::PlaceRecognition"};
       std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition_;
 
       // Visualizer plugin
-      pluginlib::ClassLoader<vslam_visualizer_base::Visualizer> visualizer_loader_{"vslam_plugins_base",
-                                                                                   "vslam_visualizer_base::Visualizer"};
       std::shared_ptr<vslam_visualizer_base::Visualizer> visualizer_;
     };
   }  // namespace vslam_nodes

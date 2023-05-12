@@ -110,38 +110,36 @@ namespace vslam_components {
     IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options)
         : Node("vslam_node", options), K_{load_camera_info()} {
       // Feature extractor
-      feature_extractor_ = feature_extractor_loader_.createSharedInstance(
-          declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
+      feature_extractor_
+          = plugin_loader_.feature_extractor(declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
       feature_extractor_->initialize(declare_parameter("num_features", 2000));
 
       // Feature matcher
-      feature_matcher_
-          = feature_matcher_loader_.createSharedInstance(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
+      feature_matcher_ = plugin_loader_.feature_matcher(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
       feature_matcher_->initialize();
 
       // Camera tracker
-      camera_tracker_
-          = camera_tracker_loader_.createSharedInstance(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
+      camera_tracker_ = plugin_loader_.camera_tracker(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
       camera_tracker_->initialize(K_);
 
       // Mapper
-      mapper_ = mapper_loader_.createSharedInstance(declare_parameter("mapper_plugin_name", "UNDEFINED"));
+      mapper_ = plugin_loader_.mapper(declare_parameter("mapper_plugin_name", "UNDEFINED"));
       mapper_->initialize(K_);
 
       // Back-end
-      backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
+      backend_ = plugin_loader_.backend(declare_parameter("backend_plugin_name", "UNDEFINED"));
       backend_->initialize(K_);
 
       // Place recognition
-      place_recognition_ = place_recognition_loader_.createSharedInstance(
-          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+      place_recognition_
+          = plugin_loader_.place_recognition(declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
       place_recognition_->initialize(declare_parameter("place_recognition.input", ""),
                                      declare_parameter("place_recognition.top_k", 3),
                                      declare_parameter("place_recognition.score_thresh", 0.9),
                                      declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
       // Visualizer
-      visualizer_ = visualizer_loader_.createSharedInstance(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
+      visualizer_ = plugin_loader_.visualizer(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
       visualizer_->initialize();
 
       // Frame subscriber and publishers
