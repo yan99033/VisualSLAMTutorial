@@ -244,7 +244,15 @@ namespace vslam_backend_plugins {
 
     // optimize graph
     optimizer.initializeOptimization();
+    optimizer.computeActiveErrors();
+    const double init_errs = optimizer.activeChi2();
     optimizer.optimize(15);
+
+    // If the errors after optimization is larger than before
+    const double final_errs = optimizer.activeChi2();
+    if (init_errs < final_errs) {
+      return;
+    }
 
     // Update keyframes
     for (auto [kf_vertex, kf_p] : core_kf_vertices) {
@@ -392,7 +400,15 @@ namespace vslam_backend_plugins {
 
     // Optimize pose graph
     optimizer.initializeOptimization();
+    optimizer.computeActiveErrors();
+    const double init_errs = optimizer.activeChi2();
     optimizer.optimize(15);
+
+    // If the errors after optimization is larger than before
+    const double final_errs = optimizer.activeChi2();
+    if (init_errs < final_errs) {
+      return;
+    }
 
     // // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
