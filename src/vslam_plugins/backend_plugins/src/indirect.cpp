@@ -115,7 +115,6 @@ namespace vslam_backend_plugins {
 
       run_local_ba_ = false;
     }
-    std::cout << "terminated local BA" << std::endl;
   }
 
   std::pair<Indirect::CoreKfsSet, Indirect::CoreMpsSet> Indirect::get_core_keyframes_mappoints() {
@@ -393,8 +392,6 @@ namespace vslam_backend_plugins {
     e_sim3->setVertex(1, v_sim3_2);
     e_sim3->setMeasurement(cvMatToSim3(T_1_2, sim3_scale).inverse());
     e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
-
-    std::cout << "sim3 scale: " << sim3_scale << std::endl;
 
     optimizer.addEdge(e_sim3);
 
