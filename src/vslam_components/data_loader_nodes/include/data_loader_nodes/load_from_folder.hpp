@@ -26,6 +26,9 @@ namespace vslam_components {
       std::vector<std::string> files_;  //!< Files in a folder
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
       rclcpp::TimerBase::SharedPtr timer_;
+
+      sensor_msgs::msg::CameraInfo load_camera_info();
+      sensor_msgs::msg::CameraInfo cam_info_msg_;
     };
 
   }  // namespace data_loader_nodes

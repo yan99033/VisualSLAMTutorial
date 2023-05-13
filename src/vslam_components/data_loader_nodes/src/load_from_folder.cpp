@@ -56,7 +56,10 @@ namespace vslam_components {
   namespace data_loader_nodes {
 
     LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions &options)
-        : Node("load_from_folder_node", options), count_(0), files_{load_files(declare_parameter("image_folder", ""))} {
+        : Node("load_from_folder_node", options),
+          count_(0),
+          files_{load_files(declare_parameter("image_folder", ""))},
+          cam_info_msg_(load_camera_info()) {
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
 
       // Use a timer to schedule periodic message publishing.
@@ -91,10 +94,27 @@ namespace vslam_components {
       msg->id = ++count_;
       RCLCPP_INFO(this->get_logger(), "Publishing frame: %u / %lu", msg->id, files_.size());
       msg->image = im_msg;
+      msg->cam_info = cam_info_msg_;
       msg->header.stamp = now();
 
       // Put the message into a queue to be processed by the middleware.
       frame_pub_->publish(std::move(msg));
+    }
+
+    sensor_msgs::msg::CameraInfo LoadFromFolder::load_camera_info() {
+      double fx = declare_parameter("camera_params.fx", -1.0);
+      double fy = declare_parameter("camera_params.fy", -1.0);
+      double cx = declare_parameter("camera_params.cx", -1.0);
+      double cy = declare_parameter("camera_params.cy", -1.0);
+
+      if (fx <= 0.0 || fy <= 0.0 || cx <= 0.0 || cy <= 0.0) {
+        throw std::runtime_error("Invalid camera info. Ensure fx, fy, cx, cy are loaded and greater than zero.");
+      }
+
+      sensor_msgs::msg::CameraInfo cam_info_msg;
+      cam_info_msg.k = {fx, 0, cx, 0, fy, cy, 0, 0, 1};
+
+      return cam_info_msg;
     }
   }  // namespace data_loader_nodes
 
