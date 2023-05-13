@@ -154,8 +154,7 @@ namespace vslam_datastructure {
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
     for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {  // && pt->mappoint->host_keyframe() == this) {
-
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier() && pt->mappoint->is_host(id_)) {
         frame_msg->keypoints_has_mp.push_back(true);
         if (!no_mappoints) {
           // Only visualize and update the map points that belong to the host
