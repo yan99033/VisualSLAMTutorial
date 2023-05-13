@@ -70,16 +70,15 @@ namespace {
 }  // namespace
 
 namespace vslam_camera_tracker_plugins {
-  void Indirect::initialize(const cv::Mat& K) { K_ = K; }
 
-  cv::Mat Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points) {
+  cv::Mat Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K) {
     const auto [cv_points_2d_1, cv_points_2d_2] = get_2d2d_correspondences(matched_points);
 
     cv::Mat inlier_mask;
     cv::Mat R;
     cv::Mat t;
-    cv::Mat E = cv::findEssentialMat(cv_points_2d_1, cv_points_2d_2, K_, cv::RANSAC, 0.999, 1.0, inlier_mask);
-    const int num_inliers = cv::recoverPose(E, cv_points_2d_1, cv_points_2d_2, K_, R, t, inlier_mask);
+    cv::Mat E = cv::findEssentialMat(cv_points_2d_1, cv_points_2d_2, K, cv::RANSAC, 0.999, 1.0, inlier_mask);
+    const int num_inliers = cv::recoverPose(E, cv_points_2d_1, cv_points_2d_2, K, R, t, inlier_mask);
 
     cv::Mat rpy;
     cv::Rodrigues(R, rpy);
@@ -93,7 +92,8 @@ namespace vslam_camera_tracker_plugins {
     return to_transformation_matrix(R, t);
   }
 
-  cv::Mat Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, cv::Mat T_2_1_init) {
+  cv::Mat Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                      cv::Mat T_2_1_init) {
     auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
 
     cv::Mat rpy;
@@ -114,7 +114,7 @@ namespace vslam_camera_tracker_plugins {
 
     std::cout << "points used for PnP: " << points_3d_1_ptr.size() << std::endl;
 
-    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K_, cv::Mat(), rpy, t, use_extrinsic_guess, num_iter,
+    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, use_extrinsic_guess, num_iter,
                        reproj_err_thresh, confidence, inliers);
 
     std::cout << "-----------------------" << std::endl;

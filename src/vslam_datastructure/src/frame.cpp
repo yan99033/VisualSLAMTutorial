@@ -68,8 +68,6 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
-  Frame::Frame(const cv::Mat& K) : K_(K) {}
-
   cv::Mat Frame::T_f_w() const {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return T_f_w_.clone();
@@ -79,6 +77,8 @@ namespace vslam_datastructure {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return T_f_w_.inv();
   }
+
+  cv::Mat Frame::K() const { return K_.clone(); }
 
   void Frame::update_sim3_pose_and_mps(const cv::Mat& S_f_w, const cv::Mat& T_f_w) {
     cv::Mat S_w_f = S_f_w.inv();
@@ -130,6 +130,9 @@ namespace vslam_datastructure {
     cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
                    frame_msg->image.data.data());
     image_ = cv_mat.clone();
+
+    cv::Mat K(3, 3, CV_64FC1, frame_msg->cam_info.k.data());
+    K_ = K.clone();
   }
 
   void Frame::to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded, const bool no_mappoints) {
@@ -150,6 +153,8 @@ namespace vslam_datastructure {
       frame_msg->image.is_bigendian = false;
       frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
       frame_msg->image.data.assign(image_.datastart, image_.dataend);
+
+      // std::copy(K_.datastart, K_.dataend, frame_msg->cam_info.k.begin());
     }
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());

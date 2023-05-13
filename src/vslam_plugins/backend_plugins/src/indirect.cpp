@@ -56,10 +56,7 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Indirect::initialize(const cv::Mat& K) {
-    K_ = K;
-    local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this);
-  }
+  void Indirect::initialize() { local_ba_thread_ = std::thread(&Indirect::local_ba_loop, this); }
 
   void Indirect::add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
     assert(keyframe->is_keyframe());
@@ -233,10 +230,12 @@ namespace vslam_backend_plugins {
         rk->setDelta(huber_kernel_delta);
         e->setRobustKernel(rk);
 
-        e->fx = K_.at<double>(0, 0);
-        e->fy = K_.at<double>(1, 1);
-        e->cx = K_.at<double>(0, 2);
-        e->cy = K_.at<double>(1, 2);
+        const cv::Mat K = pt->frame->K();
+
+        e->fx = K.at<double>(0, 0);
+        e->fy = K.at<double>(1, 1);
+        e->cx = K.at<double>(0, 2);
+        e->cy = K.at<double>(1, 2);
 
         optimizer.addEdge(e);
         all_edges.push_back(e);

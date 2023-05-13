@@ -10,10 +10,10 @@ namespace vslam_mapper_plugins {
 
   class OpenCvTriangulation : public vslam_mapper_base::Mapper {
   public:
-    void initialize(const cv::Mat& K) override;
+    void initialize() override {}
 
     virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
-                                               const cv::Mat& T_2_1) override;
+                                               const cv::Mat& T_2_1, const cv::Mat& K) override;
 
   protected:
     cv::Mat K_;

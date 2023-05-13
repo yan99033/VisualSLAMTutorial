@@ -107,8 +107,7 @@ namespace {
 namespace vslam_components {
 
   namespace vslam_nodes {
-    IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options)
-        : Node("vslam_node", options), K_{load_camera_info()} {
+    IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options) : Node("vslam_node", options) {
       // Feature extractor
       feature_extractor_
           = plugin_loader_.feature_extractor(declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
@@ -120,15 +119,15 @@ namespace vslam_components {
 
       // Camera tracker
       camera_tracker_ = plugin_loader_.camera_tracker(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
-      camera_tracker_->initialize(K_);
+      camera_tracker_->initialize();
 
       // Mapper
       mapper_ = plugin_loader_.mapper(declare_parameter("mapper_plugin_name", "UNDEFINED"));
-      mapper_->initialize(K_);
+      mapper_->initialize();
 
       // Back-end
       backend_ = plugin_loader_.backend(declare_parameter("backend_plugin_name", "UNDEFINED"));
-      backend_->initialize(K_);
+      backend_->initialize();
 
       // Place recognition
       place_recognition_
@@ -156,19 +155,6 @@ namespace vslam_components {
       place_recognition_thread_.join();
     }
 
-    cv::Mat IndirectVSlamNode::load_camera_info() {
-      double fx = declare_parameter("camera_params.fx", -1.0);
-      double fy = declare_parameter("camera_params.fy", -1.0);
-      double cx = declare_parameter("camera_params.cx", -1.0);
-      double cy = declare_parameter("camera_params.cy", -1.0);
-
-      if (fx == -1.0 || fy == -1.0 || cx == -1.0 || cy == -1.0) {
-        throw std::runtime_error("Camera matrix not loaded!");
-      }
-
-      return (cv::Mat_<double>(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
-    }
-
     void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
@@ -180,7 +166,7 @@ namespace vslam_components {
       auto points = feature_extractor_->extract_features(cv_mat);
 
       if (state_ == State::init) {
-        auto frame = std::make_shared<vslam_datastructure::Frame>(K_);
+        auto frame = std::make_shared<vslam_datastructure::Frame>();
         frame->from_msg(frame_msg.get());
         frame->set_points(points);
         frame->set_keyframe();
@@ -198,21 +184,21 @@ namespace vslam_components {
           return;
         }
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>(K_);
+        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
         auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
-        const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points);
+        const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points, current_frame->K());
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
         current_frame->set_pose(T_c_w);
 
-        auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+        auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
         current_keyframe_->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
 
         // write pose to the frame message
@@ -230,7 +216,7 @@ namespace vslam_components {
 
         std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " to track" << std::endl;
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>(K_);
+        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
 
@@ -245,7 +231,7 @@ namespace vslam_components {
           return;
         }
 
-        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points);  //, T_c_p_);
+        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, current_frame->K());  //, T_c_p_);
         // T_c_p_ = T_c_p;
 
         // Check the number of outliers in the calculating the camera pose
@@ -274,7 +260,7 @@ namespace vslam_components {
 
           // Set the current frame as keyframe
           current_frame->set_keyframe();
-          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p);
+          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
           current_keyframe_->set_mappoints(new_mps, first_indices);
           const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
@@ -415,7 +401,7 @@ namespace vslam_components {
         return false;
       }
 
-      T_p_c = camera_tracker_->track_camera_3d2d(matched_points);
+      T_p_c = camera_tracker_->track_camera_3d2d(matched_points, previous_keyframe->K());
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};

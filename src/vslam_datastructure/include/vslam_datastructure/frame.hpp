@@ -21,9 +21,7 @@ namespace vslam_datastructure {
     using SharedPtr = std::shared_ptr<Frame>;
     using KeyframeConstraintsMap = std::unordered_map<const Frame*, cv::Mat>;
 
-    Frame() = delete;
-
-    Frame(const cv::Mat& K);
+    Frame() = default;
 
     cv::Mat get_image() const;
 
@@ -32,6 +30,8 @@ namespace vslam_datastructure {
 
     // Get the camera pose (inversed)
     cv::Mat T_w_f() const;
+
+    cv::Mat K() const;
 
     // Transform the map points to the this frame and apply sim3 transformation to them
     // Then update the camera pose

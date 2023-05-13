@@ -51,8 +51,6 @@ namespace vslam_components {
 
       cv::Mat load_camera_info();
 
-      cv::Mat K_;
-
       // The previously calculated relative transformation for the initial guess in camera tracking
       cv::Mat T_c_p_{cv::Mat::eye(4, 4, CV_64F)};
 

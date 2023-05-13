@@ -14,7 +14,7 @@ namespace vslam_backend_plugins {
   public:
     ~Indirect();
 
-    void initialize(const cv::Mat& K) override;
+    void initialize() override;
 
     void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
@@ -37,9 +37,6 @@ namespace vslam_backend_plugins {
 
     // Use it for reading and writing keyframes
     mutable std::mutex keyframe_mutex_;
-
-    // Camera matrix
-    cv::Mat K_;
 
     // Local BA
     std::condition_variable local_ba_condition_;

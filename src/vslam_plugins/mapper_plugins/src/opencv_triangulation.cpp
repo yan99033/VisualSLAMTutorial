@@ -47,17 +47,16 @@ namespace {
 }  // namespace
 
 namespace vslam_mapper_plugins {
-  void OpenCvTriangulation::initialize(const cv::Mat& K) { K_ = K; }
-
   vslam_datastructure::MapPoints OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points,
-                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1) {
+                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1,
+                                                          const cv::Mat& K) {
     // Preprocess the matched points for triangulation
     const auto [cv_points1, cv_points2] = getCorrespondences(matched_points);
 
     // Calculate the projection matrix
     cv::Mat P1 = cv::Mat::eye(4, 4, CV_64F);
-    P1 = K_ * P1.rowRange(0, 3).colRange(0, 4);
-    cv::Mat P2 = K_ * T_2_1.rowRange(0, 3).colRange(0, 4);
+    P1 = K * P1.rowRange(0, 3).colRange(0, 4);
+    cv::Mat P2 = K * T_2_1.rowRange(0, 3).colRange(0, 4);
 
     // Triangulate the map points
     cv::Mat cv_points1_3d;
@@ -84,7 +83,7 @@ namespace vslam_mapper_plugins {
       }
 
       // Remove points that have a large re-projection error
-      cv::Mat pt_3d_projected = project_point_3d2d(pt_3d.rowRange(0, 3), K_);
+      cv::Mat pt_3d_projected = project_point_3d2d(pt_3d.rowRange(0, 3), K);
       constexpr double proj_err_thresh = 8.0;
       if (cv::norm(pt_3d_projected, cv_points1.col(i)) > proj_err_thresh) {
         new_mps.push_back(nullptr);
