@@ -67,9 +67,6 @@ namespace vslam_datastructure {
     // Fuse the old map points with the provided new map points
     void fuse_mappoints(const MappointIndexPairs& mappoint_index_pairs);
 
-    // Get the numbe of map points
-    size_t get_num_mps();
-
     // Check if there are points available to match or map
     inline bool has_points() const { return !points_.empty(); }
 

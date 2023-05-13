@@ -276,17 +276,6 @@ namespace vslam_datastructure {
     }
   }
 
-  size_t Frame::get_num_mps() {
-    std::lock_guard<std::mutex> lck(data_mutex_);
-    size_t num_mps{0};
-    for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
-        num_mps++;
-      }
-    }
-    return num_mps;
-  }
-
   void Frame::set_keyframe() {
     std::lock_guard<std::mutex> lck(data_mutex_);
     is_keyframe_ = true;

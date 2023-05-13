@@ -214,8 +214,6 @@ namespace vslam_components {
           return;
         }
 
-        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " to track" << std::endl;
-
         auto current_frame = std::make_shared<vslam_datastructure::Frame>();
         current_frame->from_msg(frame_msg.get());
         current_frame->set_points(points);
@@ -282,8 +280,6 @@ namespace vslam_components {
         } else {
           std::cout << "Didn't create a new keyframe. Currently tracking " << num_kf_mps << " map points" << std::endl;
         }
-
-        std::cout << "current keyframe has " << current_keyframe_->get_num_mps() << " map points" << std::endl;
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
