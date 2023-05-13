@@ -176,7 +176,6 @@ namespace vslam_components {
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
-        // auto current_keyframe = backend_->get_current_keyframe();
         if (!current_keyframe_->has_points() || points.empty()) {
           backend_->remove_keyframe(current_keyframe_);
           current_keyframe_ = nullptr;
@@ -229,8 +228,7 @@ namespace vslam_components {
           return;
         }
 
-        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, current_frame->K());  //, T_c_p_);
-        // T_c_p_ = T_c_p;
+        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, current_frame->K());
 
         // Check the number of outliers in the calculating the camera pose
         size_t num_matched_inliers{0};
@@ -276,9 +274,7 @@ namespace vslam_components {
           long unsigned int kf_id = current_frame->id();
           keyframe_id_queue_->send(std::move(kf_id));
 
-          std::cout << "created a new keyframe " << std::endl;
-        } else {
-          std::cout << "Didn't create a new keyframe. Currently tracking " << num_kf_mps << " map points" << std::endl;
+          RCLCPP_INFO(this->get_logger(), "Created a new keyframe");
         }
 
         // write pose to the frame message
@@ -368,9 +364,6 @@ namespace vslam_components {
             }
           }
         }
-
-        // Free CPU
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
     }
 
@@ -398,6 +391,10 @@ namespace vslam_components {
       }
 
       T_p_c = camera_tracker_->track_camera_3d2d(matched_points, previous_keyframe->K());
+
+      if (cv::norm(T_p_c.rowRange(0, 3).colRange(3, 4)) > max_loop_translation_) {
+        return false;
+      }
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};

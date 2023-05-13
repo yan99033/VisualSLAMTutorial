@@ -49,11 +49,6 @@ namespace vslam_components {
 
       vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
-      cv::Mat load_camera_info();
-
-      // The previously calculated relative transformation for the initial guess in camera tracking
-      cv::Mat T_c_p_{cv::Mat::eye(4, 4, CV_64F)};
-
       // Minimum number of map points needed for camera tracking
       size_t min_num_mps_cam_tracking_{30};
 
@@ -80,6 +75,10 @@ namespace vslam_components {
                        const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
                        std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
       long unsigned int last_kf_loop_found_{0};
+
+      // The magnitude of the relative translation between the two similar keyfrmaes should be close to zero, regardless
+      // of scale
+      double max_loop_translation_{0.05};
 
       // Skip detecting loop after one has been found for n frames
       // Having too many loops in close vicinity would lag the optimization
