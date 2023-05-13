@@ -112,8 +112,6 @@ namespace vslam_camera_tracker_plugins {
     constexpr double confidence = 0.99;
     cv::Mat inliers;
 
-    std::cout << "points used for PnP: " << points_3d_1_ptr.size() << std::endl;
-
     cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, use_extrinsic_guess, num_iter,
                        reproj_err_thresh, confidence, inliers);
 
