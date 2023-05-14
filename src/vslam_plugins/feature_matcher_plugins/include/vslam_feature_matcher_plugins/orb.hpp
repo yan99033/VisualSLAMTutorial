@@ -20,7 +20,7 @@ namespace vslam_feature_matcher_plugins {
     int num_features_{1000};
 
   private:
-    cv::Ptr<cv::DescriptorMatcher> orb_feature_matcher_;
+    cv::Ptr<cv::BFMatcher> orb_feature_matcher_;
   };
 }  // namespace vslam_feature_matcher_plugins
 

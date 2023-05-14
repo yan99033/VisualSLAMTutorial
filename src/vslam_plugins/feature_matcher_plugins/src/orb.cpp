@@ -56,7 +56,7 @@ namespace {
 namespace vslam_feature_matcher_plugins {
   void Orb::initialize() {
     point_type_ = vslam_datastructure::Point::Type::orb;
-    orb_feature_matcher_ = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
+    orb_feature_matcher_ = cv::BFMatcher::create(cv::NORM_HAMMING, true);
   }
 
   vslam_datastructure::Matches Orb::match_features(const vslam_datastructure::Points& points1,
