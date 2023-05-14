@@ -49,6 +49,15 @@ namespace {
         throw std::runtime_error("Unsupported encoding type");
     }
   }
+
+  sensor_msgs::msg::CameraInfo toCameraInfoMsg(const cv::Mat &K) {
+    assert(K.rows == 3 && K.cols == 3);
+    sensor_msgs::msg::CameraInfo cam_info_msg;
+    cam_info_msg.k = {K.at<double>(0, 0), 0, K.at<double>(0, 2), 0, K.at<double>(1, 1), K.at<double>(1, 2), 0, 0, 1};
+
+    return cam_info_msg;
+  }
+
 }  // namespace
 
 namespace vslam_components {
@@ -56,10 +65,14 @@ namespace vslam_components {
   namespace data_loader_nodes {
 
     LoadFromFolder::LoadFromFolder(const rclcpp::NodeOptions &options)
-        : Node("load_from_folder_node", options),
-          count_(0),
-          files_{load_files(declare_parameter("image_folder", ""))},
-          cam_info_msg_(load_camera_info()) {
+        : Node("load_from_folder_node", options), count_(0), files_{load_files(declare_parameter("image_folder", ""))} {
+      const auto cam_info = load_camera_info();
+
+      // Undistorter
+      undistorter_ = std::make_unique<detail::Undistorter>(cam_info.K, cam_info.image_width, cam_info.image_height,
+                                                           cam_info.dist_coeffs);
+      cam_info_msg_ = toCameraInfoMsg(undistorter_->get_K());
+
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);
 
       // Use a timer to schedule periodic message publishing.
@@ -101,20 +114,35 @@ namespace vslam_components {
       frame_pub_->publish(std::move(msg));
     }
 
-    sensor_msgs::msg::CameraInfo LoadFromFolder::load_camera_info() {
-      double fx = declare_parameter("camera_params.fx", -1.0);
-      double fy = declare_parameter("camera_params.fy", -1.0);
-      double cx = declare_parameter("camera_params.cx", -1.0);
-      double cy = declare_parameter("camera_params.cy", -1.0);
-
+    CameraInfo LoadFromFolder::load_camera_info() {
+      double fx = declare_parameter("camera_info.camera_matrix.fx", -1.0);
+      double fy = declare_parameter("camera_info.camera_matrix.fy", -1.0);
+      double cx = declare_parameter("camera_info.camera_matrix.cx", -1.0);
+      double cy = declare_parameter("camera_info.camera_matrix.cy", -1.0);
       if (fx <= 0.0 || fy <= 0.0 || cx <= 0.0 || cy <= 0.0) {
         throw std::runtime_error("Invalid camera info. Ensure fx, fy, cx, cy are loaded and greater than zero.");
       }
 
-      sensor_msgs::msg::CameraInfo cam_info_msg;
-      cam_info_msg.k = {fx, 0, cx, 0, fy, cy, 0, 0, 1};
+      cv::Mat K = (cv::Mat_<double>(3, 3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
 
-      return cam_info_msg;
+      std::vector<double> dist_coeffs_array
+          = declare_parameter("camera_info.dist_coeffs", std::vector<double>{0.0, 0.0, 0.0, 0.0});
+      if (dist_coeffs_array.size() != 4 && dist_coeffs_array.size() != 5) {
+        throw std::runtime_error("Distortion coefficients array has to be of size 4 or 5. Got "
+                                 + std::to_string(dist_coeffs_array.size()));
+      }
+      cv::Mat dist_coeffs(dist_coeffs_array.size(), 1, CV_64F, dist_coeffs_array.data());
+      dist_coeffs = dist_coeffs.clone();
+
+      int image_height = declare_parameter("camera_info.image_height", 0);
+      int image_width = declare_parameter("camera_info.image_width", 0);
+      if (image_height <= 0 || image_width <= 0) {
+        throw std::runtime_error("Invalid image size. Width and height have to be greater than zero.");
+      }
+
+      CameraInfo cam_info{K, dist_coeffs, image_height, image_width};
+
+      return cam_info;
     }
   }  // namespace data_loader_nodes
 

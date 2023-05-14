@@ -24,7 +24,8 @@ include_directories(include)
 # create ament index resource which references the libraries in the binary dir
 set(LIB_NAME data_loader_nodes)
 add_library(${LIB_NAME} SHARED
-  src/load_from_folder.cpp)
+  src/load_from_folder.cpp
+  src/undistorter.cpp)
 target_link_libraries(
   ${LIB_NAME} ${OpenCV_LIBRARIES}
 )
