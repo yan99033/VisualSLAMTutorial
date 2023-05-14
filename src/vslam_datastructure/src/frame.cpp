@@ -153,8 +153,6 @@ namespace vslam_datastructure {
       frame_msg->image.is_bigendian = false;
       frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
       frame_msg->image.data.assign(image_.datastart, image_.dataend);
-
-      // std::copy(K_.datastart, K_.dataend, frame_msg->cam_info.k.begin());
     }
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
