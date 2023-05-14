@@ -94,6 +94,7 @@ namespace vslam_components {
 
       // Load image
       cv::Mat image = cv::imread(files_.at(count_ % files_.size()), cv::IMREAD_COLOR);
+      image = undistorter_->undistort_image(image);
       sensor_msgs::msg::Image im_msg;
       im_msg.height = image.rows;
       im_msg.width = image.cols;
