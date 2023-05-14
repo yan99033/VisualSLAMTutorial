@@ -372,8 +372,10 @@ namespace {
 
   void compute_orb_descriptor(const cv::Mat& image, const double scale, const cv::KeyPoint& kpt, cv::Mat& descriptor,
                               const std::vector<cv::Point>& _pattern, int half_k, int dsize = 32) {
-    if ((cvRound(kpt.pt.x - 1) <= half_k) || (cvRound(kpt.pt.x + half_k + 1) >= image.cols)
-        || (cvRound(kpt.pt.y - 1) <= half_k) || (cvRound(kpt.pt.y + half_k + 1) >= image.rows)) {
+    assert(descriptor.cols == dsize);
+
+    if ((cvRound(kpt.pt.x * scale - 1) <= half_k) || (cvRound(kpt.pt.x * scale + half_k + 1) >= image.cols)
+        || (cvRound(kpt.pt.y * scale - 1) <= half_k) || (cvRound(kpt.pt.y * scale + half_k + 1) >= image.rows)) {
       return;
     }
 
@@ -440,8 +442,8 @@ namespace {
         continue;
       }
 
-      int width_pyr = cvRound(image.cols * curr_scale_factor);
-      int height_pyr = cvRound(image.rows * curr_scale_factor);
+      int width_pyr = cvRound(image.cols * scale_factors.back());
+      int height_pyr = cvRound(image.rows * scale_factors.back());
       cv::Mat resized;
       cv::resize(image_pyramid.back(), resized, cv::Size(width_pyr, height_pyr));
       image_pyramid.push_back(resized);
@@ -463,8 +465,9 @@ namespace {
     }
 
     Keypoints keypoints;
-    for (size_t i = 0; i < corners.size(); i++) {
-      cv::KeyPoint kp(corners[i], 1.0f);
+    keypoints.reserve(corners.size());
+    for (const auto& corner : corners) {
+      cv::KeyPoint kp(corner, 1.0f);
       if (calculate_harris_response_and_octave(image_pyramid, kp, nlevels, scale_factors, patch_size, harris_block_size)
           && calculate_ic_angle(image_pyramid.at(kp.octave), kp, umax, half_patch_size)) {
         keypoints.push_back(kp);
@@ -484,14 +487,15 @@ namespace {
       cv::GaussianBlur(working_mat, working_mat, cv::Size(7, 7), 2, 2, cv::BORDER_REFLECT_101);
     }
 
-    Descriptors descriptors(keypoints.size());
-    for (size_t i = 0; i < keypoints.size(); i++) {
-      // Descriptor
-      const auto kp = keypoints[i];
+    // Keypoints valid_keypoints;
+    // valid_keypoints.reserve(keypoints.size());
+    Descriptors descriptors;
+    descriptors.reserve(keypoints.size());
+    for (const auto& kp : keypoints) {
       cv::Mat descriptor = cv::Mat(1, desc_size, CV_8U);
       compute_orb_descriptor(image_pyramid.at(kp.octave), scale_factors.at(kp.octave), kp, descriptor, pattern,
                              half_patch_size);
-      descriptors[i] = descriptor;
+      descriptors.push_back(descriptor);
     }
 
     return {keypoints, descriptors};
@@ -510,11 +514,11 @@ namespace vslam_feature_extractor_plugins {
     cv::Mat grey_image;
     cv::cvtColor(image, grey_image, cv::COLOR_BGR2GRAY);
     std::vector<cv::Point2d> corners;
-    int half_patch_size = ceil(patch_size_ / 2);
-    cv::Mat mask = cv::Mat::ones(image.rows - patch_size_, image.cols - patch_size_, CV_8U);
-    cv::copyMakeBorder(mask, mask, half_patch_size, patch_size_ - half_patch_size, half_patch_size,
-                       patch_size_ - half_patch_size, cv::BORDER_CONSTANT, cv::Scalar(0));
-    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_, mask);
+    // int half_patch_size = ceil(patch_size_ / 2);
+    // cv::Mat mask = cv::Mat::ones(image.rows - patch_size_, image.cols - patch_size_, CV_8U);
+    // cv::copyMakeBorder(mask, mask, half_patch_size, patch_size_ - half_patch_size, half_patch_size,
+    //                    patch_size_ - half_patch_size, cv::BORDER_CONSTANT, cv::Scalar(0));
+    cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_);  //, mask);
 
     const auto [keypoints, descriptors] = calculate_keypoints_and_descriptors(
         grey_image, corners, nlevels_, scale_factor_, harris_block_size_, patch_size_);
