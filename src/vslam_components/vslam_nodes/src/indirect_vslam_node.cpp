@@ -165,27 +165,25 @@ namespace vslam_components {
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);
 
-      if (state_ == State::init) {
-        auto frame = std::make_shared<vslam_datastructure::Frame>();
-        frame->from_msg(frame_msg.get());
-        frame->set_points(points);
-        frame->set_keyframe();
+      // Create a new frame
+      auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+      current_frame->from_msg(frame_msg.get());
+      current_frame->set_points(points);
 
-        backend_->add_keyframe(frame);
-        current_keyframe_ = frame;
+      if (state_ == State::init) {
+        current_frame->set_keyframe();
+
+        backend_->add_keyframe(current_frame);
+        current_keyframe_ = current_frame;
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
-        if (!current_keyframe_->has_points() || points.empty()) {
+        if (!current_keyframe_->has_points() || !current_frame->has_points()) {
           backend_->remove_keyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
           return;
         }
-
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
-        current_frame->from_msg(frame_msg.get());
-        current_frame->set_points(points);
 
         auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
@@ -206,19 +204,16 @@ namespace vslam_components {
 
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
-        // auto current_keyframe = backend_->get_current_keyframe();
-        if (!current_keyframe_->has_points() || points.empty()) {
+        if (!current_keyframe_->has_points() || !current_frame->has_points()) {
           std::cout << "Current frame has no point to track" << std::endl;
           state_ = State::relocalization;
           return;
         }
 
-        auto current_frame = std::make_shared<vslam_datastructure::Frame>();
-        current_frame->from_msg(frame_msg.get());
-        current_frame->set_points(points);
-
         auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
+
+        std::cout << "num matched points: " << matched_points.size() << std::endl;
 
         // Check if we have enough map points for camera tracking
         size_t num_matched_mps{0};
