@@ -205,7 +205,7 @@ namespace vslam_components {
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
         if (!current_keyframe_->has_points() || !current_frame->has_points()) {
-          std::cout << "Current frame has no point to track" << std::endl;
+          RCLCPP_INFO(get_logger(), "Current frame has no point to track");
           state_ = State::relocalization;
           return;
         }
@@ -218,7 +218,7 @@ namespace vslam_components {
         // Check if we have enough map points for camera tracking
         size_t num_matched_mps{0};
         if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
-          std::cout << "Insufficient amount of points (" << num_matched_mps << ") needed for tracking" << std::endl;
+          RCLCPP_INFO(get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
           state_ = State::relocalization;
           return;
         }
@@ -228,8 +228,8 @@ namespace vslam_components {
         // Check the number of outliers in the calculating the camera pose
         size_t num_matched_inliers{0};
         if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
-          std::cout << "Insufficient amount of inlier points (" << num_matched_inliers << ") used for tracking"
-                    << std::endl;
+          RCLCPP_INFO(get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
+                      num_matched_inliers);
           state_ = State::relocalization;
           return;
         }
@@ -278,7 +278,7 @@ namespace vslam_components {
         current_frame->to_msg(frame_msg.get(), skip_loaded, no_points);
       } else {
         // State::relocalization
-        std::cout << "Relocalization state. unimplemented!" << std::endl;
+        RCLCPP_ERROR_ONCE(this->get_logger(), "Relocalization state. unimplemented!");
       }
 
       // Publish frame markers
