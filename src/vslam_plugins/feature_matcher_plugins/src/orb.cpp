@@ -21,8 +21,7 @@ namespace {
   vslam_datastructure::Matches create_matched_points(const vslam_datastructure::Points& points1,
                                                      const vslam_datastructure::Points& points2,
                                                      const std::vector<cv::DMatch>& matches,
-                                                     const std::vector<char>& mask,
-                                                     const double max_coord_dist = 100.0) {
+                                                     const std::vector<char>& mask) {
     if (!mask.empty() && (mask.size() != matches.size())) {
       throw std::runtime_error("Invalid mask " + std::to_string(mask.size()) + " or matches size "
                                + std::to_string(matches.size()));
@@ -34,11 +33,6 @@ namespace {
       if (mask.empty() || mask[i]) {
         const int i1 = matches[i].queryIdx;
         const int i2 = matches[i].trainIdx;
-
-        // Check distance
-        if (cv::norm(points1.at(i1)->keypoint.pt - points2.at(i2)->keypoint.pt) > max_coord_dist) {
-          continue;
-        }
 
         // Create a match
         vslam_datastructure::MatchedPoint matched_point{points1.at(i1), points2.at(i2)};
