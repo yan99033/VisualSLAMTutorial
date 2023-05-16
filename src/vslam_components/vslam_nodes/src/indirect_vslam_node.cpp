@@ -210,26 +210,10 @@ namespace vslam_components {
           return;
         }
 
-        auto [matched_points, matched_index_pairs]
-            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
-
-        std::cout << "num matched points: " << matched_points.size() << std::endl;
-
-        // Check if we have enough map points for camera tracking
-        size_t num_matched_mps{0};
-        if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
-          RCLCPP_INFO(get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
-          state_ = State::relocalization;
-          return;
-        }
-
-        const auto T_c_p = camera_tracker_->track_camera_3d2d(matched_points, current_frame->K());
-
-        // Check the number of outliers in the calculating the camera pose
-        size_t num_matched_inliers{0};
-        if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
-          RCLCPP_INFO(get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
-                      num_matched_inliers);
+        cv::Mat T_c_p;
+        vslam_datastructure::MatchedPoints matched_points;
+        vslam_datastructure::MatchedIndexPairs matched_index_pairs;
+        if (!camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           state_ = State::relocalization;
           return;
         }
@@ -283,6 +267,38 @@ namespace vslam_components {
 
       // Publish frame markers
       visualizer_->add_live_frame(*frame_msg);
+    }
+
+    bool IndirectVSlamNode::camera_tracker(const vslam_datastructure::Frame* const frame1,
+                                           const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
+                                           vslam_datastructure::MatchedPoints& matched_points,
+                                           vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
+      if (frame1 == nullptr || frame2 == nullptr) {
+        return false;
+      }
+
+      std::tie(matched_points, matched_index_pairs)
+          = feature_matcher_->match_features(frame1->get_points(), frame2->get_points());
+
+      std::cout << "num matched points: " << matched_points.size() << std::endl;
+
+      // Check if we have enough map points for camera tracking
+      size_t num_matched_mps{0};
+      if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+        RCLCPP_INFO(get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
+        return false;
+      }
+
+      T_2_1 = camera_tracker_->track_camera_3d2d(matched_points, frame2->K());
+
+      // Check the number of outliers in the calculating the camera pose
+      size_t num_matched_inliers{0};
+      if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+        RCLCPP_INFO(get_logger(), "Insufficient amount of inlier points (%lu) used for tracking", num_matched_inliers);
+        return false;
+      }
+
+      return true;
     }
 
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
@@ -375,27 +391,33 @@ namespace vslam_components {
         return false;
       }
 
-      auto [matched_points, matched_index_pairs]
-          = feature_matcher_->match_features(current_keyframe->get_points(), previous_keyframe->get_points());
-
-      // Check if we have enough map points for camera tracking
-      size_t num_matched_mps{0};
-      if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
-        RCLCPP_INFO(this->get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
+      vslam_datastructure::MatchedPoints matched_points;
+      vslam_datastructure::MatchedIndexPairs matched_index_pairs;
+      if (!camera_tracker(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
         return false;
       }
 
-      T_p_c = camera_tracker_->track_camera_3d2d(matched_points, previous_keyframe->K());
+      // auto [matched_points, matched_index_pairs]
+      //     = feature_matcher_->match_features(current_keyframe->get_points(), previous_keyframe->get_points());
+
+      // // Check if we have enough map points for camera tracking
+      // size_t num_matched_mps{0};
+      // if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+      //   RCLCPP_INFO(this->get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
+      //   return false;
+      // }
+
+      // T_p_c = camera_tracker_->track_camera_3d2d(matched_points, previous_keyframe->K());
+
+      // // Check the number of outliers in the calculating the camera pose
+      // size_t num_matched_inliers{0};
+      // if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+      //   RCLCPP_INFO(this->get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
+      //               num_matched_inliers);
+      //   return false;
+      // }
 
       if (cv::norm(T_p_c.rowRange(0, 3).colRange(3, 4)) > max_loop_translation_) {
-        return false;
-      }
-
-      // Check the number of outliers in the calculating the camera pose
-      size_t num_matched_inliers{0};
-      if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
-        RCLCPP_INFO(this->get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
-                    num_matched_inliers);
         return false;
       }
 

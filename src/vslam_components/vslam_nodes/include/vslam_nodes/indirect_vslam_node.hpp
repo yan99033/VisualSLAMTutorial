@@ -40,6 +40,12 @@ namespace vslam_components {
       bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
                              size_t& num_mps);
 
+      // Camera frame tracker
+      bool camera_tracker(const vslam_datastructure::Frame* const frame1,
+                          const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
+                          vslam_datastructure::MatchedPoints& matched_points,
+                          vslam_datastructure::MatchedIndexPairs& matched_index_pairs);
+
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
       rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr frame_publisher_;
@@ -56,7 +62,7 @@ namespace vslam_components {
       size_t min_num_cam_tracking_inliers_{15};
 
       // Minimum number of map points needed for a keyframe
-      size_t min_num_kf_mps_{400};
+      size_t min_num_kf_mps_{250};
 
       // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
       double max_rotation_rad_{0.174533};
@@ -76,9 +82,9 @@ namespace vslam_components {
                        std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
       long unsigned int last_kf_loop_found_{0};
 
-      // The magnitude of the relative translation between the two similar keyfrmaes should be close to zero, regardless
+      // The magnitude of the relative translation between the two similar keyframes should be close to zero, regardless
       // of scale
-      double max_loop_translation_{0.05};
+      double max_loop_translation_{0.1};
 
       // Skip detecting loop after one has been found for n frames
       // Having too many loops in close vicinity would lag the optimization
