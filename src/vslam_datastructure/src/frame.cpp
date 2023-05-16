@@ -157,11 +157,10 @@ namespace vslam_datastructure {
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
     for (const auto& pt : points_) {
-      if (pt->mappoint.get() && !pt->mappoint->is_outlier() && pt->mappoint->is_host(id_)) {
-        frame_msg->keypoints_has_mp.push_back(true);
+      if (pt->mappoint.get() && !pt->mappoint->is_outlier()) {
         if (!no_mappoints) {
           // Only visualize and update the map points that belong to the host
-          if (pt->mappoint->is_host(id_)) {
+          if (pt->mappoint->is_host(id_) && pt->mappoint->is_host(id_)) {
             // 3D map points
             vslam_msgs::msg::Vector3d pt_3d;
             const auto mp_pt_3d = pt->mappoint->get_mappoint();
@@ -171,15 +170,13 @@ namespace vslam_datastructure {
             frame_msg->mappoints.push_back(pt_3d);
           }
         }
-      } else {
-        frame_msg->keypoints_has_mp.push_back(false);
-      }
 
-      // 2D keypoints
-      vslam_msgs::msg::Vector2d pt_2d;
-      pt_2d.x = pt->keypoint.pt.x;
-      pt_2d.y = pt->keypoint.pt.y;
-      frame_msg->keypoints.push_back(pt_2d);
+        // 2D keypoints
+        vslam_msgs::msg::Vector2d pt_2d;
+        pt_2d.x = pt->keypoint.pt.x;
+        pt_2d.y = pt->keypoint.pt.y;
+        frame_msg->keypoints.push_back(pt_2d);
+      }
     }
 
     // relative pose constraints

@@ -25,20 +25,17 @@ namespace {
     // Add 2D keypoints to the image message and publish
     for (size_t i = 0; i < frame_msg.keypoints.size(); i++) {
       auto kp = frame_msg.keypoints.at(i);
-      auto has_mp = frame_msg.keypoints_has_mp.at(i);
 
       constexpr int ft_radius = 5;
       const cv::Scalar ft_rgb(0, 0, 255);
       const int ft_thickness = -1;
       cv::circle(cv_mat, cv::Point2d{kp.x, kp.y}, ft_radius, ft_rgb, ft_thickness);
 
-      if (has_mp) {
-        constexpr int half_size = 5;
-        const cv::Scalar sq_color(0, 255, 0);
-        const int sq_thickness = 2;
-        cv::rectangle(cv_mat, cv::Point2d{kp.x - half_size, kp.y - half_size},
-                      cv::Point2d{kp.x + half_size, kp.y + half_size}, sq_color, sq_thickness);
-      }
+      constexpr int half_size = 5;
+      const cv::Scalar sq_color(0, 255, 0);
+      const int sq_thickness = 2;
+      cv::rectangle(cv_mat, cv::Point2d{kp.x - half_size, kp.y - half_size},
+                    cv::Point2d{kp.x + half_size, kp.y + half_size}, sq_color, sq_thickness);
     }
   }
 

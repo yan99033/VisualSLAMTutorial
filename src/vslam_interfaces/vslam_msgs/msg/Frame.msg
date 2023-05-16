@@ -17,7 +17,6 @@ geometry_msgs/Pose pose
 
 # Points
 Vector2d[] keypoints
-bool[] keypoints_has_mp
 Vector3d[] mappoints
 
 # Pose constraints
