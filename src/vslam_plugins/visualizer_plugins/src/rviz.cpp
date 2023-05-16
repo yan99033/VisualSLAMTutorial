@@ -23,9 +23,7 @@ namespace {
                    frame_msg.image.data.data());
 
     // Add 2D keypoints to the image message and publish
-    for (size_t i = 0; i < frame_msg.keypoints.size(); i++) {
-      auto kp = frame_msg.keypoints.at(i);
-
+    for (const auto& kp : frame_msg.keypoints) {
       constexpr int ft_radius = 5;
       const cv::Scalar ft_rgb(0, 0, 255);
       const int ft_thickness = -1;
