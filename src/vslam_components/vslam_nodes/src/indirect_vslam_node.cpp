@@ -270,6 +270,7 @@ namespace vslam_components {
         constexpr bool no_points = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded, no_points);
       } else {
+        RCLCPP_INFO(this->get_logger(), "Relocalizating");
         cv::Mat T_c_p;
         vslam_datastructure::MatchedPoints matched_points;
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
@@ -315,9 +316,6 @@ namespace vslam_components {
             }
           }
         }
-
-        // State::relocalization
-        RCLCPP_ERROR_ONCE(this->get_logger(), "Relocalization state. unimplemented!");
       }
 
       // Publish frame markers
@@ -334,8 +332,6 @@ namespace vslam_components {
 
       std::tie(matched_points, matched_index_pairs)
           = feature_matcher_->match_features(frame1->get_points(), frame2->get_points());
-
-      std::cout << "num matched points: " << matched_points.size() << std::endl;
 
       // Check if we have enough map points for camera tracking
       size_t num_matched_mps{0};
@@ -457,26 +453,6 @@ namespace vslam_components {
       if (!camera_tracker(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
         return false;
       }
-
-      // auto [matched_points, matched_index_pairs]
-      //     = feature_matcher_->match_features(current_keyframe->get_points(), previous_keyframe->get_points());
-
-      // // Check if we have enough map points for camera tracking
-      // size_t num_matched_mps{0};
-      // if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
-      //   RCLCPP_INFO(this->get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
-      //   return false;
-      // }
-
-      // T_p_c = camera_tracker_->track_camera_3d2d(matched_points, previous_keyframe->K());
-
-      // // Check the number of outliers in the calculating the camera pose
-      // size_t num_matched_inliers{0};
-      // if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
-      //   RCLCPP_INFO(this->get_logger(), "Insufficient amount of inlier points (%lu) used for tracking",
-      //               num_matched_inliers);
-      //   return false;
-      // }
 
       if (cv::norm(T_p_c.rowRange(0, 3).colRange(3, 4)) > max_loop_translation_) {
         return false;
