@@ -408,10 +408,8 @@ namespace vslam_components {
             double scale{0.0};
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
             if (verify_loop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
-              std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
-                        << std::endl;
-              std::cout << T_p_c << std::endl;
-              std::cout << "scale: " << scale << std::endl;
+              RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
+                          prev_kf_id, score, scale);
 
               // Keep the keyframe so it can be used for relocalization
               {
