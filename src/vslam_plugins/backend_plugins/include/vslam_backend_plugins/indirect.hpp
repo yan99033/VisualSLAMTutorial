@@ -23,7 +23,7 @@ namespace vslam_backend_plugins {
     vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
 
     // Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
-    vslam_datastructure::Frame* get_keyframe(const long unsigned int id) const override;
+    vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const override;
 
     void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
                              const double sim3_scale) override;

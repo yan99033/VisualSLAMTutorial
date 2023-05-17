@@ -55,6 +55,10 @@ namespace vslam_components {
 
       vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
+      // The keyframe that is visually similar to the current frame determined by the place recognition algorithm
+      vslam_datastructure::Frame::SharedPtr loop_keyframe_{nullptr};
+      std::mutex loop_keyframe_mutex_;
+
       // Minimum number of map points needed for camera tracking
       size_t min_num_mps_cam_tracking_{30};
 

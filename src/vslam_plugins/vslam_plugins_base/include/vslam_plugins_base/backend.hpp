@@ -18,7 +18,7 @@ namespace vslam_backend_base {
     // recognition method)
     virtual vslam_datastructure::Frame::SharedPtr get_current_keyframe() = 0;
 
-    virtual vslam_datastructure::Frame* get_keyframe(const long unsigned int id) const = 0;
+    virtual vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const = 0;
 
     virtual void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                      const cv::Mat& T_1_2, const double sim3_scale)

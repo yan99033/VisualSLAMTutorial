@@ -261,6 +261,52 @@ namespace vslam_components {
         constexpr bool no_points = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded, no_points);
       } else {
+        cv::Mat T_c_p;
+        vslam_datastructure::MatchedPoints matched_points;
+        vslam_datastructure::MatchedIndexPairs matched_index_pairs;
+        bool tracked{false};
+        // Track current frame relative to the current keyframe
+        if (camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+          tracked = true;
+          state_ = State::tracking;
+        } else {
+          if (loop_keyframe_ != nullptr) {
+            // Track current frame relative to the keyframe found using place recognition
+            std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
+            if (camera_tracker(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+              tracked = true;
+              state_ = State::tracking;
+
+              // Make the current keyframe the keyframe found using place recognition
+              current_keyframe_ = loop_keyframe_;
+              loop_keyframe_ = nullptr;
+            }
+          }
+
+          // Check if we need a new keyframe
+          if (tracked) {
+            const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+            size_t num_kf_mps{0};
+            if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
+                || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
+              // Set constraints between adjacent keyframes
+              current_keyframe_->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
+              current_frame->add_T_this_other_kf(current_keyframe_.get(), T_c_p);
+              current_frame->set_parent_keyframe(current_keyframe_.get());
+
+              // Set the current frame as keyframe
+              current_frame->set_keyframe();
+              const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
+              const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
+              current_keyframe_->set_mappoints(new_mps, first_indices);
+              const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
+              current_frame->set_mappoints(new_old_mps, second_indices, true);
+              backend_->add_keyframe(current_frame);
+              current_keyframe_ = current_frame;
+            }
+          }
+        }
+
         // State::relocalization
         RCLCPP_ERROR_ONCE(this->get_logger(), "Relocalization state. unimplemented!");
       }
@@ -356,11 +402,17 @@ namespace vslam_components {
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
-            if (verify_loop(current_keyframe, previous_keyframe, T_p_c, scale, mappoint_index_pairs)) {
+            if (verify_loop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
               std::cout << "Found a loop: " << curr_kf_id << "<->" << prev_kf_id << "(score: " << score << ")"
                         << std::endl;
               std::cout << T_p_c << std::endl;
               std::cout << "scale: " << scale << std::endl;
+
+              // Keep the keyframe so it can be used for relocalization
+              {
+                std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
+                loop_keyframe_ = previous_keyframe;
+              }
 
               // Run pose-graph optimization
               backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);

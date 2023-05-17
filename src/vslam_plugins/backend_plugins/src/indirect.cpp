@@ -86,10 +86,10 @@ namespace vslam_backend_plugins {
     return current_keyframe_;
   }
 
-  vslam_datastructure::Frame* Indirect::get_keyframe(const long unsigned int id) const {
+  vslam_datastructure::Frame::SharedPtr Indirect::get_keyframe(const long unsigned int id) const {
     std::lock_guard<std::mutex> lck(keyframe_mutex_);
     if (keyframes_.find(id) != keyframes_.end()) {
-      return keyframes_.at(id).get();
+      return keyframes_.at(id);
     } else {
       return nullptr;
     }
