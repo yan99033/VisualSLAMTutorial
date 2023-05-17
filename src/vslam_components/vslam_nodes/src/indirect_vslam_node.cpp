@@ -196,6 +196,15 @@ namespace vslam_components {
         current_frame->set_pose(T_c_w);
 
         auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
+
+        // Check if we have enough initial map points
+        if (new_mps.size() < min_num_kf_mps_) {
+          backend_->remove_keyframe(current_keyframe_);
+          current_keyframe_ = nullptr;
+          state_ = State::init;
+          return;
+        }
+
         current_keyframe_->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
 
         // write pose to the frame message
