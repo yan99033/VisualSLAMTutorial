@@ -1,15 +1,16 @@
-#include "monocular_camera_plugins/generic_usb_cam_plugin.hpp"
+#include "monocular_camera_plugins/usb_cam_plugin.hpp"
 
 namespace monocular_camera_plugins {
-  GenericUsbCamera::~GenericUsbCamera() { video_capture_.release(); }
+  UsbCamera::~UsbCamera() { video_capture_.release(); }
 
-  void GenericUsbCamera::initialize(const std::string& params_file) {
+  void UsbCamera::initialize(const std::string& params_file) {
     cv::FileStorage fs(params_file, cv::FileStorage::READ);
     if (!fs.isOpened()) {
       std::cout << "Failed to open ini parameters" << std::endl;
       throw std::runtime_error("failed to open " + params_file);
     }
 
+    fs["K"] >> K_;
     fs["image_height"] >> image_height_;
     fs["image_width"] >> image_width_;
     fs["camera_id"] >> camera_id_;
@@ -32,7 +33,7 @@ namespace monocular_camera_plugins {
     }
   }
 
-  cv::Mat GenericUsbCamera::grab_image() {
+  cv::Mat UsbCamera::grab_image() {
     cv::Mat image;
     video_capture_ >> image;
 
@@ -43,4 +44,4 @@ namespace monocular_camera_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(monocular_camera_plugins::GenericUsbCamera, camera_plugins_base::MonocularCamera)
+PLUGINLIB_EXPORT_CLASS(monocular_camera_plugins::UsbCamera, camera_plugins_base::MonocularCamera)

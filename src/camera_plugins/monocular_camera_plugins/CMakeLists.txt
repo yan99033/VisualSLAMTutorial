@@ -24,7 +24,8 @@ set(dependencies
 )
 
 set(sources
-  src/generic_usb_cam_plugin.cpp
+  src/usb_cam_plugin.cpp
+  src/calicam_plugin.cpp
 )
 
 

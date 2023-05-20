@@ -22,7 +22,7 @@ set(dependencies
 )
 
 install(
-  DIRECTORY include
+  DIRECTORY include/camera_plugins_base
   DESTINATION include
 )
 

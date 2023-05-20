@@ -13,6 +13,8 @@ namespace camera_plugins_base {
 
     virtual cv::Mat grab_image() = 0;
 
+    virtual cv::Mat K() = 0;
+
     virtual ~MonocularCamera() {}
 
   protected:
