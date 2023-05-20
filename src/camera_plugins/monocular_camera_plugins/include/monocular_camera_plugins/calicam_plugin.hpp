@@ -6,7 +6,7 @@
 namespace monocular_camera_plugins {
   // For more information about the camera, see here
   // https://github.com/astar-ai/calicam
-  class CaliCam : public camera_plugins_base::MonocularCamera {
+  class CaliCam : public camera_plugins::base::MonocularCamera {
   public:
     ~CaliCam();
 

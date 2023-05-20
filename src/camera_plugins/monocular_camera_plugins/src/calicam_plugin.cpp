@@ -120,4 +120,4 @@ namespace monocular_camera_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(monocular_camera_plugins::CaliCam, camera_plugins_base::MonocularCamera)
+PLUGINLIB_EXPORT_CLASS(monocular_camera_plugins::CaliCam, camera_plugins::base::MonocularCamera)

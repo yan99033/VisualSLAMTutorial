@@ -4,7 +4,7 @@
 #include "camera_plugins_base/monocular_camera.hpp"
 
 namespace monocular_camera_plugins {
-  class UsbCamera : public camera_plugins_base::MonocularCamera {
+  class UsbCamera : public camera_plugins::base::MonocularCamera {
   public:
     ~UsbCamera();
 

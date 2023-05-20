@@ -1,9 +1,9 @@
 <library path="monocular_camera_plugins">
-  <class type="monocular_camera_plugins::UsbCamera" base_class_type="camera_plugins_base::MonocularCamera">
+  <class type="monocular_camera_plugins::UsbCamera" base_class_type="camera_plugins::base::MonocularCamera">
     <description>This is a USB camera plugin.</description>
   </class>
 
-  <class type="monocular_camera_plugins::CaliCam" base_class_type="camera_plugins_base::MonocularCamera">
+  <class type="monocular_camera_plugins::CaliCam" base_class_type="camera_plugins::base::MonocularCamera">
     <description>This is a CaliCam camera plugin.</description>
   </class>
 </library>
