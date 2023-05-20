@@ -1,4 +1,4 @@
-#include "monocular_camera_plugins/calicam_plugin.hpp"
+#include "monocular_camera_plugins/calicam.hpp"
 
 namespace {
   inline double MatRowMul(const cv::Mat& m, const double x, const double y, const double z, const int r) {

@@ -1,4 +1,4 @@
-#include "monocular_camera_plugins/usb_cam_plugin.hpp"
+#include "monocular_camera_plugins/usb_cam.hpp"
 
 namespace monocular_camera_plugins {
   UsbCamera::~UsbCamera() { video_capture_.release(); }
