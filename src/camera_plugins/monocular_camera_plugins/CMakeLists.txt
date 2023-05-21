@@ -16,16 +16,19 @@ find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(camera_plugins_base REQUIRED)
+find_package(vslam_utils REQUIRED)
 
 set(dependencies
   OpenCV
   pluginlib
   camera_plugins_base
+  vslam_utils
 )
 
 set(sources
   src/usb_cam.cpp
   src/calicam.cpp
+  src/monocular_camera_impl.cpp
 )
 
 
