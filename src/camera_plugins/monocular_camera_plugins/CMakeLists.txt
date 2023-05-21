@@ -26,14 +26,12 @@ set(dependencies
 )
 
 set(sources
-  src/usb_cam.cpp
   src/calicam.cpp
-  src/monocular_camera_impl.cpp
+  src/monocular_camera.cpp
 )
 
 
 add_library(${PROJECT_NAME} SHARED ${sources})
-# target_link_libraries(${PROJECT_NAME} ...)
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

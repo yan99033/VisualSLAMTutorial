@@ -1,5 +1,5 @@
 <library path="monocular_camera_plugins">
-  <class type="monocular_camera_plugins::base::impl::MonocularCamera" base_class_type="camera_plugins::base::MonocularCamera">
+  <class type="monocular_camera_plugins::MonocularCamera" base_class_type="camera_plugins::base::MonocularCamera">
     <description>This is a USB camera plugin.</description>
   </class>
 
