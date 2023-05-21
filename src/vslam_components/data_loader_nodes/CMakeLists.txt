@@ -17,6 +17,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(vslam_utils REQUIRED)
 find_package(OpenCV REQUIRED)
 
 include_directories(include)
@@ -24,8 +25,7 @@ include_directories(include)
 # create ament index resource which references the libraries in the binary dir
 set(LIB_NAME data_loader_nodes)
 add_library(${LIB_NAME} SHARED
-  src/load_from_folder.cpp
-  src/undistorter.cpp)
+  src/load_from_folder.cpp)
 target_link_libraries(
   ${LIB_NAME} ${OpenCV_LIBRARIES}
 )
@@ -34,7 +34,8 @@ target_compile_definitions(${LIB_NAME}
 ament_target_dependencies(${LIB_NAME}
   "rclcpp"
   "rclcpp_components"
-  "vslam_msgs")
+  "vslam_msgs"
+  "vslam_utils")
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::LoadFromFolder")
 

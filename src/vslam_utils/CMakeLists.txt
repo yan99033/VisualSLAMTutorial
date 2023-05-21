@@ -14,18 +14,16 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(vslam_msgs REQUIRED)
-find_package(vslam_srvs REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(dependencies
   rclcpp
-  vslam_msgs
-  vslam_srvs
+  OpenCV
 )
 
 include_directories(include)
 add_library(${PROJECT_NAME} SHARED
-  src/service_client.cpp)
+  src/undistorter.cpp)
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 if(BUILD_TESTING)

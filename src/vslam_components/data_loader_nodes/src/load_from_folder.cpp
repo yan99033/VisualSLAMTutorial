@@ -69,8 +69,8 @@ namespace vslam_components {
       const auto cam_info = load_camera_info();
 
       // Undistorter
-      undistorter_ = std::make_unique<detail::Undistorter>(cam_info.K, cam_info.image_width, cam_info.image_height,
-                                                           cam_info.dist_coeffs);
+      undistorter_ = std::make_unique<vslam_utils::Undistorter>(cam_info.K, cam_info.image_width, cam_info.image_height,
+                                                                cam_info.dist_coeffs);
       cam_info_msg_ = toCameraInfoMsg(undistorter_->get_K());
 
       frame_pub_ = create_publisher<vslam_msgs::msg::Frame>("out_frame", 10);

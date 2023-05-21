@@ -6,10 +6,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <string>
-#include <vslam_msgs/msg/frame.hpp>
 
 #include "data_loader_nodes/camera_info.hpp"
-#include "data_loader_nodes/detail/undistorter.hpp"
+#include "vslam_msgs/msg/frame.hpp"
+#include "vslam_utils/undistorter.hpp"
 
 namespace vslam_components {
 
@@ -33,7 +33,7 @@ namespace vslam_components {
       CameraInfo load_camera_info();
 
       // Undistorter
-      std::unique_ptr<detail::Undistorter> undistorter_{nullptr};
+      std::unique_ptr<vslam_utils::Undistorter> undistorter_{nullptr};
 
       sensor_msgs::msg::CameraInfo cam_info_msg_;
     };

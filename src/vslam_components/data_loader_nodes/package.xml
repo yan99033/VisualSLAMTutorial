@@ -3,7 +3,7 @@
 <package format="3">
   <name>data_loader_nodes</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Image frame loader to the visual SLAM pipeline</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>TODO: License declaration</license>
 
@@ -11,6 +11,7 @@
 
   <depend>sensor_msgs</depend>
   <depend>vslam_msgs</depend>
+  <depend>vslam_utils</depend>
   <depend>image_transport</depend>
 
   <test_depend>ament_lint_auto</test_depend>
