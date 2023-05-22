@@ -5,10 +5,10 @@ namespace {
     return m.at<double>(r, 0) * x + m.at<double>(r, 1) * y + m.at<double>(r, 2) * z;
   }
 
-  void initUndistortRectifyMap(const cv::Mat& K, const cv::Mat& D, const double xid, const cv::Mat& R, const cv::Mat& P,
-                               const cv::Size& size, cv::Mat& map1, cv::Mat& map2) {
-    map1 = cv::Mat(size, CV_64F);
-    map2 = cv::Mat(size, CV_64F);
+  void init_undistort_rectify_map(const cv::Mat& K, const cv::Mat& D, const double xid, const cv::Mat& R,
+                                  const cv::Mat& P, const cv::Size& size, cv::Mat& map1, cv::Mat& map2) {
+    map1 = cv::Mat(size, CV_32F);
+    map2 = cv::Mat(size, CV_32F);
 
     double fx = K.at<double>(0, 0);
     double fy = K.at<double>(1, 1);
@@ -47,8 +47,8 @@ namespace {
         double u = fx * xd + s * yd + cx;
         double v = fy * yd + cy;
 
-        map1.at<double>(r, c) = u;
-        map2.at<double>(r, c) = v;
+        map1.at<float>(r, c) = static_cast<float>(u);
+        map2.at<float>(r, c) = static_cast<float>(v);
       }
     }
   }
@@ -93,7 +93,7 @@ namespace vslam_utils {
   }
 
   void CalicamUndistorter::calculate_undistort_rectify_map() {
-    initUndistortRectifyMap(K_ori, dist_coeffs_, xi, R, K_, cv::Size(image_width_, image_height_), map1_, map2_);
+    init_undistort_rectify_map(K_ori, dist_coeffs_, xi, R, K_, cv::Size(image_width_, image_height_), map1_, map2_);
   }
 
 }  // namespace vslam_utils
