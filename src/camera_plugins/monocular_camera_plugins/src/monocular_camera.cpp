@@ -41,12 +41,8 @@ namespace monocular_camera_plugins {
   cv::Mat MonocularCamera::grab_image() {
     cv::Mat image;
 
-    if (!video_capture_.read(image)) {
-      image = last_image_;
-    } else {
-      image = undistorter_->undistort_image(image);
-      last_image_ = image.clone();
-    }
+    video_capture_ >> image;
+    image = undistorter_->undistort_image(image.clone());
 
     return image;
   }
