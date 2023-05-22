@@ -2,7 +2,14 @@
 #include "vslam_utils/undistorter.hpp"
 
 namespace monocular_camera_plugins {
-  class MonocularCamera : public camera_plugins::base::MonocularCamera {
+  namespace abstract {
+    class MonocularCamera : public virtual camera_plugins::base::MonocularCamera {
+    protected:
+      virtual void open_camera(int camera_id) = 0;
+    };
+  }  // namespace abstract
+
+  class MonocularCamera : public virtual camera_plugins::base::MonocularCamera {
   public:
     ~MonocularCamera();
 

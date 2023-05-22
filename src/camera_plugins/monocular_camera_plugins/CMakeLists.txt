@@ -28,6 +28,7 @@ set(dependencies
 set(sources
   src/calicam.cpp
   src/monocular_camera.cpp
+  src/virtual_camera.cpp
 )
 
 
