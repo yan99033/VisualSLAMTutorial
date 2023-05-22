@@ -15,6 +15,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(camera_plugins_base REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(vslam_msgs REQUIRED)
 find_package(vslam_utils REQUIRED)
@@ -25,19 +27,24 @@ include_directories(include)
 # create ament index resource which references the libraries in the binary dir
 set(LIB_NAME data_loader_nodes)
 add_library(${LIB_NAME} SHARED
-  src/load_from_folder.cpp)
+  src/load_from_folder.cpp
+  src/data_loader_node.cpp)
 target_link_libraries(
   ${LIB_NAME} ${OpenCV_LIBRARIES}
 )
 target_compile_definitions(${LIB_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
 ament_target_dependencies(${LIB_NAME}
-  "rclcpp"
-  "rclcpp_components"
-  "vslam_msgs"
-  "vslam_utils")
+  rclcpp
+  rclcpp_components
+  pluginlib
+  camera_plugins_base
+  vslam_msgs
+  vslam_utils)
 
 rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::LoadFromFolder")
+rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::DataLoaderNode")
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

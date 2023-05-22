@@ -9,6 +9,8 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>pluginlib</depend>
+  <depend>camera_plugins_base</depend>
   <depend>sensor_msgs</depend>
   <depend>vslam_msgs</depend>
   <depend>vslam_utils</depend>
