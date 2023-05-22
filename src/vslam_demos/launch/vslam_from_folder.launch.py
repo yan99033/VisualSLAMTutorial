@@ -44,7 +44,7 @@ def generate_launch_description():
                 extra_arguments=[{'use_intra_process_comms': True}],),
             ComposableNode(
                 package='data_loader_nodes',
-                plugin='vslam_components::data_loader_nodes::LoadFromFolder',
+                plugin='vslam_components::data_loader_nodes::DataLoaderNode',
                 name='camera_node',
                 parameters=[params],
                 remappings=[
