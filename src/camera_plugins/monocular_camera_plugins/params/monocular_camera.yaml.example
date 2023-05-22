@@ -1,0 +1,16 @@
+%YAML:1.0
+K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 300.0, 0.0, 320,
+       0.0, 300.0, 240,
+       0.0, 0.0, 1.0 ]
+D: !!opencv-matrix
+   rows: 1
+   cols: 4
+   dt: d
+   data: [ 0.0, 0.0, 0.0, 0.0]
+image_height: 480
+image_width: 640
+camera_id: 0
