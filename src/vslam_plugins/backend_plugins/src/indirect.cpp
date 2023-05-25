@@ -407,7 +407,7 @@ namespace vslam_backend_plugins {
       return;
     }
 
-    // // Recalculate SE(3) poses and map points in their host keyframe
+    // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
       // calculate the pose and scale
       const auto g2o_S_f_w = kf_vertex->estimate();
@@ -436,6 +436,13 @@ namespace vslam_backend_plugins {
 
       kfs_it--;
     }
+
+    // Add the loop constraint
+    auto kf_1 = keyframes_.at(kf_id_1);
+    auto kf_2 = keyframes_.at(kf_id_2);
+    const cv::Mat T_1_2_updated = kf_1->T_f_w() * kf_2->T_w_f();
+    kf_1->add_T_this_other_kf(kf_2.get(), T_1_2_updated);
+    kf_2->add_T_this_other_kf(kf_1.get(), T_1_2_updated.inv());
   }
 
 }  // namespace vslam_backend_plugins
