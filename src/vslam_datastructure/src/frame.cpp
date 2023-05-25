@@ -179,20 +179,20 @@ namespace vslam_datastructure {
       }
     }
 
-    // relative pose constraints
-    for (const auto& [frame, _] : T_this_other_kfs_) {
-      if (frame == nullptr) {
-        continue;
-      }
+    // // relative pose constraints
+    // for (const auto& [frame, _] : T_this_other_kfs_) {
+    //   if (frame == nullptr) {
+    //     continue;
+    //   }
 
-      const auto T_w_other = frame->T_w_f();
-      const auto pos = T_w_other.rowRange(0, 3).colRange(3, 4);
-      vslam_msgs::msg::Vector3d pos_other;
-      pos_other.x = pos.at<double>(0, 0);
-      pos_other.y = pos.at<double>(1, 0);
-      pos_other.z = pos.at<double>(2, 0);
-      frame_msg->other_keyframes_pos.push_back(pos_other);
-    }
+    //   const auto T_w_other = frame->T_w_f();
+    //   const auto pos = T_w_other.rowRange(0, 3).colRange(3, 4);
+    //   vslam_msgs::msg::Vector3d pos_other;
+    //   pos_other.x = pos.at<double>(0, 0);
+    //   pos_other.y = pos.at<double>(1, 0);
+    //   pos_other.z = pos.at<double>(2, 0);
+    //   frame_msg->other_keyframes_pos.push_back(pos_other);
+    // }
   }
 
   void Frame::set_points(Points& points) {
