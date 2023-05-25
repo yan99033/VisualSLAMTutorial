@@ -72,7 +72,7 @@ namespace vslam_components {
       double max_rotation_rad_{0.174533};
 
       // Minimum number of map point correspondences required for calculating Sim(3) scale
-      size_t min_num_mps_sim3_scale_{100};
+      size_t min_num_mps_sim3_scale_{50};
 
       // Signal queue for keyframes to find potential loop
       vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
@@ -86,13 +86,13 @@ namespace vslam_components {
                        std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
       long unsigned int last_kf_loop_found_{0};
 
-      // The magnitude of the relative translation between the two similar keyframes should be close to zero, regardless
+      // The magnitude of the relative translation between the two similar keyframes should be small, regardless
       // of scale
-      double max_loop_translation_{0.1};
+      double max_loop_translation_{0.5};
 
       // Skip detecting loop after one has been found for n frames
       // Having too many loops in close vicinity would lag the optimization
-      long unsigned int skip_n_after_loop_found_{50};
+      long unsigned int skip_n_after_loop_found_{10};
 
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
