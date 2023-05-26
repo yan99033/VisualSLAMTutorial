@@ -66,7 +66,7 @@ namespace vslam_components {
       size_t min_num_cam_tracking_inliers_{15};
 
       // Minimum number of map points needed for a keyframe
-      size_t min_num_kf_mps_{250};
+      size_t min_num_kf_mps_{150};
 
       // Maximum allowable relative rotation between two keyframes. Defaults to 10 degree
       double max_rotation_rad_{0.174533};
@@ -92,7 +92,7 @@ namespace vslam_components {
 
       // Skip detecting loop after one has been found for n frames
       // Having too many loops in close vicinity would lag the optimization
-      long unsigned int skip_n_after_loop_found_{10};
+      long unsigned int skip_n_after_loop_found_{50};
 
       // Flag to exit the frame visual publisher and place recognition threads
       std::atomic_bool exit_thread_{false};
