@@ -22,8 +22,8 @@ namespace vslam_feature_extractor_plugins {
     cv::Ptr<cv::ORB> orb_detector_;
 
     // goodFeaturesToTrack
-    double quality_level_{0.005};
-    double min_dist_{8};
+    double quality_level_{0.01};
+    double min_dist_{10};
 
     // ORB feature detector
     size_t nlevels_{8};
