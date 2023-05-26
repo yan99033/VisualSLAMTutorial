@@ -31,7 +31,7 @@ namespace vslam_place_recognition_plugins {
       if (ignore_last_n_keyframes_ < 0) {
         return ignore_last_n_keyframes_;
       } else {
-        return static_cast<int>(last_entry_id_) - ignore_last_n_keyframes_;
+        return std::max(0, static_cast<int>(last_entry_id_) - ignore_last_n_keyframes_);
       }
     }();
 
