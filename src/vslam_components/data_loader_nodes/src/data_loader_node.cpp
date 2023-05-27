@@ -22,8 +22,6 @@ namespace {
 
   sensor_msgs::msg::CameraInfo toCameraInfoMsg(const cv::Mat &K) {
     assert(K.rows == 3 && K.cols == 3);
-    std::cout << "K" << std::endl;
-    std::cout << K << std::endl;
 
     sensor_msgs::msg::CameraInfo cam_info_msg;
     cam_info_msg.k = {K.at<double>(0, 0), 0, K.at<double>(0, 2), 0, K.at<double>(1, 1), K.at<double>(1, 2), 0, 0, 1};
