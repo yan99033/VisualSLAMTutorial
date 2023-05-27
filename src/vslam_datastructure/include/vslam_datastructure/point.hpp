@@ -24,9 +24,6 @@ namespace vslam_datastructure {
 
     void set_mappoint(const cv::Point3d& pt_3d);
 
-    // Update the map point by getting the element-wise mean between the existing and new points
-    void update_mappoint(const cv::Point3d& pt_3d);
-
     cv::Point3d get_mappoint();
 
     void add_projection(Point* point);
