@@ -10,7 +10,7 @@
 
 namespace vslam_datastructure {
   // Forward declarations
-  struct Point;
+  class Point;
   class Frame;
 
   class MapPoint {
@@ -22,9 +22,9 @@ namespace vslam_datastructure {
     // Copy from another mappoint
     void copy_from(MapPoint* other);
 
-    void set_mappoint(const cv::Point3d& pt_3d);
+    void set_pos(const cv::Point3d& pt_3d);
 
-    cv::Point3d get_mappoint();
+    cv::Point3d get_pos();
 
     void add_projection(Point* point);
 
@@ -65,24 +65,53 @@ namespace vslam_datastructure {
   };
   using MapPoints = std::vector<MapPoint::SharedPtr>;
 
-  struct Point {
-    using SharedPtr = std::shared_ptr<Point>;
-
+  class Point {
+  public:
     enum class Type { undefined = 0, orb = 1 };
 
+    using SharedPtr = std::shared_ptr<Point>;
+
+    Point() = delete;
+
+    /// Constructor
+    /**
+     * \param[in] keypoint keypoint (\sa https://docs.opencv.org/4.5.4/d2/d29/classcv_1_1KeyPoint.html)
+     * \param[in] descriptor keypoint descriptor
+     * \param[in] type point type
+     */
+    Point(const cv::KeyPoint& keypoint, const cv::Mat& descriptor = cv::Mat(), const Type type = Type::undefined);
+
+    /// keypoint (unprotected; use responsibly)
     cv::KeyPoint keypoint;
 
+    /// Descriptor (unprotected; use responsibly)
     cv::Mat descriptor;
 
+    /// Type (unprotected; use responsibly)
     Type type{Type::undefined};
 
-    MapPoint::SharedPtr mappoint;
+    void set_frame(Frame* frame);
 
-    Frame* frame;  //!< non-owning frame pointer
+    Frame* get_frame();
+
+    MapPoint::SharedPtr get_mappoint();
+
+    void set_mappoint(MapPoint::SharedPtr mappoint);
+
+    bool has_mappoint();
+
+    bool has_frame();
+
+  private:
+    MapPoint::SharedPtr mappoint_;
+
+    Frame* frame_;  //!< non-owning frame pointer
 
     long unsigned int id{point_count_++};
 
     static long unsigned int point_count_;
+
+    std::mutex mutex_;
   };
   using Points = std::vector<Point::SharedPtr>;
 

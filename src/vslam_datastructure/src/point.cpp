@@ -1,7 +1,6 @@
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_datastructure {
-  long unsigned int Point::point_count_ = 0;
 
   long unsigned int MapPoint::point_count_ = 0;
 
@@ -25,12 +24,12 @@ namespace vslam_datastructure {
     this->id_ = other->id_;
   }
 
-  void MapPoint::set_mappoint(const cv::Point3d& pt_3d) {
+  void MapPoint::set_pos(const cv::Point3d& pt_3d) {
     std::lock_guard<std::mutex> lck(mutex_);
     pt_3d_ = pt_3d;
   }
 
-  cv::Point3d MapPoint::get_mappoint() {
+  cv::Point3d MapPoint::get_pos() {
     std::lock_guard<std::mutex> lck(mutex_);
     return pt_3d_;
   }
@@ -55,4 +54,46 @@ namespace vslam_datastructure {
     }
   }
 
+  long unsigned int Point::point_count_ = 0;
+
+  Point::Point(const cv::KeyPoint& keypoint, const cv::Mat& descriptor, const Type type)
+      : keypoint(keypoint), descriptor(descriptor), type(type) {}
+
+  void Point::set_frame(Frame* frame) {
+    std::lock_guard<std::mutex> lck(mutex_);
+    frame_ = frame;
+  }
+
+  Frame* Point::get_frame() {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return frame_;
+  }
+
+  MapPoint::SharedPtr Point::get_mappoint() {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return mappoint_;
+  }
+
+  void Point::set_mappoint(MapPoint::SharedPtr mappoint) {
+    std::lock_guard<std::mutex> lck(mutex_);
+    mappoint_ = mappoint;
+  }
+
+  bool Point::has_mappoint() {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (mappoint_.get()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool Point::has_frame() {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (frame_) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }  // namespace vslam_datastructure

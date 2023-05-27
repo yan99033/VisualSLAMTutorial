@@ -134,8 +134,9 @@ namespace vslam_backend_plugins {
       core_keyframes.insert(kf.get());
 
       for (auto pt : kf->get_points()) {
-        if (pt->mappoint.get() && !pt->mappoint->is_outlier() && pt->mappoint->get_projections().size() > 1) {
-          core_mappoints.insert(pt->mappoint.get());
+        if (pt->has_mappoint() && !pt->get_mappoint()->is_outlier()
+            && pt->get_mappoint()->get_projections().size() > 1) {
+          core_mappoints.insert(pt->get_mappoint().get());
         }
       }
 
@@ -172,7 +173,7 @@ namespace vslam_backend_plugins {
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr) {
+        if (pt == nullptr || !pt->has_frame()) {
           continue;
         }
         num_valid_projections++;
@@ -183,33 +184,33 @@ namespace vslam_backend_plugins {
 
       g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
       core_mp_vertices[mp_vertex] = mp;
-      mp_vertex->setEstimate(cvPoint3dToEigenVector3d(mp->get_mappoint()));
+      mp_vertex->setEstimate(cvPoint3dToEigenVector3d(mp->get_pos()));
       mp_vertex->setId(vertex_edge_id++);
       mp_vertex->setMarginalized(true);
       optimizer.addVertex(mp_vertex);
 
       // Projections
       for (auto pt : mp->get_projections()) {
-        if (pt == nullptr || pt->frame == nullptr) {
+        if (pt == nullptr || !pt->has_frame()) {
           continue;
         }
 
         // Keyframe vertex
         g2o::VertexSE3Expmap* kf_vertex;
-        if (existing_kf_vertices.find(pt->frame) != existing_kf_vertices.end()) {
-          kf_vertex = existing_kf_vertices[pt->frame];
+        if (existing_kf_vertices.find(pt->get_frame()) != existing_kf_vertices.end()) {
+          kf_vertex = existing_kf_vertices[pt->get_frame()];
         } else {
           kf_vertex = new g2o::VertexSE3Expmap();
-          existing_kf_vertices[pt->frame] = kf_vertex;
-          kf_vertex->setEstimate(cvMatToSE3Quat(pt->frame->T_f_w()));
+          existing_kf_vertices[pt->get_frame()] = kf_vertex;
+          kf_vertex->setEstimate(cvMatToSE3Quat(pt->get_frame()->T_f_w()));
           kf_vertex->setId(vertex_edge_id++);
-          if (core_keyframes.find(pt->frame) != core_keyframes.end()) {
+          if (core_keyframes.find(pt->get_frame()) != core_keyframes.end()) {
             // Core keyframes
-            core_kf_vertices[kf_vertex] = pt->frame;
-            kf_vertex->setFixed(pt->frame->id() == fixed_kf_id);
+            core_kf_vertices[kf_vertex] = pt->get_frame();
+            kf_vertex->setFixed(pt->get_frame()->id() == fixed_kf_id);
           } else {
             // Non-core keyframes
-            non_core_kfs.insert(pt->frame);
+            non_core_kfs.insert(pt->get_frame());
             kf_vertex->setFixed(true);
           }
           optimizer.addVertex(kf_vertex);
@@ -227,7 +228,7 @@ namespace vslam_backend_plugins {
         rk->setDelta(huber_kernel_delta_);
         e->setRobustKernel(rk);
 
-        const cv::Mat K = pt->frame->K();
+        const cv::Mat K = pt->get_frame()->K();
 
         e->fx = K.at<double>(0, 0);
         e->fy = K.at<double>(1, 1);
@@ -284,7 +285,7 @@ namespace vslam_backend_plugins {
       if (mp_p && !mp_p->is_outlier()) {
         auto pt_3d = eigenVector3dToCvPoint3d(mp);
 
-        mp_p->set_mappoint(pt_3d);
+        mp_p->set_pos(pt_3d);
         inlier_mappoints++;
       }
     }

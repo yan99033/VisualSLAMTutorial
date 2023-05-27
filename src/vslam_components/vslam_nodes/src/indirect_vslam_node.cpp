@@ -48,12 +48,12 @@ namespace {
     cv::Point3d t_2_w_pt = cv::Point3d(t_2_w);
 
     for (const auto& match : matched_points) {
-      if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier() && match.point2->mappoint.get()
-          && !match.point2->mappoint->is_outlier()) {
-        cv::Point3d mp1 = match.point1->mappoint->get_mappoint();
+      if (match.point1->has_mappoint() && !match.point1->get_mappoint()->is_outlier() && match.point2->has_mappoint()
+          && !match.point2->get_mappoint()->is_outlier()) {
+        cv::Point3d mp1 = match.point1->get_mappoint()->get_pos();
         mp1 = R_1_w * mp1 + t_1_w_pt;
 
-        cv::Point3d mp2 = match.point2->mappoint->get_mappoint();
+        cv::Point3d mp2 = match.point2->get_mappoint()->get_pos();
         mp2 = R_2_w * mp2 + t_2_w_pt;
         mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
       }
@@ -70,12 +70,12 @@ namespace {
     std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (!matched_points.at(i).point2->mappoint.get() || matched_points.at(i).point2->mappoint->is_outlier()) {
+      if (!matched_points.at(i).point2->has_mappoint() || matched_points.at(i).point2->get_mappoint()->is_outlier()) {
         continue;
       }
 
       mappoint_index_pairs.emplace_back(
-          std::make_pair(matched_index_pairs.at(i).first, matched_points.at(i).point2->mappoint));
+          std::make_pair(matched_index_pairs.at(i).first, matched_points.at(i).point2->get_mappoint()));
     }
 
     return mappoint_index_pairs;
@@ -365,7 +365,7 @@ namespace vslam_components {
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
                                               const size_t goodness_thresh, size_t& num_mps) {
       for (const auto& match : matched_points) {
-        if (match.point1->mappoint.get() && !match.point1->mappoint->is_outlier()) {
+        if (match.point1->has_mappoint() && !match.point1->get_mappoint()->is_outlier()) {
           num_mps++;
         }
 

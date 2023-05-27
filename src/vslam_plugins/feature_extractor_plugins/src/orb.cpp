@@ -181,10 +181,7 @@ namespace vslam_feature_extractor_plugins {
 
     vslam_datastructure::Points orb_ft_points;
     for (size_t i = 0; i < keypoints.size(); i++) {
-      auto pt = std::make_shared<vslam_datastructure::Point>();
-      pt->keypoint = keypoints[i];
-      pt->descriptor = descriptors.row(i).clone();
-      pt->type = point_type_;
+      auto pt = std::make_shared<vslam_datastructure::Point>(keypoints[i], descriptors.row(i).clone(), point_type_);
       orb_ft_points.push_back(pt);
     }
     return orb_ft_points;
