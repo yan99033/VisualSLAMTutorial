@@ -7,19 +7,37 @@
 namespace vslam_backend_base {
   class Backend {
   public:
+    /// Initialize the back-end
     virtual void initialize() = 0;
 
+    /// Add a new keyframe
+    /**
+     * \param[in] frame a new keyframe
+     */
     virtual void add_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
+    /// Remove a keyframe
+    /**
+     * \param[in] frame the keyframe to be removed
+     */
     virtual void remove_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
+    /// TODO: should this be removed?
     // The current keyframe could be the latest keyframe added to the backend or
     // a previous keyframe that is similar to the current frame (calculate by the place
     // recognition method)
     virtual vslam_datastructure::Frame::SharedPtr get_current_keyframe() = 0;
 
+    /// Get the keyframe by its id
     virtual vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const = 0;
 
+    /// Add a loop constraint and run pose-graph optimization
+    /**
+     * \param[in] kf_id_1 the first keyframe id
+     * \param[in] kf_id_2 the second keyframe id
+     * \param[in] T_1_2 relative transformation from the first to the second keyframe
+     * \param[in] sim3_scale the similarity transform scale
+     */
     virtual void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                      const cv::Mat& T_1_2, const double sim3_scale)
         = 0;
