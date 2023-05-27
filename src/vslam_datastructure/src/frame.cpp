@@ -227,14 +227,11 @@ namespace vslam_datastructure {
 
     for (size_t idx = 0; idx < indices.size(); idx++) {
       const auto i = indices.at(idx);
-      if (mappoints.at(idx).get() == nullptr) {
+      if (!mappoints.at(idx).get()) {
         continue;
       }
 
-      if (points_.at(i)->mappoint.get() && !points_.at(i)->mappoint->is_outlier()) {
-        // Average the results
-        points_.at(i)->mappoint->update_mappoint(mappoints.at(idx)->get_mappoint());
-      } else {
+      if (!points_.at(i)->mappoint.get() || points_.at(i)->mappoint->is_outlier()) {
         // Create a new map point
         points_.at(i)->mappoint = mappoints.at(idx);
 
@@ -255,7 +252,7 @@ namespace vslam_datastructure {
     for (const auto& [idx, mappoint] : mappoint_index_pairs) {
       assert(mappoint != nullptr);
 
-      if (points_.at(idx)->mappoint.get() == nullptr) {
+      if (!points_.at(idx)->mappoint.get()) {
         // Associate the old map point with the new point
         mappoint->add_projection(points_.at(idx).get());
         points_.at(idx)->mappoint = mappoint;
@@ -263,6 +260,7 @@ namespace vslam_datastructure {
         // Add new projections to the map point
         for (auto point : points_.at(idx)->mappoint->get_projections()) {
           mappoint->add_projection(point);
+          // TODO: replace the old mappoint in point with 'this' mappoint (after making the datastructure thread-safe)
         }
 
         // Replace the map point

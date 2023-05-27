@@ -70,8 +70,7 @@ namespace {
     std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (matched_points.at(i).point2->mappoint.get() == nullptr
-          || matched_points.at(i).point2->mappoint->is_outlier()) {
+      if (!matched_points.at(i).point2->mappoint.get() || matched_points.at(i).point2->mappoint->is_outlier()) {
         continue;
       }
 

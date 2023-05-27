@@ -127,7 +127,7 @@ namespace vslam_backend_plugins {
     while (kfs_it != keyframes_.rend() && core_keyframes.size() < num_core_kfs_) {
       auto kf = kfs_it->second;
 
-      if (kf.get() == nullptr) {
+      if (!kf.get()) {
         continue;
       }
 
