@@ -21,7 +21,15 @@ namespace vslam_camera_tracker_plugins {
   private:
     cv::Ptr<cv::ORB> orb_feature_detector_;
 
-    double inlier_ratio{0.5};
+    static constexpr const double find_ess_mat_prob_{0.999};
+    static constexpr const double find_ess_mat_thresh_{1.0};
+
+    static constexpr const int pnp_ransac_num_iters_{100};
+    static constexpr const float pnp_reproj_err_thresh_{8.0};
+    static constexpr const double pnp_confidence_{0.99};
+    static constexpr const bool use_extrinsic_guess_{false};
+
+    static constexpr const double inlier_ratio{0.5};
   };
 }  // namespace vslam_camera_tracker_plugins
 

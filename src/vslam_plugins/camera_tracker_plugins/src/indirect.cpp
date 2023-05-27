@@ -78,7 +78,8 @@ namespace vslam_camera_tracker_plugins {
     cv::Mat inlier_mask;
     cv::Mat R;
     cv::Mat t;
-    cv::Mat E = cv::findEssentialMat(cv_points_2d_1, cv_points_2d_2, K, cv::RANSAC, 0.999, 1.0, inlier_mask);
+    cv::Mat E = cv::findEssentialMat(cv_points_2d_1, cv_points_2d_2, K, cv::RANSAC, find_ess_mat_prob_,
+                                     find_ess_mat_thresh_, inlier_mask);
     const int num_inliers = cv::recoverPose(E, cv_points_2d_1, cv_points_2d_2, K, R, t, inlier_mask);
 
     cv::Mat rpy;
@@ -106,13 +107,9 @@ namespace vslam_camera_tracker_plugins {
     cv::Mat rpy;
     cv::Mat t;
 
-    constexpr int num_iter{100};
-    constexpr float reproj_err_thresh{8.0};
-    constexpr double confidence{0.99};
-    constexpr bool use_extrinsic_guess{false};
     cv::Mat inliers;
-    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, false, num_iter, reproj_err_thresh,
-                       confidence, inliers);
+    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, use_extrinsic_guess_,
+                       pnp_ransac_num_iters_, pnp_reproj_err_thresh_, pnp_confidence_, inliers);
 
     std::cout << "-----------------------" << std::endl;
     std::cout << "pnp solution: " << std::endl;
@@ -128,8 +125,8 @@ namespace vslam_camera_tracker_plugins {
     cv::Mat R;
     cv::Rodrigues(rpy, R);
 
-    for (size_t i = 0; i < inliers.total(); i++) {
-      points_3d_1_ptr.at(inliers.at<int>(i))->set_inlier();
+    for (cv::MatConstIterator_<int> it = inliers.begin<int>(); it != inliers.end<int>(); ++it) {
+      points_3d_1_ptr.at(*it)->set_inlier();
     }
 
     T_2_1 = to_transformation_matrix(R, t);

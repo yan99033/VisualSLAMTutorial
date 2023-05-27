@@ -155,8 +155,6 @@ namespace vslam_backend_plugins {
         = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
     optimizer.setAlgorithm(solver);
 
-    constexpr float huber_kernel_delta{2.45};  // sqrt(5.99)
-
     const auto fixed_kf_id = current_keyframe_->id();
 
     // Create vertices and edges
@@ -226,7 +224,7 @@ namespace vslam_backend_plugins {
         e->setInformation(Eigen::Matrix2d::Identity());  // TODO: incorporate uncertainty
 
         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-        rk->setDelta(huber_kernel_delta);
+        rk->setDelta(huber_kernel_delta_);
         e->setRobustKernel(rk);
 
         const cv::Mat K = pt->frame->K();
@@ -264,7 +262,7 @@ namespace vslam_backend_plugins {
     }
 
     for (auto e : all_edges) {
-      if (!e->isDepthPositive() || e->chi2() > 5.991) {
+      if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq_) {
         auto mp_vertex = static_cast<g2o::VertexPointXYZ*>(e->vertex(0));
         auto mp_p = core_mp_vertices[mp_vertex];
 

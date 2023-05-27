@@ -84,8 +84,7 @@ namespace vslam_mapper_plugins {
 
       // Remove points that have a large re-projection error
       cv::Mat pt_3d_projected = project_point_3d2d(pt_3d.rowRange(0, 3), K);
-      constexpr double proj_err_thresh = 8.0;
-      if (cv::norm(pt_3d_projected, cv_points1.col(i)) > proj_err_thresh) {
+      if (cv::norm(pt_3d_projected, cv_points1.col(i)) > proj_err_thresh_) {
         new_mps.push_back(nullptr);
         continue;
       }

@@ -48,6 +48,9 @@ namespace vslam_backend_plugins {
     void run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints);
     size_t num_core_kfs_{5};
 
+    static constexpr const double huber_kernel_delta_{2.4477};
+    static constexpr const double huber_kernel_delta_sq_{5.991};
+
     std::atomic_bool loop_optimization_running_{false};
     void run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                      const cv::Mat& T_1_2, const double sim3_scale);
