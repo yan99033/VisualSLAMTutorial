@@ -188,7 +188,14 @@ namespace vslam_components {
         auto [matched_points, matched_index_pairs]
             = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
 
-        const auto T_c_p = camera_tracker_->track_camera_2d2d(matched_points, current_frame->K());
+        // Get the tracked camera pose and check the tracking quality
+        cv::Mat T_c_p;
+        if (!camera_tracker_->track_camera_2d2d(matched_points, current_frame->K(), T_c_p)) {
+          backend_->remove_keyframe(current_keyframe_);
+          current_keyframe_ = nullptr;
+          state_ = State::init;
+          return;
+        }
 
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->T_f_w();
@@ -340,7 +347,11 @@ namespace vslam_components {
         return false;
       }
 
-      T_2_1 = camera_tracker_->track_camera_3d2d(matched_points, frame2->K());
+      // Get the tracked camera pose and check the tracking quality
+      if (!camera_tracker_->track_camera_3d2d(matched_points, frame2->K(), T_2_1)) {
+        RCLCPP_INFO(get_logger(), "Bad tracking quality");
+        return false;
+      }
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};
@@ -388,11 +399,20 @@ namespace vslam_components {
         }
 
         // Query from database
+        auto start = std::chrono::high_resolution_clock::now();
         cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
         auto results = place_recognition_->query(visual_features);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "place recognition query elapsed: " << elapsed.count() * 1000 << " ms\n";
 
         // Add visual features of the current frame to the database
+        start = std::chrono::high_resolution_clock::now();
         place_recognition_->add_to_database(curr_kf_id, visual_features);
+        results = place_recognition_->query(visual_features);
+        end = std::chrono::high_resolution_clock::now();
+        elapsed = end - start;
+        std::cout << "place recognition add_to_database elapsed: " << elapsed.count() * 1000 << " ms\n";
 
         // Verify any potential loops
         if (results.size() > 0) {
@@ -406,6 +426,8 @@ namespace vslam_components {
 
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
+            RCLCPP_INFO(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
+                        score);
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
             if (verify_loop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
               RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
@@ -418,15 +440,28 @@ namespace vslam_components {
               }
 
               // Run pose-graph optimization
+              start = std::chrono::high_resolution_clock::now();
               backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
               last_kf_loop_found_ = curr_kf_id;
+              end = std::chrono::high_resolution_clock::now();
+              elapsed = end - start;
+              std::cout << "pose graph optimization elapsed: " << elapsed.count() * 1000 << " ms\n";
 
               // Fuse the matched new map points with the existing ones
               current_keyframe->fuse_mappoints(mappoint_index_pairs);
 
               // Refresh the display
+              start = std::chrono::high_resolution_clock::now();
               const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
+              end = std::chrono::high_resolution_clock::now();
+              elapsed = end - start;
+              std::cout << "get_all_keyframe_msgs elapsed: " << elapsed.count() * 1000 << " ms\n";
+
+              start = std::chrono::high_resolution_clock::now();
               visualizer_->replace_all_keyframes(keyframe_msgs);
+              end = std::chrono::high_resolution_clock::now();
+              elapsed = end - start;
+              std::cout << "replace_all_keyframes elapsed: " << elapsed.count() * 1000 << " ms\n";
             }
           }
         }
@@ -461,7 +496,8 @@ namespace vslam_components {
 
       if (mappoint_pairs.size() < min_num_mps_sim3_scale_) {
         RCLCPP_INFO(this->get_logger(),
-                    "Insufficient amount of map point correspondences(%lu) for calculating Sim(3) scale",
+                    "Insufficient amount of map point correspondences(%lu) for "
+                    "calculating Sim(3) scale",
                     mappoint_pairs.size());
         return false;
       }

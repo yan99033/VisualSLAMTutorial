@@ -13,13 +13,15 @@ namespace vslam_camera_tracker_plugins {
   public:
     void initialize() override {}
 
-    virtual cv::Mat track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points,
-                                      const cv::Mat& K) override;
-    virtual cv::Mat track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                      cv::Mat T_2_1_init = cv::Mat()) override;
+    bool track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                           cv::Mat& T_2_1) override;
+    bool track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                           cv::Mat& T_2_1) override;
 
   private:
     cv::Ptr<cv::ORB> orb_feature_detector_;
+
+    double inlier_ratio{0.5};
   };
 }  // namespace vslam_camera_tracker_plugins
 

@@ -71,7 +71,8 @@ namespace {
 
 namespace vslam_camera_tracker_plugins {
 
-  cv::Mat Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K) {
+  bool Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                   cv::Mat& T_2_1) {
     const auto [cv_points_2d_1, cv_points_2d_2] = get_2d2d_correspondences(matched_points);
 
     cv::Mat inlier_mask;
@@ -89,37 +90,40 @@ namespace vslam_camera_tracker_plugins {
     std::cout << "translation: " << t.t() << std::endl;
     std::cout << "-----------------------" << std::endl;
 
-    return to_transformation_matrix(R, t);
+    if (static_cast<double>(num_inliers) / static_cast<double>(matched_points.size()) < inlier_ratio) {
+      return false;
+    }
+
+    T_2_1 = to_transformation_matrix(R, t);
+
+    return true;
   }
 
-  cv::Mat Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                      cv::Mat T_2_1_init) {
+  bool Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                   cv::Mat& T_2_1) {
     auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
 
     cv::Mat rpy;
     cv::Mat t;
-    const bool use_extrinsic_guess = [&]() {
-      if (T_2_1_init.empty()) {
-        return false;
-      } else {
-        cv::Rodrigues(T_2_1_init.rowRange(0, 3).colRange(0, 3), rpy);
-        t = T_2_1_init.rowRange(0, 3).colRange(3, 4);
-        return true;
-      }
-    }();
-    constexpr int num_iter = 100;
-    constexpr float reproj_err_thresh = 8.0;
-    constexpr double confidence = 0.99;
-    cv::Mat inliers;
 
-    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, use_extrinsic_guess, num_iter,
-                       reproj_err_thresh, confidence, inliers);
+    constexpr int num_iter{100};
+    constexpr float reproj_err_thresh{8.0};
+    constexpr double confidence{0.99};
+    constexpr bool use_extrinsic_guess{false};
+    cv::Mat inliers;
+    cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, false, num_iter, reproj_err_thresh,
+                       confidence, inliers);
 
     std::cout << "-----------------------" << std::endl;
     std::cout << "pnp solution: " << std::endl;
     std::cout << "rotation: " << rpy.t() << std::endl;
     std::cout << "translation: " << t.t() << std::endl;
+    std::cout << "num inliers: " << inliers.total() << " / " << cv_points_3d_1.size() << std::endl;
     std::cout << "-----------------------" << std::endl;
+
+    if (static_cast<double>(inliers.total()) / static_cast<double>(cv_points_3d_1.size()) < inlier_ratio) {
+      return false;
+    }
 
     cv::Mat R;
     cv::Rodrigues(rpy, R);
@@ -128,7 +132,9 @@ namespace vslam_camera_tracker_plugins {
       points_3d_1_ptr.at(inliers.at<int>(i))->set_inlier();
     }
 
-    return to_transformation_matrix(R, t);
+    T_2_1 = to_transformation_matrix(R, t);
+
+    return true;
   }
 
 }  // namespace vslam_camera_tracker_plugins
