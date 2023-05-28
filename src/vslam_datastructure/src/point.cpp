@@ -105,4 +105,14 @@ namespace vslam_datastructure {
       return false;
     }
   }
+
+  bool Point::is_mappoint_host() {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (mappoint_ && frame_) {
+      if (mappoint_->is_host(frame_->id())) {
+        return true;
+      }
+    }
+    return false;
+  }
 }  // namespace vslam_datastructure

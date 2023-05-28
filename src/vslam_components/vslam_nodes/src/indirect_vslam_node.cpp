@@ -61,7 +61,7 @@ namespace {
     return mappoint_pairs;
   }
 
-  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> get_mappooint_index_pairs(
+  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> get_mappoint_index_pairs_to_fuse(
       const vslam_datastructure::MatchedPoints& matched_points,
       const vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
     assert(matched_points.size() == matched_index_pairs.size());
@@ -69,12 +69,17 @@ namespace {
     std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (!matched_points.at(i).point2->has_mappoint()) {
+      if (!matched_points.at(i).point1->has_mappoint()) {
+        continue;
+      }
+
+      // Skip if the point has a map point but it is not the host of the map point
+      if (matched_points.at(i).point2->has_mappoint() && !matched_points.at(i).point2->is_mappoint_host()) {
         continue;
       }
 
       mappoint_index_pairs.emplace_back(
-          std::make_pair(matched_index_pairs.at(i).first, matched_points.at(i).point2->get_mappoint()));
+          std::make_pair(matched_index_pairs.at(i).second, matched_points.at(i).point1->get_mappoint()));
     }
 
     return mappoint_index_pairs;
@@ -384,13 +389,6 @@ namespace vslam_components {
         // Get the keyframe from the backend
         const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
 
-        if (curr_kf_id - last_kf_loop_found_ < skip_n_after_loop_found_) {
-          cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
-          place_recognition_->add_to_database(curr_kf_id, visual_features);
-
-          continue;
-        }
-
         if (current_keyframe == nullptr) {
           RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
           continue;
@@ -413,8 +411,8 @@ namespace vslam_components {
 
             cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
             double scale{0.0};
-            RCLCPP_INFO(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
-                        score);
+            RCLCPP_DEBUG(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
+                         score);
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
             if (verify_loop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
               RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
@@ -426,17 +424,33 @@ namespace vslam_components {
                 loop_keyframe_ = previous_keyframe;
               }
 
-              // Run pose-graph optimization
-              backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
-              last_kf_loop_found_ = curr_kf_id;
+              bool refresh_visual{false};
+              if (curr_kf_id - last_kf_loop_found_ > skip_n_after_loop_found_) {
+                // Run pose-graph optimization
+                backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
+                last_kf_loop_found_ = curr_kf_id;
 
-              // Fuse the matched new map points with the existing ones
-              current_keyframe->fuse_mappoints(mappoint_index_pairs);
+                // Fuse the matched new map points with the existing ones
+                previous_keyframe->fuse_mappoints(mappoint_index_pairs);
 
-              // Refresh the display
-              const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
+                refresh_visual = true;
 
-              visualizer_->replace_all_keyframes(keyframe_msgs);
+              } else {
+                // The relative scale has to small to fuse the map points
+                if (scale < 1.1 && scale > 0.9) {
+                  // Fuse the matched new map points with the existing ones
+                  previous_keyframe->fuse_mappoints(mappoint_index_pairs);
+
+                  refresh_visual = true;
+                }
+              }
+
+              if (refresh_visual) {
+                // Refresh the display
+                const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
+
+                visualizer_->replace_all_keyframes(keyframe_msgs);
+              }
             }
           }
         }
@@ -482,7 +496,7 @@ namespace vslam_components {
       if (scale <= 0) {
         return false;
       } else {
-        mappoint_index_pairs = get_mappooint_index_pairs(matched_points, matched_index_pairs);
+        mappoint_index_pairs = get_mappoint_index_pairs_to_fuse(matched_points, matched_index_pairs);
         return true;
       }
     }

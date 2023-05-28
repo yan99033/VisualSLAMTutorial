@@ -111,6 +111,9 @@ namespace vslam_datastructure {
 
     bool has_frame();
 
+    /// A boolean indicating if the host of the map point (if there is one associated) is 'this' point
+    bool is_mappoint_host();
+
   private:
     MapPoint::SharedPtr mappoint_;
 

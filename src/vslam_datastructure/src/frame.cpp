@@ -257,14 +257,15 @@ namespace vslam_datastructure {
         mappoint->add_projection(points_.at(idx).get());
         points_.at(idx)->set_mappoint(mappoint);
       } else {
-        for (auto point : points_.at(idx)->get_mappoint()->get_projections()) {
-          // Replace the old map point and the projection with the new map point
-          mappoint->add_projection(point);
-          // point->set_mappoint(mappoint); // not thread-safe
-        }
+        auto old_mappoint = points_.at(idx)->get_mappoint();
 
-        // Replace the map point
-        points_.at(idx)->set_mappoint(mappoint);
+        for (auto point : old_mappoint->get_projections()) {
+          // Add new projections to the new map point
+          mappoint->add_projection(point);
+
+          // Replace the old map point
+          point->set_mappoint(mappoint);
+        }
       }
     }
   }
