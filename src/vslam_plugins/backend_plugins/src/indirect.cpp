@@ -443,6 +443,17 @@ namespace vslam_backend_plugins {
     kf_2->add_T_this_other_kf(kf_1.get(), T_1_2_updated.inv());
   }
 
+  std::vector<vslam_msgs::msg::Frame> Indirect::get_all_keyframe_msgs() const {
+    std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
+    for (const auto& [_, kf] : keyframes_) {
+      vslam_msgs::msg::Frame keyframe_msg;
+      kf->to_msg(&keyframe_msg, true);
+      keyframe_msgs.push_back(keyframe_msg);
+    }
+
+    return keyframe_msgs;
+  }
+
 }  // namespace vslam_backend_plugins
 
 #include <pluginlib/class_list_macros.hpp>

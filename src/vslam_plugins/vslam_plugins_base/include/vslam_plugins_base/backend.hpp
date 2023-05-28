@@ -43,15 +43,12 @@ namespace vslam_backend_base {
         = 0;
 
     // Convert all the keyframes to frame msgs to refresh the visualizer
-    std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const;
+    virtual std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const = 0;
 
     virtual ~Backend() {}
 
   protected:
     Backend() {}
-
-    // All keyframes (can be looked up using their id)
-    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
   };
 }  // namespace vslam_backend_base
 

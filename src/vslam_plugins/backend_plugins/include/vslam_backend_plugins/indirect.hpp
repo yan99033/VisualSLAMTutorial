@@ -28,9 +28,15 @@ namespace vslam_backend_plugins {
     void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
                              const double sim3_scale) override;
 
+    // Convert all the keyframes to frame msgs to refresh the visualizer
+    std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const override;
+
   private:
     using CoreKfsSet = std::set<vslam_datastructure::Frame*>;
     using CoreMpsSet = std::set<vslam_datastructure::MapPoint*>;
+
+    // All keyframes (can be looked up using their id)
+    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
 
     // The keyframe that is closest to the current camera pose
     vslam_datastructure::Frame::SharedPtr current_keyframe_;
