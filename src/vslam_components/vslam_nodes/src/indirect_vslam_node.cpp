@@ -48,8 +48,7 @@ namespace {
     cv::Point3d t_2_w_pt = cv::Point3d(t_2_w);
 
     for (const auto& match : matched_points) {
-      if (match.point1->has_mappoint() && !match.point1->get_mappoint()->is_outlier() && match.point2->has_mappoint()
-          && !match.point2->get_mappoint()->is_outlier()) {
+      if (match.point1->has_mappoint() && match.point2->has_mappoint()) {
         cv::Point3d mp1 = match.point1->get_mappoint()->get_pos();
         mp1 = R_1_w * mp1 + t_1_w_pt;
 
@@ -70,7 +69,7 @@ namespace {
     std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (!matched_points.at(i).point2->has_mappoint() || matched_points.at(i).point2->get_mappoint()->is_outlier()) {
+      if (!matched_points.at(i).point2->has_mappoint()) {
         continue;
       }
 
@@ -365,7 +364,7 @@ namespace vslam_components {
     bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
                                               const size_t goodness_thresh, size_t& num_mps) {
       for (const auto& match : matched_points) {
-        if (match.point1->has_mappoint() && !match.point1->get_mappoint()->is_outlier()) {
+        if (match.point1->has_mappoint()) {
           num_mps++;
         }
 
@@ -398,20 +397,9 @@ namespace vslam_components {
         }
 
         // Query from database
-        auto start = std::chrono::high_resolution_clock::now();
         cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
         auto results = place_recognition_->query(visual_features);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-        std::cout << "place recognition query elapsed: " << elapsed.count() * 1000 << " ms\n";
-
-        // Add visual features of the current frame to the database
-        start = std::chrono::high_resolution_clock::now();
         place_recognition_->add_to_database(curr_kf_id, visual_features);
-        results = place_recognition_->query(visual_features);
-        end = std::chrono::high_resolution_clock::now();
-        elapsed = end - start;
-        std::cout << "place recognition add_to_database elapsed: " << elapsed.count() * 1000 << " ms\n";
 
         // Verify any potential loops
         if (results.size() > 0) {
@@ -439,28 +427,16 @@ namespace vslam_components {
               }
 
               // Run pose-graph optimization
-              start = std::chrono::high_resolution_clock::now();
               backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
               last_kf_loop_found_ = curr_kf_id;
-              end = std::chrono::high_resolution_clock::now();
-              elapsed = end - start;
-              std::cout << "pose graph optimization elapsed: " << elapsed.count() * 1000 << " ms\n";
 
               // Fuse the matched new map points with the existing ones
               current_keyframe->fuse_mappoints(mappoint_index_pairs);
 
               // Refresh the display
-              start = std::chrono::high_resolution_clock::now();
               const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
-              end = std::chrono::high_resolution_clock::now();
-              elapsed = end - start;
-              std::cout << "get_all_keyframe_msgs elapsed: " << elapsed.count() * 1000 << " ms\n";
 
-              start = std::chrono::high_resolution_clock::now();
               visualizer_->replace_all_keyframes(keyframe_msgs);
-              end = std::chrono::high_resolution_clock::now();
-              elapsed = end - start;
-              std::cout << "replace_all_keyframes elapsed: " << elapsed.count() * 1000 << " ms\n";
             }
           }
         }

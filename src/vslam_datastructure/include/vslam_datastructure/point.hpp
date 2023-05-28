@@ -28,6 +28,15 @@ namespace vslam_datastructure {
 
     void add_projection(Point* point);
 
+    void remove_projection(Point* point);
+
+    /// Get the projections
+    /**
+     * \note Do not modify the projections, i.e., calling MapPoint::add_projection or MapPoint::remove_projection while
+     * iterating through the projections
+     *
+     * \return projections
+     */
     inline const std::set<Point*>& get_projections() const { return projections_; }
 
     inline void set_inlier() { is_outlier_ = false; };

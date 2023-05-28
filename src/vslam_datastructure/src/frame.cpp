@@ -157,10 +157,10 @@ namespace vslam_datastructure {
 
     frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
     for (const auto& pt : points_) {
-      if (pt->has_mappoint() && !pt->get_mappoint()->is_outlier()) {
+      if (pt->has_mappoint()) {
         if (!no_mappoints) {
           // Only visualize and update the map points that belong to the host
-          if (pt->get_mappoint()->is_host(id_) && pt->get_mappoint()->is_host(id_)) {
+          if (pt->get_mappoint()->is_host(id_)) {
             // 3D map points
             vslam_msgs::msg::Vector3d pt_3d;
             const auto mp_pt_3d = pt->get_mappoint()->get_pos();
@@ -210,7 +210,7 @@ namespace vslam_datastructure {
 
     MapPoints mappoints;
     for (const auto i : point_indices) {
-      if (points_.at(i)->has_mappoint() && !points_.at(i)->get_mappoint()->is_outlier()) {
+      if (points_.at(i)->has_mappoint()) {
         mappoints.push_back(points_.at(i)->get_mappoint());
       } else {
         mappoints.push_back(nullptr);
@@ -231,7 +231,7 @@ namespace vslam_datastructure {
         continue;
       }
 
-      if (!points_.at(i)->has_mappoint() || points_.at(i)->get_mappoint()->is_outlier()) {
+      if (!points_.at(i)->has_mappoint()) {
         // Create a new map point
         points_.at(i)->set_mappoint(mappoints.at(idx));
 
@@ -257,10 +257,10 @@ namespace vslam_datastructure {
         mappoint->add_projection(points_.at(idx).get());
         points_.at(idx)->set_mappoint(mappoint);
       } else {
-        // Add new projections to the map point
         for (auto point : points_.at(idx)->get_mappoint()->get_projections()) {
+          // Replace the old map point and the projection with the new map point
           mappoint->add_projection(point);
-          // TODO: replace the old mappoint in point with 'this' mappoint (after making the datastructure thread-safe)
+          // point->set_mappoint(mappoint); // not thread-safe
         }
 
         // Replace the map point
@@ -286,7 +286,7 @@ namespace vslam_datastructure {
 
   void Frame::set_mappoint_projections() {
     for (auto& pt : points_) {
-      if (pt->has_mappoint() && !pt->get_mappoint()->is_outlier()) {
+      if (pt->has_mappoint()) {
         // Project the map point to its 2D keypoint and see if it is an inlier
         const auto pt_2d = project_point_3d2d(pt->get_mappoint()->get_pos(), K_, T_f_w_);
 

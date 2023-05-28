@@ -26,7 +26,7 @@ namespace {
     CvPoint2dVec cv_points_2d_2;
     PointPtrVec points_3d_1_ptr;
     for (const auto& match : matched_points) {
-      if (match.point1->has_mappoint() && !match.point1->get_mappoint()->is_outlier()) {
+      if (match.point1->has_mappoint()) {
         assert(match.point1->has_frame());
 
         // Transform the 3d point in point1 to local

@@ -39,6 +39,15 @@ namespace vslam_datastructure {
     projections_.insert(point);
   }
 
+  void MapPoint::remove_projection(Point* point) {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (projections_.find(point) == projections_.end()) {
+      return;
+    }
+
+    projections_.erase(point);
+  }
+
   void MapPoint::set_host_keyframe_id(const long unsigned int host_keyframe_id) {
     std::lock_guard<std::mutex> lck(mutex_);
     host_keyframe_id_ = host_keyframe_id;
@@ -81,7 +90,7 @@ namespace vslam_datastructure {
 
   bool Point::has_mappoint() {
     std::lock_guard<std::mutex> lck(mutex_);
-    if (mappoint_.get()) {
+    if (mappoint_.get() && !mappoint_->is_outlier()) {
       return true;
     } else {
       return false;

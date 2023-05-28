@@ -134,8 +134,7 @@ namespace vslam_backend_plugins {
       core_keyframes.insert(kf.get());
 
       for (auto pt : kf->get_points()) {
-        if (pt->has_mappoint() && !pt->get_mappoint()->is_outlier()
-            && pt->get_mappoint()->get_projections().size() > 1) {
+        if (pt->has_mappoint() && pt->get_mappoint()->get_projections().size() > 1) {
           core_mappoints.insert(pt->get_mappoint().get());
         }
       }
@@ -277,7 +276,7 @@ namespace vslam_backend_plugins {
     int inlier_mappoints{0};
     for (auto [mp_vertex, mp_p] : core_mp_vertices) {
       auto mp = mp_vertex->estimate();
-      if (mp.hasNaN()) {
+      if (mp_p && mp.hasNaN()) {
         mp_p->set_outlier();
         continue;
       }
