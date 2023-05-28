@@ -19,15 +19,22 @@ namespace vslam_datastructure {
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
-    // Copy from another mappoint
+    /// Copy from another mappoint (TODO: do we still need it?)
     void copy_from(MapPoint* other);
 
+    /// Set the position of the map point
     void set_pos(const cv::Point3d& pt_3d);
 
+    /// Get the position of the map point
+    /**
+     * \return position of the map point
+     */
     cv::Point3d get_pos();
 
+    /// Add a projection from `this` map point to a point in a frame
     void add_projection(Point* point);
 
+    /// Remove the projection of the point
     void remove_projection(Point* point);
 
     /// Get the projections
@@ -39,18 +46,38 @@ namespace vslam_datastructure {
      */
     inline const std::set<Point*>& get_projections() const { return projections_; }
 
+    /// Make the map point an inlier
     inline void set_inlier() { is_outlier_ = false; };
 
+    /// Make the map point an outlier
     inline void set_outlier() { is_outlier_ = true; }
 
+    /// Check if the map point is an outlier
+    /**
+     * \return a boolean indicating if the map point is an outlier
+     */
     inline bool is_outlier() const { return is_outlier_; }
 
+    /// Map point id
+    /**
+     * \return map point id
+     */
     inline long unsigned int id() const { return id_; }
 
+    /// Set the host keyframe id
     void set_host_keyframe_id(const long unsigned int host_keyframe_id);
 
-    bool is_host(const long unsigned int host_keyframe_id);
+    /// Check if the keyframe id matches the map point host keyframe id
+    /**
+     *  \param keyframe_id a keyframe id
+     *  \return a boolean indicating if the id matches the host keyframe id
+     */
+    bool is_host(const long unsigned int keyframe_id);
 
+    /// Check if the map point is associated with a host keyframe id
+    /**
+     * a boolean indicating if the map point is associated with a host keyframe id
+     */
     inline bool has_host() const { return host_keyframe_id_.has_value(); }
 
   private:

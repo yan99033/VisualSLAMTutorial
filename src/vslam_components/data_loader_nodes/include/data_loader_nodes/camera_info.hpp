@@ -6,15 +6,24 @@
 namespace vslam_components {
   namespace data_loader_nodes {
     struct CameraInfo {
-      // Focal length and principal point
+      /// Camera matrix
+      /**
+       * [[fx,  0, cx],
+       *  [ 0, fy, cy],
+       *  [ 0,  0,  1]]
+       */
       cv::Mat K;
 
-      // distortion coefficient of shape (5, 1)
-      // @sa https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+      /// distortion coefficient
+      /**
+       * \sa https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html#ga7dfb72c9cf9780a347fbe3d1c47e5d5a
+       */
       cv::Mat dist_coeffs;
 
-      // Image size
+      /// Image height
       int image_height;
+
+      /// Image width
       int image_width;
     };
   }  // namespace data_loader_nodes
