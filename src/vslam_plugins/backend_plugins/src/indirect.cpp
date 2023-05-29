@@ -157,6 +157,10 @@ namespace vslam_backend_plugins {
 
     const auto fixed_kf_id = current_keyframe_->id();
 
+    for (auto core_kf : core_keyframes) {
+      core_kf->active_local_ba_state = true;
+    }
+
     // Create vertices and edges
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
     std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame*> core_kf_vertices;
@@ -300,6 +304,10 @@ namespace vslam_backend_plugins {
         const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_w_f();
         kf1->add_T_this_other_kf(kf2, T_1_2);
       }
+    }
+
+    for (auto core_kf : core_keyframes) {
+      core_kf->active_local_ba_state = false;
     }
   }
 
@@ -453,6 +461,12 @@ namespace vslam_backend_plugins {
 
     return keyframe_msgs;
   }
+
+  // void Indirect::remove_outlier_mappoints() {
+  //   for (auto& [_, kf] : keyframes_) {
+  //     if
+  //   }
+  // }
 
 }  // namespace vslam_backend_plugins
 

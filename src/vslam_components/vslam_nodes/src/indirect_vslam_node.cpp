@@ -221,10 +221,13 @@ namespace vslam_components {
         constexpr bool skip_loaded = true;
         current_frame->to_msg(frame_msg.get(), skip_loaded);
 
+        current_keyframe_->active_tracking_state = true;
+
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
         if (!current_keyframe_->has_points() || !current_frame->has_points()) {
           RCLCPP_INFO(get_logger(), "Current frame has no point to track");
+          current_keyframe_->active_tracking_state = false;
           state_ = State::relocalization;
           return;
         }
@@ -233,6 +236,7 @@ namespace vslam_components {
         vslam_datastructure::MatchedPoints matched_points;
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
         if (!camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+          current_keyframe_->active_tracking_state = false;
           state_ = State::relocalization;
           return;
         }
@@ -260,7 +264,9 @@ namespace vslam_components {
           const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
           current_frame->set_mappoints(new_old_mps, second_indices, true);
           backend_->add_keyframe(current_frame);
+          current_keyframe_->active_tracking_state = false;
           current_keyframe_ = current_frame;
+          current_keyframe_->active_tracking_state = true;
 
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame keyframe_msg;
@@ -288,6 +294,7 @@ namespace vslam_components {
         // Track current frame relative to the current keyframe
         if (camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           tracked = true;
+          current_keyframe_->active_tracking_state = true;
           state_ = State::tracking;
         } else {
           if (loop_keyframe_ != nullptr) {
@@ -299,6 +306,7 @@ namespace vslam_components {
 
               // Make the current keyframe the keyframe found using place recognition
               current_keyframe_ = loop_keyframe_;
+              current_keyframe_->active_tracking_state = true;
               loop_keyframe_ = nullptr;
             }
           }
@@ -322,7 +330,9 @@ namespace vslam_components {
               const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
               current_frame->set_mappoints(new_old_mps, second_indices, true);
               backend_->add_keyframe(current_frame);
+              current_keyframe_->active_tracking_state = false;
               current_keyframe_ = current_frame;
+              current_keyframe_->active_tracking_state = true;
             }
           }
         }
@@ -431,13 +441,16 @@ namespace vslam_components {
                 last_kf_loop_found_ = curr_kf_id;
 
                 // Fuse the matched new map points with the existing ones
-                previous_keyframe->fuse_mappoints(mappoint_index_pairs);
+                if (!previous_keyframe->active_local_ba_state && !previous_keyframe->active_tracking_state) {
+                  previous_keyframe->fuse_mappoints(mappoint_index_pairs);
 
-                refresh_visual = true;
+                  refresh_visual = true;
+                }
 
               } else {
                 // The relative scale has to small to fuse the map points
-                if (scale < 1.1 && scale > 0.9) {
+                if ((scale < 1.1 && scale > 0.9)
+                    && (!previous_keyframe->active_local_ba_state && !previous_keyframe->active_tracking_state)) {
                   // Fuse the matched new map points with the existing ones
                   previous_keyframe->fuse_mappoints(mappoint_index_pairs);
 
