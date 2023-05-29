@@ -6,7 +6,7 @@
 #include "vslam_plugins_base/place_recognition.hpp"
 
 namespace vslam_place_recognition_plugins {
-  class BagOfWords : public vslam_place_recognition_base::PlaceRecognition {
+  class BagOfWords : public vslam_place_recognition::base::PlaceRecognition {
   public:
     void initialize(const std::string& input = std::string(), const int top_k = 1, const double score_thresh = 0.9,
                     const int ignore_last_n_keyframes = -1) override;

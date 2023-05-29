@@ -138,4 +138,4 @@ namespace vslam_camera_tracker_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::Indirect, vslam_camera_tracker_base::CameraTracker)
+PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::Indirect, vslam_camera_tracker::base::CameraTracker)

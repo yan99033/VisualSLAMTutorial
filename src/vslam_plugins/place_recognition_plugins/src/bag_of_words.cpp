@@ -51,4 +51,4 @@ namespace vslam_place_recognition_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_place_recognition_plugins::BagOfWords, vslam_place_recognition_base::PlaceRecognition)
+PLUGINLIB_EXPORT_CLASS(vslam_place_recognition_plugins::BagOfWords, vslam_place_recognition::base::PlaceRecognition)

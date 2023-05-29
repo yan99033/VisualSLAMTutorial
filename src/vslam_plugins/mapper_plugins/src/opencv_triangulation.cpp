@@ -112,4 +112,4 @@ namespace vslam_mapper_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_mapper_plugins::OpenCvTriangulation, vslam_mapper_base::Mapper)
+PLUGINLIB_EXPORT_CLASS(vslam_mapper_plugins::OpenCvTriangulation, vslam_mapper::base::Mapper)

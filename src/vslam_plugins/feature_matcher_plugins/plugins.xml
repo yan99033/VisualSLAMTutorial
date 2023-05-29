@@ -1,5 +1,5 @@
 <library path="vslam_feature_matcher_plugins">
-  <class type="vslam_feature_matcher_plugins::Orb" base_class_type="vslam_feature_matcher_base::FeatureMatcher">
+  <class type="vslam_feature_matcher_plugins::Orb" base_class_type="vslam_feature_matcher::base::FeatureMatcher">
     <description>This is an ORB feature matcher plugin.</description>
   </class>
 </library>

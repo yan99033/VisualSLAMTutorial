@@ -10,7 +10,7 @@
 
 namespace vslam_backend_plugins {
 
-  class Indirect : public vslam_backend_base::Backend {
+  class Indirect : public vslam_backend::base::Backend {
   public:
     ~Indirect();
 
@@ -60,6 +60,9 @@ namespace vslam_backend_plugins {
     std::atomic_bool loop_optimization_running_{false};
     void run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                      const cv::Mat& T_1_2, const double sim3_scale);
+
+    /// Remove outlier map points (excluding the core map points)
+    void remove_outlier_mappoints();
 
     std::atomic_bool exit_thread_{false};
   };

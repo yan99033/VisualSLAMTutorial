@@ -11,7 +11,7 @@
 
 namespace vslam_visualizer_plugins {
 
-  class RViz : public vslam_visualizer_base::Visualizer {
+  class RViz : public vslam_visualizer::base::Visualizer {
   public:
     ~RViz();
 

@@ -19,57 +19,57 @@ namespace vslam_components {
 
       class Loader {
       public:
-        std::shared_ptr<vslam_feature_extractor_base::FeatureExtractor> feature_extractor(
+        std::shared_ptr<vslam_feature_extractor::base::FeatureExtractor> feature_extractor(
             const std::string& class_name) {
           return feature_extractor_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_feature_matcher_base::FeatureMatcher> feature_matcher(const std::string& class_name) {
+        std::shared_ptr<vslam_feature_matcher::base::FeatureMatcher> feature_matcher(const std::string& class_name) {
           return feature_matcher_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_camera_tracker_base::CameraTracker> camera_tracker(const std::string& class_name) {
+        std::shared_ptr<vslam_camera_tracker::base::CameraTracker> camera_tracker(const std::string& class_name) {
           return camera_tracker_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_mapper_base::Mapper> mapper(const std::string& class_name) {
+        std::shared_ptr<vslam_mapper::base::Mapper> mapper(const std::string& class_name) {
           return mapper_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_backend_base::Backend> backend(const std::string& class_name) {
+        std::shared_ptr<vslam_backend::base::Backend> backend(const std::string& class_name) {
           return backend_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition(
+        std::shared_ptr<vslam_place_recognition::base::PlaceRecognition> place_recognition(
             const std::string& class_name) {
           return place_recognition_loader_.createSharedInstance(class_name);
         }
 
-        std::shared_ptr<vslam_visualizer_base::Visualizer> visualizer(const std::string& class_name) {
+        std::shared_ptr<vslam_visualizer::base::Visualizer> visualizer(const std::string& class_name) {
           return visualizer_loader_.createSharedInstance(class_name);
         }
 
       private:
-        pluginlib::ClassLoader<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_loader_{
-            "vslam_plugins_base", "vslam_feature_extractor_base::FeatureExtractor"};
+        pluginlib::ClassLoader<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_loader_{
+            "vslam_plugins_base", "vslam_feature_extractor::base::FeatureExtractor"};
 
-        pluginlib::ClassLoader<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_loader_{
-            "vslam_plugins_base", "vslam_feature_matcher_base::FeatureMatcher"};
+        pluginlib::ClassLoader<vslam_feature_matcher::base::FeatureMatcher> feature_matcher_loader_{
+            "vslam_plugins_base", "vslam_feature_matcher::base::FeatureMatcher"};
 
-        pluginlib::ClassLoader<vslam_camera_tracker_base::CameraTracker> camera_tracker_loader_{
-            "vslam_plugins_base", "vslam_camera_tracker_base::CameraTracker"};
+        pluginlib::ClassLoader<vslam_camera_tracker::base::CameraTracker> camera_tracker_loader_{
+            "vslam_plugins_base", "vslam_camera_tracker::base::CameraTracker"};
 
-        pluginlib::ClassLoader<vslam_mapper_base::Mapper> mapper_loader_{"vslam_plugins_base",
-                                                                         "vslam_mapper_base::Mapper"};
+        pluginlib::ClassLoader<vslam_mapper::base::Mapper> mapper_loader_{"vslam_plugins_base",
+                                                                          "vslam_mapper::base::Mapper"};
 
-        pluginlib::ClassLoader<vslam_backend_base::Backend> backend_loader_{"vslam_plugins_base",
-                                                                            "vslam_backend_base::Backend"};
+        pluginlib::ClassLoader<vslam_backend::base::Backend> backend_loader_{"vslam_plugins_base",
+                                                                             "vslam_backend::base::Backend"};
 
-        pluginlib::ClassLoader<vslam_place_recognition_base::PlaceRecognition> place_recognition_loader_{
-            "vslam_plugins_base", "vslam_place_recognition_base::PlaceRecognition"};
+        pluginlib::ClassLoader<vslam_place_recognition::base::PlaceRecognition> place_recognition_loader_{
+            "vslam_plugins_base", "vslam_place_recognition::base::PlaceRecognition"};
 
-        pluginlib::ClassLoader<vslam_visualizer_base::Visualizer> visualizer_loader_{
-            "vslam_plugins_base", "vslam_visualizer_base::Visualizer"};
+        pluginlib::ClassLoader<vslam_visualizer::base::Visualizer> visualizer_loader_{
+            "vslam_plugins_base", "vslam_visualizer::base::Visualizer"};
       };
 
     }  // namespace vslam_plugins

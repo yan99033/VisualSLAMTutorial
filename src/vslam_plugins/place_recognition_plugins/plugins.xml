@@ -1,5 +1,5 @@
 <library path="vslam_place_recognition_plugins">
-  <class type="vslam_place_recognition_plugins::BagOfWords" base_class_type="vslam_place_recognition_base::PlaceRecognition">
+  <class type="vslam_place_recognition_plugins::BagOfWords" base_class_type="vslam_place_recognition::base::PlaceRecognition">
     <description>This is BoW-based place recognition plugin.</description>
   </class>
 </library>

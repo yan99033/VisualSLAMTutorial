@@ -101,25 +101,25 @@ namespace vslam_components {
       vslam_plugins::Loader plugin_loader_;
 
       // Feature extraction plugin
-      std::shared_ptr<vslam_feature_extractor_base::FeatureExtractor> feature_extractor_;
+      std::shared_ptr<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_;
 
       // Feature matcher plugin
-      std::shared_ptr<vslam_feature_matcher_base::FeatureMatcher> feature_matcher_;
+      std::shared_ptr<vslam_feature_matcher::base::FeatureMatcher> feature_matcher_;
 
       // Camera tracker plugin
-      std::shared_ptr<vslam_camera_tracker_base::CameraTracker> camera_tracker_;
+      std::shared_ptr<vslam_camera_tracker::base::CameraTracker> camera_tracker_;
 
       // Mapper plugin
-      std::shared_ptr<vslam_mapper_base::Mapper> mapper_;
+      std::shared_ptr<vslam_mapper::base::Mapper> mapper_;
 
       // Back-end plugin
-      std::shared_ptr<vslam_backend_base::Backend> backend_;
+      std::shared_ptr<vslam_backend::base::Backend> backend_;
 
       // Place recognition plugin
-      std::shared_ptr<vslam_place_recognition_base::PlaceRecognition> place_recognition_;
+      std::shared_ptr<vslam_place_recognition::base::PlaceRecognition> place_recognition_;
 
       // Visualizer plugin
-      std::shared_ptr<vslam_visualizer_base::Visualizer> visualizer_;
+      std::shared_ptr<vslam_visualizer::base::Visualizer> visualizer_;
     };
   }  // namespace vslam_nodes
 }  // namespace vslam_components

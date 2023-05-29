@@ -1,5 +1,5 @@
 <library path="vslam_camera_tracker_plugins">
-  <class type="vslam_camera_tracker_plugins::Indirect" base_class_type="vslam_camera_tracker_base::CameraTracker">
+  <class type="vslam_camera_tracker_plugins::Indirect" base_class_type="vslam_camera_tracker::base::CameraTracker">
     <description>This is a camera tracking plugin using the indirect method.</description>
   </class>
 </library>

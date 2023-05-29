@@ -9,7 +9,7 @@
 
 namespace vslam_camera_tracker_plugins {
 
-  class Indirect : public vslam_camera_tracker_base::CameraTracker {
+  class Indirect : public vslam_camera_tracker::base::CameraTracker {
   public:
     void initialize() override {}
 

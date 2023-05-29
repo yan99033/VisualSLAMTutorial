@@ -9,7 +9,7 @@
 
 namespace vslam_feature_extractor_plugins {
 
-  class Orb : public vslam_feature_extractor_base::FeatureExtractor {
+  class Orb : public vslam_feature_extractor::base::FeatureExtractor {
   public:
     void initialize(int num_features) override;
 

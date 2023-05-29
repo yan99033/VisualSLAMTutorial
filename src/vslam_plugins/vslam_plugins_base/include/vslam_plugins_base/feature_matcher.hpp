@@ -4,21 +4,23 @@
 #include "vslam_datastructure/frame_pair.hpp"
 #include "vslam_datastructure/point.hpp"
 
-namespace vslam_feature_matcher_base {
-  class FeatureMatcher {
-  public:
-    virtual void initialize() = 0;
-    virtual vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,
-                                                        const vslam_datastructure::Points& points2)
-        = 0;
-    vslam_datastructure::Point::Type point_type() const { return point_type_; };
-    virtual ~FeatureMatcher() {}
+namespace vslam_feature_matcher {
+  namespace base {
+    class FeatureMatcher {
+    public:
+      virtual void initialize() = 0;
+      virtual vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,
+                                                          const vslam_datastructure::Points& points2)
+          = 0;
+      vslam_datastructure::Point::Type point_type() const { return point_type_; };
+      virtual ~FeatureMatcher() {}
 
-  protected:
-    FeatureMatcher() {}
+    protected:
+      FeatureMatcher() {}
 
-    vslam_datastructure::Point::Type point_type_{vslam_datastructure::Point::Type::undefined};
-  };
-}  // namespace vslam_feature_matcher_base
+      vslam_datastructure::Point::Type point_type_{vslam_datastructure::Point::Type::undefined};
+    };
+  }  // namespace base
+}  // namespace vslam_feature_matcher
 
 #endif  // VSLAM_PLUGINS_BASE__FEATURE_MATCHER_HPP_

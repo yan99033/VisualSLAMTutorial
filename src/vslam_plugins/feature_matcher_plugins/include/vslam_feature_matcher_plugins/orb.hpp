@@ -9,7 +9,7 @@
 
 namespace vslam_feature_matcher_plugins {
 
-  class Orb : public vslam_feature_matcher_base::FeatureMatcher {
+  class Orb : public vslam_feature_matcher::base::FeatureMatcher {
   public:
     void initialize() override;
 

@@ -77,4 +77,4 @@ namespace vslam_feature_matcher_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::Orb, vslam_feature_matcher_base::FeatureMatcher)
+PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::Orb, vslam_feature_matcher::base::FeatureMatcher)

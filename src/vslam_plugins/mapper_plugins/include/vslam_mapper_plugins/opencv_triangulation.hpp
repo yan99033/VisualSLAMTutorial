@@ -8,7 +8,7 @@
 
 namespace vslam_mapper_plugins {
 
-  class OpenCvTriangulation : public vslam_mapper_base::Mapper {
+  class OpenCvTriangulation : public vslam_mapper::base::Mapper {
   public:
     void initialize() override {}
 

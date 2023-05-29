@@ -191,4 +191,4 @@ namespace vslam_feature_extractor_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_feature_extractor_plugins::Orb, vslam_feature_extractor_base::FeatureExtractor)
+PLUGINLIB_EXPORT_CLASS(vslam_feature_extractor_plugins::Orb, vslam_feature_extractor::base::FeatureExtractor)
