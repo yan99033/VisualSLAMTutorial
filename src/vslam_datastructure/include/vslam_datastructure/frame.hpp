@@ -121,6 +121,18 @@ namespace vslam_datastructure {
     /// Get pose constraints
     inline const KeyframeConstraintsMap& get_T_this_other_kfs() const { return T_this_other_kfs_; }
 
+    /**
+     * The active state denotes the frame and its map points must not be removed.
+     * Should be applied to the frames and map points used for camera tracking
+     */
+    std::atomic_bool active_tracking_state{false};
+
+    /**
+     * The active state denotes the frame and its map points must not be removed.
+     * Should be applied to the frames and map points used for the local BA optimization
+     */
+    std::atomic_bool active_local_ba_state{false};
+
   private:
     /// Iterate through the map points and set the projection constraints
     void set_mappoint_projections();
