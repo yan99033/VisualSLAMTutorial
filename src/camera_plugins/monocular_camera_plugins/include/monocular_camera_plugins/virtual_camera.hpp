@@ -20,9 +20,10 @@ namespace monocular_camera_plugins {
 
     cv::Mat K() override { return K_.clone(); }
 
-  private:
+  protected:
     void load_from_folder(const std::string& folder, const std::string& ext = ".png") override;
 
+  private:
     size_t i_;
 
     std::vector<std::string> files_;  //!< Files in a folder

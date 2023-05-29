@@ -9,7 +9,7 @@ namespace monocular_camera_plugins {
     };
   }  // namespace abstract
 
-  class MonocularCamera : public virtual camera_plugins::base::MonocularCamera {
+  class MonocularCamera : public virtual monocular_camera_plugins::abstract::MonocularCamera {
   public:
     ~MonocularCamera();
 
@@ -21,7 +21,7 @@ namespace monocular_camera_plugins {
     cv::Mat K() override { return K_.clone(); }
 
   protected:
-    void open_camera(int camera_id);
+    void open_camera(int camera_id) override;
 
     cv::FileStorage params_fs_;
 
