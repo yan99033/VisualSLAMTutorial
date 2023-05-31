@@ -18,6 +18,7 @@ find_package(pluginlib REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(vslam_utils REQUIRED)
 find_package(g2o REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -27,12 +28,14 @@ set(dependencies
   vslam_plugins_base
   vslam_datastructure
   vslam_msgs
+  vslam_utils
 )
 
 set(sources
-  src/indirect.cpp
+  src/backend.cpp
+  src/indirect_optimizer.cpp
+  src/utils.cpp
 )
-
 
 add_library(${PROJECT_NAME} SHARED ${sources})
 target_link_libraries(${PROJECT_NAME} g2o::core g2o::types_sba g2o::types_sim3 g2o::solver_eigen Eigen3::Eigen)
