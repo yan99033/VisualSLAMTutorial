@@ -37,8 +37,8 @@ namespace monocular_camera_plugins {
     cv::Mat K_new = (cv::Mat_<double>(3, 3) << focal, 0., image_width_out / 2. - 0.5, 0., focal,
                      image_height_out / 2. - 0.5, 0., 0., 1.);
 
-    undistorter_ = std::make_unique<vslam_utils::CalicamUndistorter>(K, image_width_out, image_height_out, dist_coeffs,
-                                                                     xi.at<double>(0, 0), R, K_new);
+    undistorter_ = std::make_unique<vslam_utils::camera::CalicamUndistorter>(
+        K, image_width_out, image_height_out, dist_coeffs, xi.at<double>(0, 0), R, K_new);
     K_ = K_new;
   }
 

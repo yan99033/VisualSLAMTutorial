@@ -30,7 +30,7 @@ namespace monocular_camera_plugins {
     int camera_id_{-1};
 
     // Undistorter
-    std::unique_ptr<vslam_utils::Undistorter> undistorter_{nullptr};
+    std::unique_ptr<vslam_utils::camera::Undistorter> undistorter_{nullptr};
 
     cv::Mat K_;
 
