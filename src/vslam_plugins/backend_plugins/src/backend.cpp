@@ -16,7 +16,7 @@
 
 namespace vslam_backend_plugins {
   void Optimizer::run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
-                                             const long unsigned int fixed_kf_id) {
+                                             const long unsigned int current_kf_id) {
     // Setup g2o optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -29,6 +29,8 @@ namespace vslam_backend_plugins {
     for (auto core_kf : core_keyframes) {
       core_kf->active_local_ba_state = true;
     }
+
+    const auto last_core_kf = (*core_keyframes.rbegin())->id();
 
     // Create vertices and edges
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
@@ -79,7 +81,7 @@ namespace vslam_backend_plugins {
           if (core_keyframes.find(pt->get_frame()) != core_keyframes.end()) {
             // Core keyframes
             core_kf_vertices[kf_vertex] = pt->get_frame();
-            kf_vertex->setFixed(pt->get_frame()->id() == fixed_kf_id);
+            kf_vertex->setFixed(pt->get_frame()->id() == current_kf_id || pt->get_frame()->id() == last_core_kf);
           } else {
             // Non-core keyframes
             non_core_kfs.insert(pt->get_frame());
@@ -116,7 +118,7 @@ namespace vslam_backend_plugins {
     optimizer.initializeOptimization();
     optimizer.computeActiveErrors();
     const double init_errs = optimizer.activeChi2();
-    optimizer.optimize(15);
+    optimizer.optimize(ba_iterations_);
 
     // If the errors after optimization is larger than before
     const double final_errs = optimizer.activeChi2();
@@ -184,7 +186,7 @@ namespace vslam_backend_plugins {
   void Optimizer::run_pose_graph_optimization_impl(
       const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2, const double sim3_scale,
       std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
-      const long unsigned int fixed_kf_id) {
+      const long unsigned int current_kf_id) {
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -201,13 +203,13 @@ namespace vslam_backend_plugins {
       g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
       v_sim3->setId(vertex_edge_id++);
       v_sim3->setEstimate(utils::cvMatToSim3(kf->T_f_w(), 1.0));
-      v_sim3->setFixed(kf_id == fixed_kf_id);
+      v_sim3->setFixed(kf_id == current_kf_id);
       v_sim3->setMarginalized(false);
       optimizer.addVertex(v_sim3);
 
       kf_vertices[kf_id] = v_sim3;
 
-      if (kf_id >= fixed_kf_id) {
+      if (kf_id >= current_kf_id) {
         break;
       }
     }
@@ -233,7 +235,7 @@ namespace vslam_backend_plugins {
         optimizer.addEdge(e_sim3);
       }
 
-      if (kf_id >= fixed_kf_id) {
+      if (kf_id >= current_kf_id) {
         break;
       }
     }
@@ -254,7 +256,7 @@ namespace vslam_backend_plugins {
     optimizer.initializeOptimization();
     optimizer.computeActiveErrors();
     const double init_errs = optimizer.activeChi2();
-    optimizer.optimize(15);
+    optimizer.optimize(pgo_iterations_);
 
     // If the errors after optimization is larger than before
     const double final_errs = optimizer.activeChi2();
@@ -280,7 +282,7 @@ namespace vslam_backend_plugins {
       kf->update_sim3_pose_and_mps(S_f_w, T_f_w);
     }
 
-    auto kfs_it = keyframes.find(fixed_kf_id);
+    auto kfs_it = keyframes.find(current_kf_id);
     while (kfs_it != keyframes.begin()) {
       auto this_kf = kfs_it->second;
       // Update the relative constraints (T_this_others) in the keyframes using the edge constraints

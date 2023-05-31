@@ -19,16 +19,12 @@
 
 namespace vslam_backend_plugins {
   IndirectOptimizer::~IndirectOptimizer() {
-    std::cout << "destructing IndirectOptimizer...";
-
     exit_thread_ = true;
 
     if (local_ba_thread_.joinable()) {
       local_ba_condition_.notify_one();
       local_ba_thread_.join();
     }
-
-    std::cout << "destructed IndirectOptimizer" << std::endl;
   }
 
   void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::local_ba_loop, this); }
@@ -81,13 +77,18 @@ namespace vslam_backend_plugins {
         break;
       }
 
-      auto [core_kfs, core_mps] = get_core_keyframes_mappoints();
-      if (core_kfs.size() < num_core_kfs_) {
+      auto [core_keyframes, core_mappoints] = get_core_keyframes_mappoints();
+      if (core_keyframes.size() < num_core_kfs_) {
         std::this_thread::yield();
         continue;
       }
 
-      run_local_ba(core_kfs, core_mps);
+      const long unsigned int current_kf_id = [&] {
+        std::lock_guard<std::mutex> lck(keyframe_mutex_);
+        return current_keyframe_->id();
+      }();
+
+      run_bundle_adjustment_impl(core_keyframes, core_mappoints, current_kf_id);
 
       run_local_ba_ = false;
     }
@@ -122,18 +123,6 @@ namespace vslam_backend_plugins {
     return {core_keyframes, core_mappoints};
   }
 
-  void IndirectOptimizer::run_local_ba(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints) {
-    long unsigned int fixed_kf_id;
-    {
-      std::lock_guard<std::mutex> lck(keyframe_mutex_);
-      fixed_kf_id = current_keyframe_->id();
-    }
-
-    std::cout << "running local ba and fixing kf " << fixed_kf_id << std::endl;
-
-    run_bundle_adjustment_impl(core_keyframes, core_mappoints, fixed_kf_id);
-  }
-
   void IndirectOptimizer::add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                               const cv::Mat& T_1_2, const double sim3_scale) {
     if (loop_optimization_running_) {
@@ -150,19 +139,14 @@ namespace vslam_backend_plugins {
 
     loop_optimization_running_ = true;
 
-    run_pose_graph_optimization(kf_id_1, kf_id_2, T_1_2, sim3_scale);
+    const long unsigned int current_kf_id = [&] {
+      std::lock_guard<std::mutex> lck(keyframe_mutex_);
+      return current_keyframe_->id();
+    }();
+
+    run_pose_graph_optimization_impl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_kf_id);
 
     loop_optimization_running_ = false;
-  }
-
-  void IndirectOptimizer::run_pose_graph_optimization(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                                      const cv::Mat& T_1_2, const double sim3_scale) {
-    long unsigned int fixed_kf_id;
-    {
-      std::lock_guard<std::mutex> lck(keyframe_mutex_);
-      fixed_kf_id = current_keyframe_->id();
-    }
-    run_pose_graph_optimization_impl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, fixed_kf_id);
   }
 
   std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::get_all_keyframe_msgs() const {
