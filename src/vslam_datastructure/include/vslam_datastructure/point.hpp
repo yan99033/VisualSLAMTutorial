@@ -76,24 +76,27 @@ namespace vslam_datastructure {
 
     /// Check if the map point is associated with a host keyframe id
     /**
-     * a boolean indicating if the map point is associated with a host keyframe id
+     * \return a boolean indicating if the map point is associated with a host keyframe id
      */
     inline bool has_host() const { return host_keyframe_id_.has_value(); }
 
   private:
+    /// Mutex for synchronizing reading and writing mappoint data
     std::mutex mutex_;
 
+    /// 3D position of the map point
     cv::Point3d pt_3d_;
 
+    /// A flag to indicate if the map point is an outlier
     std::atomic_bool is_outlier_{false};
 
-    /*
-     * @brief: the corresponding points
-     */
+    /// The corresponding points in the keyframes
     std::set<Point*> projections_;
 
+    /// Point id
     long unsigned int id_{point_count_++};
 
+    /// The total number of points created so far
     static long unsigned int point_count_;
 
     // The host keyframe id
@@ -103,10 +106,12 @@ namespace vslam_datastructure {
 
   class Point {
   public:
+    /// Point type
     enum class Type { undefined = 0, orb = 1 };
 
     using SharedPtr = std::shared_ptr<Point>;
 
+    /// Remove the default constructor
     Point() = delete;
 
     /// Constructor
@@ -126,16 +131,31 @@ namespace vslam_datastructure {
     /// Type (unprotected; use responsibly)
     Type type{Type::undefined};
 
+    /// Set the frame pointer (non-owning) of the point
+    /**
+     * \param frame frame pointer
+     */
     void set_frame(Frame* frame);
 
+    /// Get the frame pointer
     Frame* get_frame();
 
+    /// Get the map point of the point
     MapPoint::SharedPtr get_mappoint();
 
+    /// Set the map point of the point
     void set_mappoint(MapPoint::SharedPtr mappoint);
 
+    /// Check if there is a map point associated with the point
+    /**
+     * \return A boolean indicating if there is a map point
+     */
     bool has_mappoint();
 
+    /// Check if there is a frame associated with the point
+    /**
+     * \return A boolean indicating if there is a frame
+     */
     bool has_frame();
 
     /// A boolean indicating if the host of the map point (if there is one associated) is 'this' point
