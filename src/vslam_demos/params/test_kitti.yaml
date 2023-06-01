@@ -30,9 +30,9 @@ indirect_vslam_node:
       score_thresh: 0.02
 
     # Plugins
-    feature_extractor_plugin_name: "vslam_feature_extractor_plugins::Orb"
+    feature_extractor_plugin_name: "vslam_feature_extractor_plugins::OpenCVFeatureExtractor"
     feature_matcher_plugin_name: "vslam_feature_matcher_plugins::Orb"
-    camera_tracker_plugin_name: "vslam_camera_tracker_plugins::Indirect"
+    camera_tracker_plugin_name: "vslam_camera_tracker_plugins::IndirectTracker"
     mapper_plugin_name: "vslam_mapper_plugins::OpenCvTriangulation"
     backend_plugin_name: "vslam_backend_plugins::IndirectOptimizer"
     place_recognition_plugin_name: "vslam_place_recognition_plugins::BagOfWords"
