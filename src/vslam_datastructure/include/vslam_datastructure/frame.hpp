@@ -85,10 +85,10 @@ namespace vslam_datastructure {
     void set_points(Points& points);
 
     /// Get points
-    inline const Points& get_points() const { return points_; }
+    inline const Points& points() const { return points_; }
 
     /// Get map points
-    MapPoints get_mappoints(const std::vector<size_t> point_indices);
+    MapPoints mappoints(const std::vector<size_t> point_indices);
 
     /// Set map points to the existing points
     /**
@@ -119,7 +119,10 @@ namespace vslam_datastructure {
     void add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
     /// Get pose constraints
-    inline const KeyframeConstraintsMap& get_T_this_other_kfs() const { return T_this_other_kfs_; }
+    inline const KeyframeConstraintsMap& T_this_other_kfs() const { return T_this_other_kfs_; }
+
+    /// Transform a map point in the world coordinate frame to this camera's coordinate frame
+    cv::Point3d mappoint_world_to_cam(const cv::Point3d& world_pos) const;
 
     /**
      * The active state denotes the frame and its map points must not be removed.
@@ -131,7 +134,7 @@ namespace vslam_datastructure {
      * The active state denotes the frame and its map points must not be removed.
      * Should be applied to the frames and map points used for the local BA optimization
      */
-    std::atomic_bool active_local_ba_state{false};
+    std::atomic_bool active_ba_state{false};
 
   private:
     /// Iterate through the map points and set the projection constraints

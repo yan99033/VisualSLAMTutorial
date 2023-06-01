@@ -29,7 +29,7 @@ namespace vslam_datastructure {
     /**
      * \return position of the map point
      */
-    cv::Point3d get_pos();
+    cv::Point3d pos();
 
     /// Add a projection from `this` map point to a point in a frame
     void add_projection(Point* point);
@@ -44,7 +44,7 @@ namespace vslam_datastructure {
      *
      * \return projections
      */
-    inline const std::set<Point*>& get_projections() const { return projections_; }
+    inline const std::set<Point*>& projections() const { return projections_; }
 
     /// Make the map point an inlier
     inline void set_inlier() { is_outlier_ = false; };
@@ -138,10 +138,10 @@ namespace vslam_datastructure {
     void set_frame(Frame* frame);
 
     /// Get the frame pointer
-    Frame* get_frame();
+    Frame* frame();
 
     /// Get the map point of the point
-    MapPoint::SharedPtr get_mappoint();
+    MapPoint::SharedPtr mappoint();
 
     /// Set the map point of the point
     void set_mappoint(MapPoint::SharedPtr mappoint);

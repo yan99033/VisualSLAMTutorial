@@ -12,7 +12,7 @@ namespace vslam_utils {
       public:
         virtual ~Undistorter() {}
 
-        virtual cv::Mat get_K() const = 0;
+        virtual cv::Mat K() const = 0;
 
         virtual cv::Mat undistort_image(const cv::Mat& in_image) const = 0;
       };
@@ -30,7 +30,7 @@ namespace vslam_utils {
       Undistorter(const cv::Mat& K, const int image_width, const int image_height,
                   const cv::Mat& dist_coeffs = cv::Mat());
 
-      cv::Mat get_K() const override;
+      cv::Mat K() const override;
 
       cv::Mat undistort_image(const cv::Mat& in_image) const override;
 

@@ -32,19 +32,19 @@ namespace {
         assert(match.point1->has_frame());
 
         // Transform the 3d point in point1 to local
-        cv::Point3d pt_3d_1 = match.point1->get_mappoint()->get_pos();
+        cv::Point3d pt_3d_1 = match.point1->mappoint()->pos();
 
-        cv::Mat T_1_w = match.point1->get_frame()->T_f_w();
+        cv::Mat T_1_w = match.point1->frame()->T_f_w();
         cv::Matx33d R = T_1_w.rowRange(0, 3).colRange(0, 3);
         cv::Mat t = T_1_w.rowRange(0, 3).colRange(3, 4);
         pt_3d_1 = R * pt_3d_1 + cv::Point3d(t);
 
         cv_points_3d_1.push_back(pt_3d_1);
         cv_points_2d_2.push_back(match.point2->keypoint.pt);
-        points_3d_1_ptr.push_back(match.point1->get_mappoint());
+        points_3d_1_ptr.push_back(match.point1->mappoint());
 
         // Mark it as outlier first and decide later
-        match.point1->get_mappoint()->set_outlier();
+        match.point1->mappoint()->set_outlier();
       }
     }
 

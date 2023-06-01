@@ -28,7 +28,7 @@ namespace {
     return {first_indices, second_indices};
   }
 
-  std::vector<std::pair<cv::Point3d, cv::Point3d>> get_mappoint_correspondences(
+  std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_correspondences(
       const vslam_datastructure::MatchedPoints& matched_points, const vslam_datastructure::Frame* const frame1,
       const vslam_datastructure::Frame* const frame2) {
     std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_pairs;
@@ -49,10 +49,10 @@ namespace {
 
     for (const auto& match : matched_points) {
       if (match.point1->has_mappoint() && match.point2->has_mappoint()) {
-        cv::Point3d mp1 = match.point1->get_mappoint()->get_pos();
+        cv::Point3d mp1 = match.point1->mappoint()->pos();
         mp1 = R_1_w * mp1 + t_1_w_pt;
 
-        cv::Point3d mp2 = match.point2->get_mappoint()->get_pos();
+        cv::Point3d mp2 = match.point2->mappoint()->pos();
         mp2 = R_2_w * mp2 + t_2_w_pt;
         mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
       }
@@ -61,7 +61,7 @@ namespace {
     return mappoint_pairs;
   }
 
-  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> get_mappoint_index_pairs_to_fuse(
+  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs_to_fuse(
       const vslam_datastructure::MatchedPoints& matched_points,
       const vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
     assert(matched_points.size() == matched_index_pairs.size());
@@ -79,7 +79,7 @@ namespace {
       }
 
       mappoint_index_pairs.emplace_back(
-          std::make_pair(matched_index_pairs.at(i).second, matched_points.at(i).point1->get_mappoint()));
+          std::make_pair(matched_index_pairs.at(i).second, matched_points.at(i).point1->mappoint()));
     }
 
     return mappoint_index_pairs;
@@ -189,7 +189,7 @@ namespace vslam_components {
         }
 
         auto [matched_points, matched_index_pairs]
-            = feature_matcher_->match_features(current_keyframe_->get_points(), current_frame->get_points());
+            = feature_matcher_->match_features(current_keyframe_->points(), current_frame->points());
 
         // Get the tracked camera pose and check the tracking quality
         cv::Mat T_c_p;
@@ -261,7 +261,7 @@ namespace vslam_components {
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
           const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
           current_keyframe_->set_mappoints(new_mps, first_indices);
-          const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
+          const auto new_old_mps = current_keyframe_->mappoints(first_indices);
           current_frame->set_mappoints(new_old_mps, second_indices, true);
           backend_->add_keyframe(current_frame);
           current_keyframe_->active_tracking_state = false;
@@ -327,7 +327,7 @@ namespace vslam_components {
               const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
               const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
               current_keyframe_->set_mappoints(new_mps, first_indices);
-              const auto new_old_mps = current_keyframe_->get_mappoints(first_indices);
+              const auto new_old_mps = current_keyframe_->mappoints(first_indices);
               current_frame->set_mappoints(new_old_mps, second_indices, true);
               backend_->add_keyframe(current_frame);
               current_keyframe_->active_tracking_state = false;
@@ -351,7 +351,7 @@ namespace vslam_components {
       }
 
       std::tie(matched_points, matched_index_pairs)
-          = feature_matcher_->match_features(frame1->get_points(), frame2->get_points());
+          = feature_matcher_->match_features(frame1->points(), frame2->points());
 
       // Check if we have enough map points for camera tracking
       size_t num_matched_mps{0};
@@ -405,7 +405,7 @@ namespace vslam_components {
         }
 
         // Query from database
-        cv::Mat visual_features = extract_descriptors(current_keyframe->get_points());
+        cv::Mat visual_features = extract_descriptors(current_keyframe->points());
         auto results = place_recognition_->query(visual_features);
         place_recognition_->add_to_database(curr_kf_id, visual_features);
 
@@ -441,7 +441,7 @@ namespace vslam_components {
                 last_kf_loop_found_ = curr_kf_id;
 
                 // Fuse the matched new map points with the existing ones
-                if (!previous_keyframe->active_local_ba_state && !previous_keyframe->active_tracking_state) {
+                if (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state) {
                   previous_keyframe->fuse_mappoints(mappoint_index_pairs);
 
                   refresh_visual = true;
@@ -450,7 +450,7 @@ namespace vslam_components {
               } else {
                 // The relative scale has to small to fuse the map points
                 if ((scale < 1.1 && scale > 0.9)
-                    && (!previous_keyframe->active_local_ba_state && !previous_keyframe->active_tracking_state)) {
+                    && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
                   // Fuse the matched new map points with the existing ones
                   previous_keyframe->fuse_mappoints(mappoint_index_pairs);
 
@@ -494,7 +494,7 @@ namespace vslam_components {
       }
 
       // Calculate the scale
-      const auto mappoint_pairs = get_mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
+      const auto mappoint_pairs = mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
 
       if (mappoint_pairs.size() < min_num_mps_sim3_scale_) {
         RCLCPP_INFO(this->get_logger(),
@@ -509,7 +509,7 @@ namespace vslam_components {
       if (scale <= 0) {
         return false;
       } else {
-        mappoint_index_pairs = get_mappoint_index_pairs_to_fuse(matched_points, matched_index_pairs);
+        mappoint_index_pairs = mappoint_index_pairs_to_fuse(matched_points, matched_index_pairs);
         return true;
       }
     }

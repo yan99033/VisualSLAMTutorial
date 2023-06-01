@@ -29,7 +29,7 @@ namespace vslam_datastructure {
     pt_3d_ = pt_3d;
   }
 
-  cv::Point3d MapPoint::get_pos() {
+  cv::Point3d MapPoint::pos() {
     std::lock_guard<std::mutex> lck(mutex_);
     return pt_3d_;
   }
@@ -73,12 +73,12 @@ namespace vslam_datastructure {
     frame_ = frame;
   }
 
-  Frame* Point::get_frame() {
+  Frame* Point::frame() {
     std::lock_guard<std::mutex> lck(mutex_);
     return frame_;
   }
 
-  MapPoint::SharedPtr Point::get_mappoint() {
+  MapPoint::SharedPtr Point::mappoint() {
     std::lock_guard<std::mutex> lck(mutex_);
     return mappoint_;
   }

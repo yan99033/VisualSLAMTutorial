@@ -94,14 +94,14 @@ namespace vslam_datastructure {
 
     // Iterate through the map points with this keyframe being the host and update their global position
     for (auto& pt : points_) {
-      if (pt->has_mappoint() && pt->get_mappoint()->is_host(id_)) {
+      if (pt->has_mappoint() && pt->mappoint()->is_host(id_)) {
         // Transform to this frame
-        auto mp = pt->get_mappoint()->get_pos();
+        auto mp = pt->mappoint()->pos();
         mp = old_R_f_w * mp + old_t_f_w_pt;
 
         // Transform to the new pos in the world coordinate frame
         mp = sR_w_f * mp + st_w_f_pt;
-        pt->get_mappoint()->set_pos(mp);
+        pt->mappoint()->set_pos(mp);
       }
     }
 
@@ -160,10 +160,10 @@ namespace vslam_datastructure {
       if (pt->has_mappoint()) {
         if (!no_mappoints) {
           // Only visualize and update the map points that belong to the host
-          if (pt->get_mappoint()->is_host(id_)) {
+          if (pt->mappoint()->is_host(id_)) {
             // 3D map points
             vslam_msgs::msg::Vector3d pt_3d;
-            const auto mp_pt_3d = pt->get_mappoint()->get_pos();
+            const auto mp_pt_3d = pt->mappoint()->pos();
             pt_3d.x = mp_pt_3d.x;
             pt_3d.y = mp_pt_3d.y;
             pt_3d.z = mp_pt_3d.z;
@@ -205,13 +205,13 @@ namespace vslam_datastructure {
     }
   }
 
-  MapPoints Frame::get_mappoints(const std::vector<size_t> point_indices) {
+  MapPoints Frame::mappoints(const std::vector<size_t> point_indices) {
     std::lock_guard<std::mutex> lck(data_mutex_);
 
     MapPoints mappoints;
     for (const auto i : point_indices) {
       if (points_.at(i)->has_mappoint()) {
-        mappoints.push_back(points_.at(i)->get_mappoint());
+        mappoints.push_back(points_.at(i)->mappoint());
       } else {
         mappoints.push_back(nullptr);
       }
@@ -235,8 +235,8 @@ namespace vslam_datastructure {
         // Create a new map point
         points_.at(i)->set_mappoint(mappoints.at(idx));
 
-        if (set_host && !points_.at(i)->get_mappoint()->has_host()) {
-          points_.at(i)->get_mappoint()->set_host_keyframe_id(id_);
+        if (set_host && !points_.at(i)->mappoint()->has_host()) {
+          points_.at(i)->mappoint()->set_host_keyframe_id(id_);
         }
       }
     }
@@ -257,9 +257,9 @@ namespace vslam_datastructure {
         mappoint->add_projection(points_.at(idx).get());
         points_.at(idx)->set_mappoint(mappoint);
       } else {
-        auto old_mappoint = points_.at(idx)->get_mappoint();
+        auto old_mappoint = points_.at(idx)->mappoint();
 
-        for (auto point : old_mappoint->get_projections()) {
+        for (auto point : old_mappoint->projections()) {
           // Add new projections to the new map point
           mappoint->add_projection(point);
 
@@ -285,15 +285,22 @@ namespace vslam_datastructure {
     T_this_other_kfs_[next_kf] = T_this_next;
   }
 
+  cv::Point3d Frame::mappoint_world_to_cam(const cv::Point3d& world_pos) const {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    cv::Matx33d R = T_f_w_.rowRange(0, 3).colRange(0, 3);
+    cv::Mat t = T_f_w_.rowRange(0, 3).colRange(3, 4);
+    return R * world_pos + cv::Point3d(t);
+  }
+
   void Frame::set_mappoint_projections() {
     for (auto& pt : points_) {
       if (pt->has_mappoint()) {
         // Project the map point to its 2D keypoint and see if it is an inlier
-        const auto pt_2d = project_point_3d2d(pt->get_mappoint()->get_pos(), K_, T_f_w_);
+        const auto pt_2d = project_point_3d2d(pt->mappoint()->pos(), K_, T_f_w_);
 
         // Add projection if the reprojection error is low
         if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_) {
-          pt->get_mappoint()->add_projection(pt.get());
+          pt->mappoint()->add_projection(pt.get());
         }
       }
     }

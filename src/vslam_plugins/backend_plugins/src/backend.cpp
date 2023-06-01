@@ -27,7 +27,7 @@ namespace vslam_backend_plugins {
     optimizer.setAlgorithm(solver);
 
     for (auto core_kf : core_keyframes) {
-      core_kf->active_local_ba_state = true;
+      core_kf->active_ba_state = true;
     }
 
     const auto last_core_kf = (*core_keyframes.rbegin())->id();
@@ -46,7 +46,7 @@ namespace vslam_backend_plugins {
 
       // Check if we have at least two valid projections
       int num_valid_projections{0};
-      for (auto pt : mp->get_projections()) {
+      for (auto pt : mp->projections()) {
         if (pt == nullptr || !pt->has_frame()) {
           continue;
         }
@@ -58,33 +58,33 @@ namespace vslam_backend_plugins {
 
       g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
       core_mp_vertices[mp_vertex] = mp;
-      mp_vertex->setEstimate(vslam_utils::conversions::cvPoint3dToEigenVector3d(mp->get_pos()));
+      mp_vertex->setEstimate(vslam_utils::conversions::cvPoint3dToEigenVector3d(mp->pos()));
       mp_vertex->setId(vertex_edge_id++);
       mp_vertex->setMarginalized(true);
       optimizer.addVertex(mp_vertex);
 
       // Projections
-      for (auto pt : mp->get_projections()) {
+      for (auto pt : mp->projections()) {
         if (pt == nullptr || !pt->has_frame()) {
           continue;
         }
 
         // Keyframe vertex
         g2o::VertexSE3Expmap* kf_vertex;
-        if (existing_kf_vertices.find(pt->get_frame()) != existing_kf_vertices.end()) {
-          kf_vertex = existing_kf_vertices[pt->get_frame()];
+        if (existing_kf_vertices.find(pt->frame()) != existing_kf_vertices.end()) {
+          kf_vertex = existing_kf_vertices[pt->frame()];
         } else {
           kf_vertex = new g2o::VertexSE3Expmap();
-          existing_kf_vertices[pt->get_frame()] = kf_vertex;
-          kf_vertex->setEstimate(utils::cvMatToSE3Quat(pt->get_frame()->T_f_w()));
+          existing_kf_vertices[pt->frame()] = kf_vertex;
+          kf_vertex->setEstimate(utils::cvMatToSE3Quat(pt->frame()->T_f_w()));
           kf_vertex->setId(vertex_edge_id++);
-          if (core_keyframes.find(pt->get_frame()) != core_keyframes.end()) {
+          if (core_keyframes.find(pt->frame()) != core_keyframes.end()) {
             // Core keyframes
-            core_kf_vertices[kf_vertex] = pt->get_frame();
-            kf_vertex->setFixed(pt->get_frame()->id() == current_kf_id || pt->get_frame()->id() == last_core_kf);
+            core_kf_vertices[kf_vertex] = pt->frame();
+            kf_vertex->setFixed(pt->frame()->id() == current_kf_id || pt->frame()->id() == last_core_kf);
           } else {
             // Non-core keyframes
-            non_core_kfs.insert(pt->get_frame());
+            non_core_kfs.insert(pt->frame());
             kf_vertex->setFixed(true);
           }
           optimizer.addVertex(kf_vertex);
@@ -102,7 +102,7 @@ namespace vslam_backend_plugins {
         rk->setDelta(huber_kernel_delta_);
         e->setRobustKernel(rk);
 
-        const cv::Mat K = pt->get_frame()->K();
+        const cv::Mat K = pt->frame()->K();
 
         e->fx = K.at<double>(0, 0);
         e->fy = K.at<double>(1, 1);
@@ -179,7 +179,7 @@ namespace vslam_backend_plugins {
     }
 
     for (auto core_kf : core_keyframes) {
-      core_kf->active_local_ba_state = false;
+      core_kf->active_ba_state = false;
     }
   }
 
@@ -218,7 +218,7 @@ namespace vslam_backend_plugins {
     for (const auto& [kf_id, kf] : keyframes) {
       auto v_sim3_this = kf_vertices.at(kf_id);
 
-      for (const auto& [other_kf, T_this_other] : kf->get_T_this_other_kfs()) {
+      for (const auto& [other_kf, T_this_other] : kf->T_this_other_kfs()) {
         if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
           continue;
         }
@@ -286,7 +286,7 @@ namespace vslam_backend_plugins {
     while (kfs_it != keyframes.begin()) {
       auto this_kf = kfs_it->second;
       // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
-      for (auto [other_kf, old_T_this_other] : this_kf->get_T_this_other_kfs()) {
+      for (auto [other_kf, old_T_this_other] : this_kf->T_this_other_kfs()) {
         const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
         this_kf->add_T_this_other_kf(other_kf, T_this_other);
       }

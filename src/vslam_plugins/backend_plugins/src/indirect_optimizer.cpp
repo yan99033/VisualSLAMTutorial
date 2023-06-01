@@ -111,9 +111,9 @@ namespace vslam_backend_plugins {
 
       core_keyframes.insert(kf.get());
 
-      for (auto pt : kf->get_points()) {
-        if (pt->has_mappoint() && pt->get_mappoint()->get_projections().size() > 1) {
-          core_mappoints.insert(pt->get_mappoint().get());
+      for (auto pt : kf->points()) {
+        if (pt->has_mappoint() && pt->mappoint()->projections().size() > 1) {
+          core_mappoints.insert(pt->mappoint().get());
         }
       }
 

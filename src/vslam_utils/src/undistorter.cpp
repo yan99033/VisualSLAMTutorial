@@ -72,7 +72,7 @@ namespace vslam_utils {
                                   map2_);
     }
 
-    cv::Mat Undistorter::get_K() const { return K_.clone(); }
+    cv::Mat Undistorter::K() const { return K_.clone(); }
 
     cv::Mat Undistorter::undistort_image(const cv::Mat& in_image) const {
       if (passthrough_) {

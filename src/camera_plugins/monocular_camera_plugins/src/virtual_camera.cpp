@@ -20,7 +20,7 @@ namespace monocular_camera_plugins {
     params_fs_["D"] >> dist_coeffs;
 
     undistorter_ = std::make_unique<vslam_utils::camera::Undistorter>(K, image_width_, image_height_, dist_coeffs);
-    K_ = undistorter_->get_K();
+    K_ = undistorter_->K();
 
     std::string image_folder;
     params_fs_["image_folder"] >> image_folder;
