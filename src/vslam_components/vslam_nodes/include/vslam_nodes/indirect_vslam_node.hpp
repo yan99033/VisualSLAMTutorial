@@ -60,7 +60,7 @@ namespace vslam_components {
       std::mutex loop_keyframe_mutex_;
 
       // Minimum number of map points needed for camera tracking
-      size_t min_num_mps_cam_tracking_{30};
+      size_t min_num_mps_cam_tracking_{20};
 
       // Minimum number of inliers needed for good camera tracking
       size_t min_num_cam_tracking_inliers_{15};
