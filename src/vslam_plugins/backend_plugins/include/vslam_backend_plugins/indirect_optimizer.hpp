@@ -29,12 +29,6 @@ namespace vslam_backend_plugins {
      */
     void remove_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
-    /// Get the current keyframe
-    /**
-     * \return the current keyframe
-     */
-    vslam_datastructure::Frame::SharedPtr get_current_keyframe() override;
-
     /// Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
     vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const override;
 

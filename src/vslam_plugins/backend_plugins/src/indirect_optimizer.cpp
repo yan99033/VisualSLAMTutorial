@@ -52,11 +52,6 @@ namespace vslam_backend_plugins {
     }
   }
 
-  vslam_datastructure::Frame::SharedPtr IndirectOptimizer::get_current_keyframe() {
-    std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
-    return current_keyframe_;
-  }
-
   vslam_datastructure::Frame::SharedPtr IndirectOptimizer::get_keyframe(const long unsigned int id) const {
     std::lock_guard<std::mutex> lck(keyframe_mutex_);
     if (keyframes_.find(id) != keyframes_.end()) {

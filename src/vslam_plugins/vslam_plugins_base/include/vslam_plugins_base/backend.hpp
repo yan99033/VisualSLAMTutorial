@@ -23,12 +23,6 @@ namespace vslam_backend {
        */
       virtual void remove_keyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
-      /// TODO: should this be removed?
-      // The current keyframe could be the latest keyframe added to the backend or
-      // a previous keyframe that is similar to the current frame (calculate by the place
-      // recognition method)
-      virtual vslam_datastructure::Frame::SharedPtr get_current_keyframe() = 0;
-
       /// Get the keyframe by its id
       virtual vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const = 0;
 
