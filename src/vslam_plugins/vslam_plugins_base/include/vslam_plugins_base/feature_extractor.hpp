@@ -7,7 +7,7 @@ namespace vslam_feature_extractor {
   namespace base {
     class FeatureExtractor {
     public:
-      virtual void initialize(int num_features) = 0;
+      virtual void initialize(int num_features, const vslam_datastructure::Point::Type type) = 0;
       virtual vslam_datastructure::Points extract_features(const cv::Mat& image) = 0;
       vslam_datastructure::Point::Type point_type() const { return point_type_; };
       virtual ~FeatureExtractor() {}

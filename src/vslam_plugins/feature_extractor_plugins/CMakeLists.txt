@@ -28,7 +28,7 @@ set(dependencies
 )
 
 set(sources
-  src/orb.cpp
+  src/opencv_feature_extractor.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${sources})

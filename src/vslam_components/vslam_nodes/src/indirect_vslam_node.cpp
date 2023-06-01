@@ -114,8 +114,8 @@ namespace vslam_components {
       // Feature extractor
       feature_extractor_
           = plugin_loader_.feature_extractor(declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
-      feature_extractor_->initialize(declare_parameter("feature_extractor.num_features", 2000));
-
+      feature_extractor_->initialize(declare_parameter("feature_extractor.num_features", 2000),
+                                     vslam_datastructure::Point::Type::orb);
       // Feature matcher
       feature_matcher_ = plugin_loader_.feature_matcher(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
       feature_matcher_->initialize();
