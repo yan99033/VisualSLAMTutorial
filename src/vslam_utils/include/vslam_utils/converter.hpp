@@ -3,6 +3,7 @@
 #ifndef VSLAM_UTILS__CONVERTER_HPP_
 #define VSLAM_UTILS__CONVERTER_HPP_
 
+#include <eigen3/Eigen/Core>
 #include <opencv2/opencv.hpp>
 
 namespace vslam_utils {
@@ -21,6 +22,8 @@ namespace vslam_utils {
     inline cv::Point3d eigenVector3dToCvPoint3d(const Eigen::Vector3d& vec) {
       return cv::Point3d(vec.x(), vec.y(), vec.z());
     }
+
+    cv::Mat to_transformation_matrix(const cv::Mat& R, const cv::Mat& t);
 
   }  // namespace conversions
 

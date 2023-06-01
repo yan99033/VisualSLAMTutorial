@@ -15,15 +15,21 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 set(dependencies
   rclcpp
   OpenCV
+  Eigen3
+)
+
+set(sources
+  src/converter.cpp
+  src/undistorter.cpp
 )
 
 include_directories(include)
-add_library(${PROJECT_NAME} SHARED
-  src/undistorter.cpp)
+add_library(${PROJECT_NAME} SHARED ${sources})
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 if(BUILD_TESTING)

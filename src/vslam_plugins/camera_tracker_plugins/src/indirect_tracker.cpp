@@ -1,7 +1,9 @@
-#include "vslam_camera_tracker_plugins/indirect.hpp"
+#include "vslam_camera_tracker_plugins/indirect_tracker.hpp"
 
 #include <cmath>
 #include <iostream>
+
+#include "vslam_utils/converter.hpp"
 
 using CvPoint2dVec = std::vector<cv::Point2d>;
 using CvPoint3dVec = std::vector<cv::Point3d>;
@@ -49,17 +51,6 @@ namespace {
     return {points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2};
   }
 
-  cv::Mat to_transformation_matrix(const cv::Mat& R, const cv::Mat& t) {
-    // Create an identity matrix
-    cv::Mat T = cv::Mat::eye(4, 4, CV_64F);
-
-    // Copy data
-    R.copyTo(T(cv::Rect(0, 0, 3, 3)));
-    t.copyTo(T(cv::Rect(3, 0, 1, 3)));
-
-    return T;
-  }
-
   cv::Mat project_point_3d2d(const cv::Mat& pt, const cv::Mat& K) {
     cv::Mat pt_projected = pt.clone();
     pt_projected = K * pt_projected;
@@ -71,8 +62,8 @@ namespace {
 
 namespace vslam_camera_tracker_plugins {
 
-  bool Indirect::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                   cv::Mat& T_2_1) {
+  bool IndirectTracker::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                          cv::Mat& T_2_1) {
     const auto [cv_points_2d_1, cv_points_2d_2] = get_2d2d_correspondences(matched_points);
 
     cv::Mat inlier_mask;
@@ -95,13 +86,13 @@ namespace vslam_camera_tracker_plugins {
       return false;
     }
 
-    T_2_1 = to_transformation_matrix(R, t);
+    T_2_1 = vslam_utils::conversions::to_transformation_matrix(R, t);
 
     return true;
   }
 
-  bool Indirect::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                   cv::Mat& T_2_1) {
+  bool IndirectTracker::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                          cv::Mat& T_2_1) {
     auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
 
     cv::Mat rpy;
@@ -129,7 +120,7 @@ namespace vslam_camera_tracker_plugins {
       points_3d_1_ptr.at(*it)->set_inlier();
     }
 
-    T_2_1 = to_transformation_matrix(R, t);
+    T_2_1 = vslam_utils::conversions::to_transformation_matrix(R, t);
 
     return true;
   }
@@ -138,4 +129,4 @@ namespace vslam_camera_tracker_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::Indirect, vslam_camera_tracker::base::CameraTracker)
+PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::IndirectTracker, vslam_camera_tracker::base::CameraTracker)
