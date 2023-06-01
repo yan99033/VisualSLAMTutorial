@@ -10,7 +10,7 @@ namespace vslam_backend_plugins {
   };
 
   namespace abstract {
-    class Optimizer : virtual public vslam_backend::base::Backend {
+    class Optimizer : public virtual vslam_backend::base::Backend {
     protected:
       using CoreKfsSet = std::set<vslam_datastructure::Frame*, Cmp<vslam_datastructure::Frame>>;
       using CoreMpsSet = std::set<vslam_datastructure::MapPoint*, Cmp<vslam_datastructure::MapPoint>>;
@@ -27,7 +27,7 @@ namespace vslam_backend_plugins {
     };
   }  // namespace abstract
 
-  class Optimizer : virtual public abstract::Optimizer {
+  class Optimizer : public virtual abstract::Optimizer {
   protected:
     void run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
                                     const long unsigned int current_kf_id) override;
