@@ -1,4 +1,4 @@
-#include "vslam_camera_tracker_plugins/indirect_tracker.hpp"
+#include "vslam_camera_tracker_plugins/opencv_camera_tracker.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -62,8 +62,8 @@ namespace {
 
 namespace vslam_camera_tracker_plugins {
 
-  bool IndirectTracker::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                          cv::Mat& T_2_1) {
+  bool OpenCVCameraTracker::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points,
+                                              const cv::Mat& K, cv::Mat& T_2_1) {
     const auto [cv_points_2d_1, cv_points_2d_2] = get_2d2d_correspondences(matched_points);
 
     cv::Mat inlier_mask;
@@ -91,8 +91,8 @@ namespace vslam_camera_tracker_plugins {
     return true;
   }
 
-  bool IndirectTracker::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
-                                          cv::Mat& T_2_1) {
+  bool OpenCVCameraTracker::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points,
+                                              const cv::Mat& K, cv::Mat& T_2_1) {
     auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
 
     cv::Mat rpy;
@@ -129,4 +129,4 @@ namespace vslam_camera_tracker_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::IndirectTracker, vslam_camera_tracker::base::CameraTracker)
+PLUGINLIB_EXPORT_CLASS(vslam_camera_tracker_plugins::OpenCVCameraTracker, vslam_camera_tracker::base::CameraTracker)

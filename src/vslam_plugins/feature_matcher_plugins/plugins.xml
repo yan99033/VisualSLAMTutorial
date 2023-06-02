@@ -1,5 +1,5 @@
 <library path="vslam_feature_matcher_plugins">
   <class type="vslam_feature_matcher_plugins::OpenCVFeatureMatcher" base_class_type="vslam_feature_matcher::base::FeatureMatcher">
-    <description>This is an OpenCV feature matcher plugin.</description>
+    <description>This is a feature matcher plugin using the OpenCV library.</description>
   </class>
 </library>

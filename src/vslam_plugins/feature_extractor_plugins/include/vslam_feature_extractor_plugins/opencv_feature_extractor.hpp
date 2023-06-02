@@ -1,5 +1,5 @@
-#ifndef VSLAM_FEATURE_EXTRACTOR_PLUGINS__FEATURE_EXTRACTOR_HPP_
-#define VSLAM_FEATURE_EXTRACTOR_PLUGINS__FEATURE_EXTRACTOR_HPP_
+#ifndef VSLAM_FEATURE_EXTRACTOR_PLUGINS__OPENCV_FEATURE_EXTRACTOR_HPP_
+#define VSLAM_FEATURE_EXTRACTOR_PLUGINS__OPENCV_FEATURE_EXTRACTOR_HPP_
 
 #include <opencv2/opencv.hpp>
 #include <vector>
@@ -55,4 +55,4 @@ namespace vslam_feature_extractor_plugins {
 
 }  // namespace vslam_feature_extractor_plugins
 
-#endif
+#endif  // VSLAM_FEATURE_EXTRACTOR_PLUGINS__OPENCV_FEATURE_EXTRACTOR_HPP_

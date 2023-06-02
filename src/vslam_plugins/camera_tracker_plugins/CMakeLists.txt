@@ -30,7 +30,7 @@ set(dependencies
 )
 
 set(sources
-  src/indirect_tracker.cpp
+  src/opencv_camera_tracker.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${sources})

@@ -111,7 +111,7 @@ namespace vslam_feature_extractor_plugins {
         feature_detector_ = cv::ORB::create(num_features);
         break;
       default:
-        throw std::runtime_error("OpenCVFeatureExtractor::initialize: feature_detector is not defined.");
+        throw std::runtime_error("OpenCVFeatureExtractor::initialize: feature detector is not defined.");
     }
   }
 

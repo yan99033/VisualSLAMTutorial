@@ -1,5 +1,5 @@
-#ifndef VSLAM_CAMERA_TRACKER_PLUGINS__INDIRECT_HPP_
-#define VSLAM_CAMERA_TRACKER_PLUGINS__INDIRECT_HPP_
+#ifndef VSLAM_CAMERA_TRACKER_PLUGINS__OPENCV_CAMERA_TRACKER_HPP_
+#define VSLAM_CAMERA_TRACKER_PLUGINS__OPENCV_CAMERA_TRACKER_HPP_
 
 #include <cmath>
 #include <opencv2/calib3d.hpp>
@@ -9,7 +9,7 @@
 
 namespace vslam_camera_tracker_plugins {
 
-  class IndirectTracker : public virtual vslam_camera_tracker::base::CameraTracker {
+  class OpenCVCameraTracker : public virtual vslam_camera_tracker::base::CameraTracker {
   public:
     void initialize() override {}
 
@@ -31,4 +31,4 @@ namespace vslam_camera_tracker_plugins {
   };
 }  // namespace vslam_camera_tracker_plugins
 
-#endif  // VSLAM_CAMERA_TRACKER_PLUGINS__INDIRECT_HPP_
+#endif  // VSLAM_CAMERA_TRACKER_PLUGINS__OPENCV_CAMERA_TRACKER_HPP_
