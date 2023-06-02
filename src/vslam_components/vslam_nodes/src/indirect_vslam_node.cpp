@@ -118,7 +118,7 @@ namespace vslam_components {
                                      vslam_datastructure::Point::Type::orb);
       // Feature matcher
       feature_matcher_ = plugin_loader_.feature_matcher(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
-      feature_matcher_->initialize();
+      feature_matcher_->initialize(vslam_datastructure::Point::Type::orb);
 
       // Camera tracker
       camera_tracker_ = plugin_loader_.camera_tracker(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));

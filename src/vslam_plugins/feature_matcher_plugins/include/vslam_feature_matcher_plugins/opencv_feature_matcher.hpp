@@ -9,18 +9,15 @@
 
 namespace vslam_feature_matcher_plugins {
 
-  class Orb : public vslam_feature_matcher::base::FeatureMatcher {
+  class OpenCVFeatureMatcher : public virtual vslam_feature_matcher::base::FeatureMatcher {
   public:
-    void initialize() override;
+    void initialize(const vslam_datastructure::Point::Type point_type) override;
 
     vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,
                                                 const vslam_datastructure::Points& points2) override;
 
-  protected:
-    int num_features_{1000};
-
   private:
-    cv::Ptr<cv::BFMatcher> orb_feature_matcher_;
+    cv::Ptr<cv::DescriptorMatcher> feature_matcher_;
   };
 }  // namespace vslam_feature_matcher_plugins
 

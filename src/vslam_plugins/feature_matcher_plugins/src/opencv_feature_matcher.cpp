@@ -1,4 +1,4 @@
-#include "vslam_feature_matcher_plugins/orb.hpp"
+#include "vslam_feature_matcher_plugins/opencv_feature_matcher.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -48,13 +48,18 @@ namespace {
 }  // namespace
 
 namespace vslam_feature_matcher_plugins {
-  void Orb::initialize() {
-    point_type_ = vslam_datastructure::Point::Type::orb;
-    orb_feature_matcher_ = cv::BFMatcher::create(cv::NORM_HAMMING, true);
+  void OpenCVFeatureMatcher::initialize(const vslam_datastructure::Point::Type point_type) {
+    switch (point_type) {
+      case vslam_datastructure::Point::Type::orb:
+        feature_matcher_ = cv::BFMatcher::create(cv::NORM_HAMMING, true);
+        break;
+      default:
+        throw std::runtime_error("OpenCVFeatureMatcher::initialize: feature matcher is not defined.");
+    }
   }
 
-  vslam_datastructure::Matches Orb::match_features(const vslam_datastructure::Points& points1,
-                                                   const vslam_datastructure::Points& points2) {
+  vslam_datastructure::Matches OpenCVFeatureMatcher::match_features(const vslam_datastructure::Points& points1,
+                                                                    const vslam_datastructure::Points& points2) {
     if (points1.empty() || points2.empty()) {
       return {vslam_datastructure::MatchedPoints(), vslam_datastructure::MatchedIndexPairs()};
     }
@@ -66,7 +71,7 @@ namespace vslam_feature_matcher_plugins {
     // Match descriptors
     std::vector<cv::DMatch> matches;
     std::vector<char> matcher_mask;
-    orb_feature_matcher_->match(descriptors1, descriptors2, matches, matcher_mask);
+    feature_matcher_->match(descriptors1, descriptors2, matches, matcher_mask);
 
     const auto [matched_points, matched_index_pairs] = create_matched_points(points1, points2, matches, matcher_mask);
 
@@ -77,4 +82,4 @@ namespace vslam_feature_matcher_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::Orb, vslam_feature_matcher::base::FeatureMatcher)
+PLUGINLIB_EXPORT_CLASS(vslam_feature_matcher_plugins::OpenCVFeatureMatcher, vslam_feature_matcher::base::FeatureMatcher)
