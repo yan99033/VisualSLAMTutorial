@@ -33,7 +33,7 @@ indirect_vslam_node:
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::OpenCVFeatureExtractor"
     feature_matcher_plugin_name: "vslam_feature_matcher_plugins::OpenCVFeatureMatcher"
     camera_tracker_plugin_name: "vslam_camera_tracker_plugins::OpenCVCameraTracker"
-    mapper_plugin_name: "vslam_mapper_plugins::OpenCVTriangulation"
+    mapper_plugin_name: "vslam_mapper_plugins::OpenCVMapper"
     backend_plugin_name: "vslam_backend_plugins::IndirectOptimizer"
     place_recognition_plugin_name: "vslam_place_recognition_plugins::BagOfWords"
     visualizer_plugin_name: "vslam_visualizer_plugins::RViz"

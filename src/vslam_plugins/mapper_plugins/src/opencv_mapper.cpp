@@ -1,4 +1,4 @@
-#include "vslam_mapper_plugins/opencv_triangulation.hpp"
+#include "vslam_mapper_plugins/opencv_mapper.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -47,9 +47,8 @@ namespace {
 }  // namespace
 
 namespace vslam_mapper_plugins {
-  vslam_datastructure::MapPoints OpenCvTriangulation::map(vslam_datastructure::MatchedPoints& matched_points,
-                                                          const cv::Mat& T_1_w, const cv::Mat& T_2_1,
-                                                          const cv::Mat& K) {
+  vslam_datastructure::MapPoints OpenCVMapper::map(vslam_datastructure::MatchedPoints& matched_points,
+                                                   const cv::Mat& T_1_w, const cv::Mat& T_2_1, const cv::Mat& K) {
     // Preprocess the matched points for triangulation
     const auto [cv_points1, cv_points2] = getCorrespondences(matched_points);
 
@@ -112,4 +111,4 @@ namespace vslam_mapper_plugins {
 
 #include <pluginlib/class_list_macros.hpp>
 
-PLUGINLIB_EXPORT_CLASS(vslam_mapper_plugins::OpenCvTriangulation, vslam_mapper::base::Mapper)
+PLUGINLIB_EXPORT_CLASS(vslam_mapper_plugins::OpenCVMapper, vslam_mapper::base::Mapper)

@@ -1,5 +1,5 @@
 <library path="vslam_mapper_plugins">
-  <class type="vslam_mapper_plugins::OpenCvTriangulation" base_class_type="vslam_mapper::base::Mapper">
-    <description>This is a mapper plugin using the OpenCV function.</description>
+  <class type="vslam_mapper_plugins::OpenCVMapper" base_class_type="vslam_mapper::base::Mapper">
+    <description>This is a mapper plugin using the OpenCV library.</description>
   </class>
 </library>

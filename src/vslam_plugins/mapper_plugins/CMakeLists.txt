@@ -28,7 +28,7 @@ set(dependencies
 )
 
 set(sources
-  src/opencv_triangulation.cpp
+  src/opencv_mapper.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${sources})
