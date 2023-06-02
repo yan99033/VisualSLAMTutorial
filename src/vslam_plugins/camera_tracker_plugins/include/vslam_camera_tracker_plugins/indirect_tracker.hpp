@@ -19,8 +19,6 @@ namespace vslam_camera_tracker_plugins {
                            cv::Mat& T_2_1) override;
 
   private:
-    cv::Ptr<cv::ORB> orb_feature_detector_;
-
     static constexpr const double find_ess_mat_prob_{0.999};
     static constexpr const double find_ess_mat_thresh_{1.0};
 
@@ -29,7 +27,7 @@ namespace vslam_camera_tracker_plugins {
     static constexpr const double pnp_confidence_{0.99};
     static constexpr const bool use_extrinsic_guess_{false};
 
-    static constexpr const double inlier_ratio{0.5};
+    static constexpr const double inlier_ratio_{0.5};
   };
 }  // namespace vslam_camera_tracker_plugins
 

@@ -82,7 +82,7 @@ namespace vslam_camera_tracker_plugins {
     std::cout << "translation: " << t.t() << std::endl;
     std::cout << "-----------------------" << std::endl;
 
-    if (static_cast<double>(num_inliers) / static_cast<double>(matched_points.size()) < inlier_ratio) {
+    if (static_cast<double>(num_inliers) / static_cast<double>(matched_points.size()) < inlier_ratio_) {
       return false;
     }
 
@@ -109,7 +109,7 @@ namespace vslam_camera_tracker_plugins {
     std::cout << "num inliers: " << inliers.total() << " / " << cv_points_3d_1.size() << std::endl;
     std::cout << "-----------------------" << std::endl;
 
-    if (static_cast<double>(inliers.total()) / static_cast<double>(cv_points_3d_1.size()) < inlier_ratio) {
+    if (static_cast<double>(inliers.total()) / static_cast<double>(cv_points_3d_1.size()) < inlier_ratio_) {
       return false;
     }
 
