@@ -6,7 +6,7 @@
 #include "vslam_plugins_base/place_recognition.hpp"
 
 namespace vslam_place_recognition_plugins {
-  class BagOfWords : public vslam_place_recognition::base::PlaceRecognition {
+  class BagOfWords : public virtual vslam_place_recognition::base::PlaceRecognition {
   public:
     void initialize(const std::string& input = std::string(), const int top_k = 1, const double score_thresh = 0.9,
                     const int ignore_last_n_keyframes = -1) override;
@@ -23,6 +23,14 @@ namespace vslam_place_recognition_plugins {
     std::unordered_map<DBoW3::EntryId, long unsigned int> keyframe_index_pairs_;
 
     DBoW3::EntryId last_entry_id_{0};
+
+    int top_k_{1};
+
+    // Filter the results within the last n keyframes
+    // -1 means no filtering is performed
+    int ignore_last_n_keyframes_{-1};
+
+    double score_thresh_{0.9};
   };
 }  // namespace vslam_place_recognition_plugins
 
