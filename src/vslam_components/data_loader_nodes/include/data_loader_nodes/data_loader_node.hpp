@@ -19,6 +19,7 @@ namespace vslam_components {
     namespace abstract {
       class DataLoaderNode {
       protected:
+        /// Periodically call this function to publish data
         virtual void on_timer() = 0;
       };
     }  // namespace abstract
@@ -31,15 +32,23 @@ namespace vslam_components {
       void on_timer() override;
 
     private:
+      /// Frame count
       int count_{0};
 
+      /// Frame publisher
       rclcpp::Publisher<vslam_msgs::msg::Frame>::SharedPtr frame_pub_;
+
+      /// Wall timer to publish frame data
       rclcpp::TimerBase::SharedPtr timer_;
 
+      /// Camera matrix (based on undistorted images)
       sensor_msgs::msg::CameraInfo cam_info_msg_;
 
+      /// Camera plugin loader
       pluginlib::ClassLoader<camera_plugins::base::MonocularCamera> camera_loader_{
           "camera_plugins_base", "camera_plugins::base::MonocularCamera"};
+
+      /// Camera plugin
       std::shared_ptr<camera_plugins::base::MonocularCamera> camera_;
     };
   }  // namespace data_loader_nodes

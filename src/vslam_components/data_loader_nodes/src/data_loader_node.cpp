@@ -62,7 +62,7 @@ namespace vslam_components {
       msg->cam_info = cam_info_msg_;
       msg->header.stamp = now();
 
-      // Put the message into a queue to be processed by the middleware.
+      // Publish frame
       frame_pub_->publish(std::move(msg));
     }
   }  // namespace data_loader_nodes
