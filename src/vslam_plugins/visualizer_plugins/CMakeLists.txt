@@ -33,6 +33,7 @@ set(dependencies
 
 set(sources
   src/rviz.cpp
+  src/visualizer.cpp
 )
 
 

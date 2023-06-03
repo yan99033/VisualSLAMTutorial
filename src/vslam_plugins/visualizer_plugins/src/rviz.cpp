@@ -37,44 +37,12 @@ namespace {
     }
   }
 
-  visualization_msgs::msg::Marker calculate_pose_marker(const geometry_msgs::msg::Pose& pose,
-                                                        const std::string& frame_id, const double scale,
-                                                        const double line_thickness, const std::string& marker_ns,
-                                                        const int marker_id, const std::array<double, 3>& rgb,
-                                                        const Eigen::Matrix3d& cam_axes_transform,
-                                                        const rclcpp::Duration& duration) {
-    // Convert the pose to an Eigen matrix
-    Eigen::Isometry3d eigen_transform;
-    tf2::fromMsg(pose, eigen_transform);
-
-    // Calculate the preset vertices
-    constexpr double fx = 340.0;
-    constexpr double fy = 350.0;
-    constexpr double cx = 300.0;
-    constexpr double cy = 200.0;
-    constexpr double w = 600.0;
-    constexpr double h = 400.0;
-    const double s = scale;
-    const double p0[] = {0.0, 0.0, 0.0, 1.0};
-    const double p1[] = {s * (0 - cx) / fx, s * (0 - cy) / fy, s, 1.0};
-    const double p2[] = {s * (0 - cx) / fx, s * (h - 1 - cy) / fy, s, 1.0};
-    const double p3[] = {s * (w - 1 - cx) / fx, s * (h - 1 - cy) / fy, s, 1.0};
-    const double p4[] = {s * (w - 1 - cx) / fx, s * (0 - cy) / fy, s, 1.0};
-
-    constexpr int num_vertices = 16;
-    constexpr int num_dims = 4;
-    Eigen::MatrixXd marker_vertices(num_dims, num_vertices);
-    marker_vertices << p0[0], p1[0], p0[0], p2[0], p0[0], p3[0], p0[0], p4[0], p4[0], p3[0], p3[0], p2[0], p2[0], p1[0],
-        p1[0], p4[0],  //
-        p0[1], p1[1], p0[1], p2[1], p0[1], p3[1], p0[1], p4[1], p4[1], p3[1], p3[1], p2[1], p2[1], p1[1], p1[1],
-        p4[1],         //
-        p0[2], p1[2], p0[2], p2[2], p0[2], p3[2], p0[2], p4[2], p4[2], p3[2], p3[2], p2[2], p2[2], p1[2], p1[2],
-        p4[2],         //
-        p0[3], p1[3], p0[3], p2[3], p0[3], p3[3], p0[3], p4[3], p4[3], p3[3], p3[3], p2[3], p2[3], p1[3], p1[3],
-        p4[3];         //
-    marker_vertices = eigen_transform.matrix() * marker_vertices;
-    marker_vertices.topRows(3) = cam_axes_transform * marker_vertices.topRows(3);
-
+  visualization_msgs::msg::Marker to_pose_marker(const Mat3x16& cam_vertices, const std::string& frame_id,
+                                                 const double line_thickness, const std::string& marker_ns,
+                                                 const int marker_id, const std::array<double, 3>& rgb,
+                                                 const rclcpp::Duration& duration,
+                                                 const Eigen::Matrix3d& cam_axes_transform
+                                                 = Eigen::Matrix3d::Identity()) {
     visualization_msgs::msg::Marker pose_marker;
     // Add vertices to the marker msg
     pose_marker.header.frame_id = frame_id;
@@ -88,11 +56,13 @@ namespace {
     pose_marker.lifetime = duration;
     pose_marker.id = marker_id;
     pose_marker.ns = marker_ns;
-    for (int i = 0; i < num_vertices; i++) {
+    for (int i = 0; i < cam_vertices.cols(); i++) {
+      Eigen::Vector3d cam_pt = cam_vertices.col(i);
+      cam_pt = cam_axes_transform * cam_pt;
       auto pt = geometry_msgs::msg::Point();
-      pt.x = marker_vertices.col(i)(0);
-      pt.y = marker_vertices.col(i)(1);
-      pt.z = marker_vertices.col(i)(2);
+      pt.x = cam_pt.x();
+      pt.y = cam_pt.y();
+      pt.z = cam_pt.z();
 
       pose_marker.points.push_back(pt);
     }
@@ -100,25 +70,26 @@ namespace {
     return pose_marker;
   }
 
-  visualization_msgs::msg::Marker calculate_mappoints_marker(const std::vector<vslam_msgs::msg::Vector3d>& mps,
-                                                             const std::string& frame_id, const double scale,
-                                                             const std::string& marker_ns, const int marker_id,
-                                                             const std::array<double, 3>& rgb,
-                                                             const Eigen::Matrix3d& cam_axes_transform,
-                                                             const rclcpp::Duration& duration) {
+  visualization_msgs::msg::Marker to_mappoints_marker(const std::vector<vslam_msgs::msg::Vector3d>& mps,
+                                                      const std::string& frame_id, const double marker_scale,
+                                                      const std::string& marker_ns, const int marker_id,
+                                                      const std::array<double, 3>& rgb,
+                                                      const rclcpp::Duration& duration,
+                                                      const Eigen::Matrix3d& cam_axes_transform) {
     visualization_msgs::msg::Marker mps_marker;
     mps_marker.header.frame_id = frame_id;
     mps_marker.type = visualization_msgs::msg::Marker::POINTS;
     mps_marker.action = visualization_msgs::msg::Marker::ADD;
-    mps_marker.scale.x = scale;
-    mps_marker.scale.y = scale;
-    mps_marker.scale.z = scale;
+    mps_marker.scale.x = marker_scale;
+    mps_marker.scale.y = marker_scale;
+    mps_marker.scale.z = marker_scale;
     mps_marker.color.r = rgb[0];
     mps_marker.color.g = rgb[1];
     mps_marker.color.b = rgb[2];
     mps_marker.color.a = 1.0;
     mps_marker.id = marker_id;
     mps_marker.ns = marker_ns;
+    mps_marker.lifetime = duration;
     for (const auto& mp : mps) {
       Eigen::Vector3d mp_eigen(mp.x, mp.y, mp.z);
       mp_eigen = cam_axes_transform * mp_eigen;
@@ -133,27 +104,26 @@ namespace {
     return mps_marker;
   }
 
-  void combine_markers(const visualization_msgs::msg::Marker& new_marker,
-                       visualization_msgs::msg::Marker& existing_markers) {
-    for (const auto& pt : new_marker.points) {
-      existing_markers.points.push_back(pt);
-    }
+  Eigen::Isometry3d to_eigen_isometry3d(const geometry_msgs::msg::Pose& T_w_f) {
+    // Convert the pose to an Eigen matrix
+    Eigen::Isometry3d eigen_T_w_f;
+    tf2::fromMsg(T_w_f, eigen_T_w_f);
+
+    return eigen_T_w_f;
   }
 
 }  // namespace
 
 namespace vslam_visualizer_plugins {
-  const Eigen::Matrix3d RViz::cam_axes_transform_
-      = (Eigen::Matrix3d() << 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0).finished();
-
   RViz::~RViz() {}
 
   void RViz::initialize() {
     node_ = std::make_shared<rclcpp::Node>("visualizer_node", "vslam");
 
     image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("live_image", 1);
-    live_frame_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("live_frame_marker", 10);
-    keyframe_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("keyframe_marker", 10);
+    live_frame_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("live_frame", 10);
+    keyframe_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("keyframes", 10);
+    mappoint_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("mappoints", 10);
   }
 
   void RViz::add_live_frame(const vslam_msgs::msg::Frame& frame_msg) {
@@ -161,24 +131,32 @@ namespace vslam_visualizer_plugins {
     add_keypoints_to_image_frame_msg(frame_msg_cpy);
     image_publisher_->publish(frame_msg_cpy.image);
 
-    const auto pose_marker = calculate_pose_marker(frame_msg_cpy.pose, frame_id_, 10.0, line_thickness_, "live", -1,
-                                                   {1, 0, 0}, cam_axes_transform_, rclcpp::Duration({10000000}));
-    live_frame_publisher_->publish(std::move(pose_marker));
+    Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
+    Mat3x16 cam_vertices = get_camera_vertices(live_cam_marker_scale_, T_w_c);
+    const auto pose_marker = to_pose_marker(cam_vertices, frame_id_, line_thickness_, live_cam_marker_ns_, -1,
+                                            live_cam_marker_rgb_, rclcpp::Duration({10000000}), cam_axes_transform_);
+    live_frame_publisher_->publish(pose_marker);
   }
 
   void RViz::add_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
+    Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
+    Mat3x16 cam_vertices = get_camera_vertices(marker_scale_, T_w_c);
     const auto pose_marker
-        = calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe_pose",
-                                frame_msg.id, {0, 1, 0}, cam_axes_transform_, rclcpp::Duration({0}));
-    keyframe_publisher_->publish(std::move(pose_marker));
+        = to_pose_marker(cam_vertices, frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
+                         keyframe_cam_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
+    keyframe_publisher_->publish(pose_marker);
 
     const auto mps_marker
-        = calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, "keyfame_mps", frame_msg.id,
-                                     {0, 0, 0}, cam_axes_transform_, rclcpp::Duration({0}));
-    keyframe_publisher_->publish(std::move(mps_marker));
+        = to_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, keyframe_mps_marker_ns_, frame_msg.id,
+                              mappoint_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
+    mappoint_publisher_->publish(mps_marker);
   }
 
-  void RViz::remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) {}
+  void RViz::remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
+    (void)frame_msg;
+
+    std::cerr << "RViz::remove_keyframe: not supported! Use `RViz::replace_all_keyframes` instead" << std::endl;
+  }
 
   void RViz::replace_all_keyframes(const FrameVec& frame_msgs) {
     if (frame_msgs.empty()) {
@@ -189,7 +167,8 @@ namespace vslam_visualizer_plugins {
     visualization_msgs::msg::Marker del_marker;
     del_marker.header.frame_id = frame_id_;
     del_marker.action = visualization_msgs::msg::Marker::DELETEALL;
-    keyframe_publisher_->publish(std::move(del_marker));
+    keyframe_publisher_->publish(del_marker);
+    mappoint_publisher_->publish(del_marker);
 
     // Combine the new markers and publish them
     visualization_msgs::msg::Marker combined_pose_markers;
@@ -197,25 +176,29 @@ namespace vslam_visualizer_plugins {
     for (size_t i = 0; i < frame_msgs.size(); i++) {
       const auto frame_msg = frame_msgs[i];
 
+      Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
+      Mat3x16 cam_vertices = get_camera_vertices(marker_scale_, T_w_c);
       const auto pose_marker
-          = calculate_pose_marker(frame_msg.pose, frame_id_, marker_scale_, line_thickness_, "keyframe_pose",
-                                  frame_msg.id, {0, 1, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+          = to_pose_marker(cam_vertices, frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
+                           keyframe_cam_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
 
       const auto mps_marker
-          = calculate_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, "keyfame_mps", frame_msg.id,
-                                       {0, 0, 0}, cam_axes_transform_, rclcpp::Duration({0}));
+          = to_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, keyframe_mps_marker_ns_, frame_msg.id,
+                                mappoint_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
 
       if (i == 0) {
         combined_pose_markers = pose_marker;
         combined_mps_markers = mps_marker;
       } else {
-        combine_markers(pose_marker, combined_pose_markers);
-        combine_markers(mps_marker, combined_mps_markers);
+        combined_pose_markers.points.insert(combined_pose_markers.points.end(), pose_marker.points.begin(),
+                                            pose_marker.points.end());
+        combined_mps_markers.points.insert(combined_mps_markers.points.end(), mps_marker.points.begin(),
+                                           mps_marker.points.end());
       }
     }
 
     keyframe_publisher_->publish(combined_pose_markers);
-    keyframe_publisher_->publish(combined_mps_markers);
+    mappoint_publisher_->publish(combined_mps_markers);
   }
 
 }  // namespace vslam_visualizer_plugins
