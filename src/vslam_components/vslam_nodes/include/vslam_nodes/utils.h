@@ -21,23 +21,6 @@ namespace vslam_components {
       int encoding2mat_type(const std::string& encoding);
 
     }  // namespace utils
-
-    namespace visualization {
-      void add_keypoints_to_image_frame_msg(vslam_msgs::msg::Frame& frame_msg);
-
-      visualization_msgs::msg::Marker calculate_pose_marker(
-          const geometry_msgs::msg::Pose& pose, const std::string& frame_id, const double scale,
-          const double line_thickness, const std::string& marker_ns, const int marker_id,
-          const std::array<double, 3>& rgb = {0, 0, 0},
-          const Eigen::Matrix3d& cam_axes_transform = Eigen::Matrix3d::Identity(),
-          const rclcpp::Duration& duration = rclcpp::Duration({10000000}));
-
-      visualization_msgs::msg::Marker calculate_mappoints_marker(
-          const std::vector<vslam_msgs::msg::Vector3d>& mps, const std::string& frame_id, const double scale,
-          const std::string& marker_ns, const int marker_id, const std::array<double, 3>& rgb = {0, 0, 0},
-          const Eigen::Matrix3d& cam_axes_transform = Eigen::Matrix3d::Identity(),
-          const rclcpp::Duration& duration = rclcpp::Duration({10000000}));
-    }  // namespace visualization
   }    // namespace vslam_nodes
 }  // namespace vslam_components
 
