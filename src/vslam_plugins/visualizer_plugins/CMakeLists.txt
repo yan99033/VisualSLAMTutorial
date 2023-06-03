@@ -19,6 +19,7 @@ find_package(pluginlib REQUIRED)
 find_package(visualization_msgs REQUIRED) 
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(vslam_utils REQUIRED)
 find_package(tf2_eigen REQUIRED)
 
 set(dependencies
@@ -28,6 +29,7 @@ set(dependencies
   visualization_msgs
   vslam_plugins_base
   vslam_msgs
+  vslam_utils
   tf2_eigen
 )
 

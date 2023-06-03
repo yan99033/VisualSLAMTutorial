@@ -17,6 +17,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(vslam_utils REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
@@ -27,6 +28,7 @@ set(sources
 set(dependencies
   OpenCV
   vslam_msgs
+  vslam_utils
   tf2_eigen
   tf2_geometry_msgs)
 

@@ -4,22 +4,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace {
-  std::string mat_type2encoding(int mat_type) {
-    switch (mat_type) {
-      case CV_8UC1:
-        return "mono8";
-      case CV_8UC3:
-        return "bgr8";
-      case CV_16SC1:
-        return "mono16";
-      case CV_8UC4:
-        return "rgba8";
-      default:
-        throw std::runtime_error("Unsupported encoding type");
-    }
-  }
+#include "vslam_utils/converter.hpp"
 
+namespace {
   sensor_msgs::msg::CameraInfo toCameraInfoMsg(const cv::Mat &K) {
     assert(K.rows == 3 && K.cols == 3);
 
@@ -62,7 +49,7 @@ namespace vslam_components {
       sensor_msgs::msg::Image im_msg;
       im_msg.height = image.rows;
       im_msg.width = image.cols;
-      im_msg.encoding = mat_type2encoding(image.type());
+      im_msg.encoding = vslam_utils::conversions::mat_type2encoding(image.type());
       im_msg.is_bigendian = false;
       im_msg.step = static_cast<sensor_msgs::msg::Image::_step_type>(image.step);
       im_msg.data.assign(image.datastart, image.dataend);

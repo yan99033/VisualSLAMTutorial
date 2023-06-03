@@ -5,6 +5,7 @@
 #include "vslam_msgs/msg/vector2d.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
 #include "vslam_nodes/utils.h"
+#include "vslam_utils/converter.hpp"
 
 using std::placeholders::_1;
 
@@ -163,7 +164,8 @@ namespace vslam_components {
 
       // Create a cv::Mat from the image message (without copying).
       cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
-                     utils::encoding2mat_type(frame_msg->image.encoding), frame_msg->image.data.data());
+                     vslam_utils::conversions::encoding2mat_type(frame_msg->image.encoding),
+                     frame_msg->image.data.data());
 
       // Extract features in the image
       auto points = feature_extractor_->extract_features(cv_mat);

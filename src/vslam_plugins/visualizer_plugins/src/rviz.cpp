@@ -3,24 +3,14 @@
 #include <opencv2/opencv.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
+#include "vslam_utils/converter.hpp"
+
 namespace {
-  int encoding2mat_type(const std::string& encoding) {
-    if (encoding == "mono8") {
-      return CV_8UC1;
-    } else if (encoding == "bgr8") {
-      return CV_8UC3;
-    } else if (encoding == "mono16") {
-      return CV_16SC1;
-    } else if (encoding == "rgba8") {
-      return CV_8UC4;
-    }
-    throw std::runtime_error("Unsupported mat type");
-  }
 
   void add_keypoints_to_image_frame_msg(vslam_msgs::msg::Frame& frame_msg) {
     // Create a cv::Mat from the image message (without copying).
-    cv::Mat cv_mat(frame_msg.image.height, frame_msg.image.width, encoding2mat_type(frame_msg.image.encoding),
-                   frame_msg.image.data.data());
+    cv::Mat cv_mat(frame_msg.image.height, frame_msg.image.width,
+                   vslam_utils::conversions::encoding2mat_type(frame_msg.image.encoding), frame_msg.image.data.data());
 
     // Add 2D keypoints to the image message and publish
     for (const auto& kp : frame_msg.keypoints) {

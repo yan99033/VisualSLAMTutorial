@@ -15,10 +15,9 @@ namespace vslam_components {
   namespace vslam_nodes {
     using PointPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
     namespace utils {
+
       double calculate_sim3_scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters = 100,
                                   size_t ransac_n = 10);
-
-      int encoding2mat_type(const std::string& encoding);
 
     }  // namespace utils
   }    // namespace vslam_nodes

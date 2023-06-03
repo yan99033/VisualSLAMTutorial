@@ -21,8 +21,8 @@ find_package(tf2_eigen REQUIRED)
 find_package(vslam_plugins_base REQUIRED)
 find_package(vslam_datastructure REQUIRED)
 find_package(vslam_msgs REQUIRED)
+find_package(vslam_utils REQUIRED)
 find_package(OpenCV REQUIRED)
-# find_package(Sophus REQUIRED)
 
 set(sources
   src/indirect_vslam_node.cpp
@@ -37,13 +37,13 @@ set(dependencies
   vslam_datastructure
   vslam_plugins_base
   vslam_msgs
+  vslam_utils
   OpenCV)
 
 include_directories(include)
 
 # create ament index resource which references the libraries in the binary dir
 add_library(${PROJECT_NAME} SHARED ${sources})
-# target_link_libraries(${PROJECT_NAME} Sophus::Sophus)
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
 ament_target_dependencies(${PROJECT_NAME}

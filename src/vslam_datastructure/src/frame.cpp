@@ -7,36 +7,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "vslam_datastructure/point.hpp"
+#include "vslam_utils/converter.hpp"
 
 namespace {
-  int encoding2mat_type(const std::string& encoding) {
-    if (encoding == "mono8") {
-      return CV_8UC1;
-    } else if (encoding == "bgr8") {
-      return CV_8UC3;
-    } else if (encoding == "mono16") {
-      return CV_16SC1;
-    } else if (encoding == "rgba8") {
-      return CV_8UC4;
-    }
-    throw std::runtime_error("Unsupported mat type");
-  }
-
-  std::string mat_type2encoding(int mat_type) {
-    switch (mat_type) {
-      case CV_8UC1:
-        return "mono8";
-      case CV_8UC3:
-        return "bgr8";
-      case CV_16SC1:
-        return "mono16";
-      case CV_8UC4:
-        return "rgba8";
-      default:
-        throw std::runtime_error("Unsupported encoding type");
-    }
-  }
-
   cv::Point2f project_point_3d2d(const cv::Point3d& pt_3d, const cv::Mat& K, const cv::Mat& T_f_w) {
     cv::Mat pt_projected = (cv::Mat_<double>(3, 1) << pt_3d.x, pt_3d.y, pt_3d.z);
     pt_projected = K * (T_f_w.rowRange(0, 3).colRange(0, 3) * pt_projected + T_f_w.rowRange(0, 3).colRange(3, 4));
@@ -127,7 +100,8 @@ namespace vslam_datastructure {
     ros_timestamp_sec_ = frame_msg->header.stamp.sec;
     ros_timestamp_nanosec_ = frame_msg->header.stamp.nanosec;
 
-    cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width, encoding2mat_type(frame_msg->image.encoding),
+    cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
+                   vslam_utils::conversions::encoding2mat_type(frame_msg->image.encoding),
                    frame_msg->image.data.data());
     image_ = cv_mat.clone();
 
@@ -149,7 +123,7 @@ namespace vslam_datastructure {
 
       frame_msg->image.height = image_.rows;
       frame_msg->image.width = image_.cols;
-      frame_msg->image.encoding = mat_type2encoding(image_.type());
+      frame_msg->image.encoding = vslam_utils::conversions::mat_type2encoding(image_.type());
       frame_msg->image.is_bigendian = false;
       frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
       frame_msg->image.data.assign(image_.datastart, image_.dataend);
