@@ -24,7 +24,9 @@ namespace vslam_components {
           frame_pub_{create_publisher<vslam_msgs::msg::Frame>("out_frame", 10)} {
       // Use a timer to schedule periodic message publishing.
       const auto frame_rate_hz = declare_parameter("frame_rate_hz", 10);
-      assert(frame_rate_hz > 0);
+      if (frame_rate_hz <= 0) {
+        throw std::runtime_error("frame_rate_hz must be greater than zero");
+      }
       timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz),
                                  std::bind(&DataLoaderNode::on_timer, this));
 
@@ -36,6 +38,11 @@ namespace vslam_components {
       camera_->initialize(cam_params_file);
 
       cam_info_msg_ = toCameraInfoMsg(camera_->K());
+    }
+
+    DataLoaderNode::~DataLoaderNode() {
+      camera_.reset();
+      std::cerr << "Terminated DataLoaderNode" << std::endl;
     }
 
     void DataLoaderNode::on_timer() {

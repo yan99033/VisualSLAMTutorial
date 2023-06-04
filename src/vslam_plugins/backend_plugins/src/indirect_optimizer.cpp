@@ -25,6 +25,7 @@ namespace vslam_backend_plugins {
       local_ba_condition_.notify_one();
       local_ba_thread_.join();
     }
+    std::cerr << "Terminated IndirectOptimizer" << std::endl;
   }
 
   void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::local_ba_loop, this); }
@@ -38,7 +39,7 @@ namespace vslam_backend_plugins {
       current_keyframe_ = keyframe;
     }
 
-    if (!run_local_ba_) {
+    if (!run_local_ba_ && !loop_optimization_running_) {
       run_local_ba_ = true;
       std::unique_lock<std::mutex> lck(local_ba_mutex_);
       local_ba_condition_.notify_one();

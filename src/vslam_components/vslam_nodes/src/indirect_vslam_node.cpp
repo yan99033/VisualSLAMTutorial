@@ -153,10 +153,26 @@ namespace vslam_components {
     }
 
     IndirectVSlamNode::~IndirectVSlamNode() {
+      // Unsubscribe from the frame topic
+      frame_subscriber_.reset();
+
       keyframe_id_queue_->stop();
 
       exit_thread_ = true;
       place_recognition_thread_.join();
+
+      feature_extractor_.reset();
+      feature_matcher_.reset();
+      camera_tracker_.reset();
+      mapper_.reset();
+      backend_.reset();
+      place_recognition_.reset();
+      visualizer_.reset();
+
+      current_keyframe_.reset();
+      loop_keyframe_.reset();
+
+      std::cerr << "Terminated vslam node" << std::endl;
     }
 
     void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
@@ -342,6 +358,8 @@ namespace vslam_components {
 
       // Publish frame markers
       visualizer_->add_live_frame(*frame_msg);
+
+      std::cout << "end of frame callback" << std::endl;
     }
 
     bool IndirectVSlamNode::camera_tracker(const vslam_datastructure::Frame* const frame1,
@@ -518,6 +536,13 @@ namespace vslam_components {
 
   }  // namespace vslam_nodes
 }  // namespace vslam_components
+
+int main(int argc, char* argv[]) {
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<vslam_components::vslam_nodes::IndirectVSlamNode>(rclcpp::NodeOptions()));
+  rclcpp::shutdown();
+  return 0;
+}
 
 #include "rclcpp_components/register_node_macro.hpp"
 

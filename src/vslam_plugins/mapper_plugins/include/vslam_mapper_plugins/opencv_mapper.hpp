@@ -10,6 +10,8 @@ namespace vslam_mapper_plugins {
 
   class OpenCVMapper : public virtual vslam_mapper::base::Mapper {
   public:
+    ~OpenCVMapper() { std::cerr << "Terminated OpenCVMapper" << std::endl; }
+
     void initialize() override {}
 
     virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,

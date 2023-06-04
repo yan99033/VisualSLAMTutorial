@@ -105,7 +105,7 @@ namespace {
 }  // namespace
 
 namespace vslam_visualizer_plugins {
-  RViz::~RViz() {}
+  RViz::~RViz() { std::cerr << "Terminated RViz" << std::endl; }
 
   void RViz::initialize() {
     node_ = std::make_shared<rclcpp::Node>("visualizer_node", "vslam");

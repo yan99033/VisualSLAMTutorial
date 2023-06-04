@@ -29,6 +29,8 @@ namespace vslam_backend_plugins {
 
   class Optimizer : public virtual abstract::Optimizer {
   protected:
+    ~Optimizer();
+
     void run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
                                     const long unsigned int current_kf_id) override;
 
@@ -36,6 +38,12 @@ namespace vslam_backend_plugins {
                                           const cv::Mat& T_1_2, const double sim3_scale,
                                           std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
                                           const long unsigned int current_kf_id) override;
+
+    // All keyframes (can be looked up using their id)
+    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
+
+    // The keyframe that is closest to the current camera pose
+    vslam_datastructure::Frame::SharedPtr current_keyframe_;
 
     /// The window size of the error
     static constexpr const double huber_kernel_delta_{2.4477};

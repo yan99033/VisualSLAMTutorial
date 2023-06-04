@@ -15,6 +15,12 @@
 #include "vslam_utils/converter.hpp"
 
 namespace vslam_backend_plugins {
+  Optimizer::~Optimizer() {
+    keyframes_.clear();
+    current_keyframe_.reset();
+    std::cerr << "Terminated Optimizer" << std::endl;
+  }
+
   void Optimizer::run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
                                              const long unsigned int current_kf_id) {
     // Setup g2o optimizer
@@ -29,8 +35,6 @@ namespace vslam_backend_plugins {
     for (auto core_kf : core_keyframes) {
       core_kf->active_ba_state = true;
     }
-
-    const auto last_core_kf = (*core_keyframes.rbegin())->id();
 
     // Create vertices and edges
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
@@ -81,7 +85,7 @@ namespace vslam_backend_plugins {
           if (core_keyframes.find(pt->frame()) != core_keyframes.end()) {
             // Core keyframes
             core_kf_vertices[kf_vertex] = pt->frame();
-            kf_vertex->setFixed(pt->frame()->id() == current_kf_id || pt->frame()->id() == last_core_kf);
+            kf_vertex->setFixed(pt->frame()->id() == current_kf_id || pt->frame()->active_tracking_state);
           } else {
             // Non-core keyframes
             non_core_kfs.insert(pt->frame());
@@ -266,6 +270,13 @@ namespace vslam_backend_plugins {
 
     // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
+      auto kf = keyframes.at(kf_id);
+
+      // If the keyframe is being used or optimized
+      if (kf->active_tracking_state || kf->active_ba_state) {
+        continue;
+      }
+
       // calculate the pose and scale
       const auto g2o_S_f_w = kf_vertex->estimate();
       const cv::Mat temp_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(
@@ -276,8 +287,6 @@ namespace vslam_backend_plugins {
       T_f_w.rowRange(0, 3).colRange(3, 4) /= scale;
       cv::Mat S_f_w = temp_T_f_w.clone();
       S_f_w.rowRange(0, 3).colRange(0, 3) *= scale;
-
-      auto kf = keyframes.at(kf_id);
 
       kf->update_sim3_pose_and_mps(S_f_w, T_f_w);
     }

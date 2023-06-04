@@ -28,6 +28,8 @@ namespace vslam_components {
     public:
       explicit DataLoaderNode(const rclcpp::NodeOptions& options);
 
+      ~DataLoaderNode();
+
     protected:
       void on_timer() override;
 

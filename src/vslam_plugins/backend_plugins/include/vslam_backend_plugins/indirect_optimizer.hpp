@@ -46,12 +46,6 @@ namespace vslam_backend_plugins {
     std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const override;
 
   private:
-    // All keyframes (can be looked up using their id)
-    std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
-
-    // The keyframe that is closest to the current camera pose
-    vslam_datastructure::Frame::SharedPtr current_keyframe_;
-
     // Use it for reading and writing keyframes
     mutable std::mutex keyframe_mutex_;
 

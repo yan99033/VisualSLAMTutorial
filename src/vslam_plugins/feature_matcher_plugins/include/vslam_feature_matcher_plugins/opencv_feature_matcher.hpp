@@ -11,6 +11,8 @@ namespace vslam_feature_matcher_plugins {
 
   class OpenCVFeatureMatcher : public virtual vslam_feature_matcher::base::FeatureMatcher {
   public:
+    ~OpenCVFeatureMatcher() { std::cerr << "Terminated OpenCVFeatureMatcher" << std::endl; }
+
     void initialize(const vslam_datastructure::Point::Type point_type) override;
 
     vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,

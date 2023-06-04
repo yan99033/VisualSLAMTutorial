@@ -8,6 +8,8 @@
 namespace vslam_place_recognition_plugins {
   class BagOfWords : public virtual vslam_place_recognition::base::PlaceRecognition {
   public:
+    ~BagOfWords();
+
     void initialize(const std::string& input = std::string(), const int top_k = 1, const double score_thresh = 0.9,
                     const int ignore_last_n_keyframes = -1) override;
 

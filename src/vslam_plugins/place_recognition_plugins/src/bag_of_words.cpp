@@ -2,6 +2,12 @@
 
 namespace vslam_place_recognition_plugins {
 
+  BagOfWords::~BagOfWords() {
+    database_->clear();
+    keyframe_index_pairs_.clear();
+    std::cerr << "Terminated BagOfWords" << std::endl;
+  }
+
   void BagOfWords::initialize(const std::string& input, const int top_k, const double score_thresh,
                               const int ignore_last_n_keyframes) {
     top_k_ = top_k;

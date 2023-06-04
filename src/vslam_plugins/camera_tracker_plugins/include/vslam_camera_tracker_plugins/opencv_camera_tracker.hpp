@@ -11,6 +11,8 @@ namespace vslam_camera_tracker_plugins {
 
   class OpenCVCameraTracker : public virtual vslam_camera_tracker::base::CameraTracker {
   public:
+    ~OpenCVCameraTracker() { std::cerr << "Terminated OpenCVCameraTracker" << std::endl; }
+
     void initialize() override {}
 
     bool track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,

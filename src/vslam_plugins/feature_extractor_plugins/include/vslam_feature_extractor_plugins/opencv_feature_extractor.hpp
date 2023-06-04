@@ -26,6 +26,8 @@ namespace vslam_feature_extractor_plugins {
 
   class OpenCVFeatureExtractor : public virtual abstract::OpenCVFeatureExtractor {
   public:
+    ~OpenCVFeatureExtractor() { std::cerr << "Terminated OpenCVFeatureExtractor" << std::endl; }
+
     void initialize(int num_feature, const vslam_datastructure::Point::Type point_type) override;
 
     vslam_datastructure::Points extract_features(const cv::Mat& image) override;
