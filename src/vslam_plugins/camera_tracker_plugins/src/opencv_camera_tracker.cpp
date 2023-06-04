@@ -50,14 +50,6 @@ namespace {
 
     return {points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2};
   }
-
-  cv::Mat project_point_3d2d(const cv::Mat& pt, const cv::Mat& K) {
-    cv::Mat pt_projected = pt.clone();
-    pt_projected = K * pt_projected;
-    pt_projected /= pt_projected.at<double>(2, 0);
-
-    return pt_projected.rowRange(0, 2);
-  }
 }  // namespace
 
 namespace vslam_camera_tracker_plugins {
