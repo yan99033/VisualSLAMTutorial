@@ -1,6 +1,7 @@
 #ifndef VSLAM_DATASTRUCTURE__FRAME_HPP_
 #define VSLAM_DATASTRUCTURE__FRAME_HPP_
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <opencv2/core/mat.hpp>
