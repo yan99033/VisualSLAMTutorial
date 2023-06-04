@@ -1,0 +1,17 @@
+%YAML:1.0
+K: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 718.856, 0.0, 607.1928,
+       0.0, 718.856, 185.2157,
+       0.0, 0.0, 1.0 ]
+D: !!opencv-matrix
+   rows: 1
+   cols: 4
+   dt: d
+   data: [ 0.0, 0.0, 0.0, 0.0]
+image_height: 376
+image_width: 1241
+
+image_folder: "/path/to/kitti/00/image_2/folder"

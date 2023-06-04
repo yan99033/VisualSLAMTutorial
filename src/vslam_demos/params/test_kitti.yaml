@@ -1,22 +1,7 @@
 camera_node:
   ros__parameters:
-    frame_rate_hz: 10
-    image_folder: "/path/to/kitti/dataset/image/folder"
-
-    camera_info:
-      camera_matrix:
-        fx: 718.856
-        fy: 718.856
-        cx: 607.1928
-        cy: 185.2157
-      dist_coeffs: [0.0, 0.0, 0.0, 0.0] # radial-tangential distortion
-        k1: 0.0
-        k2: 0.0
-        p1: 0.0
-        p2: 0.0
-        k3: 0.0
-      image_height: 376
-      image_width: 1241
+    plugin_name: "monocular_camera_plugins::VirtualCamera"
+    params_file: "kitti_camera.yaml"
     
 indirect_vslam_node:
   ros__parameters:
