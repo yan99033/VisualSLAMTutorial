@@ -7,18 +7,18 @@ namespace {
   // Credit:
   // https://github.com/opencv/opencv/blob/f5a92cb43f6ac6b60f401613cc80cea3a04cf59b/modules/features2d/src/orb.cpp
 
-  bool calculate_ic_angle(const cv::Mat& img, cv::KeyPoint& kp, const std::vector<int>& u_max, int half_k) {
-    // if ((cvRound(kp.pt.x - 1) <= half_k) || (cvRound(kp.pt.x + half_k + 1) >= img.cols)
-    //     || (cvRound(kp.pt.y - 1) <= half_k) || (cvRound(kp.pt.y + half_k + 1) >= img.rows)) {
-    if ((cvRound(kp.pt.x - kp.size) <= 0) || (cvRound(kp.pt.x + kp.size) >= img.cols)
-        || (cvRound(kp.pt.y - kp.size) <= 0) || (cvRound(kp.pt.y + kp.size) >= img.rows)) {
+  bool calculate_ic_angle(const cv::Mat& img, cv::KeyPoint& kp, const double scale_factor,
+                          const std::vector<int>& u_max, int half_k) {
+    if ((cvRound(kp.pt.x * scale_factor - kp.size) <= 0) || (cvRound(kp.pt.x * scale_factor + kp.size) >= img.cols)
+        || (cvRound(kp.pt.y * scale_factor - kp.size) <= 0)
+        || (cvRound(kp.pt.y * scale_factor + kp.size) >= img.rows)) {
       return false;
     }
 
     int step = static_cast<int>(img.step1());
     int m_01 = 0;
     int m_10 = 0;
-    const uchar* center = &img.at<uchar>(cvRound(kp.pt.y), cvRound(kp.pt.x));
+    const uchar* center = &img.at<uchar>(cvRound(kp.pt.y * scale_factor), cvRound(kp.pt.x * scale_factor));
 
     // Treat the center line differently, v=0
     for (int u = -half_k; u <= half_k; ++u) m_10 += u * center[u];
@@ -178,7 +178,7 @@ namespace vslam_feature_extractor_plugins {
       cv::KeyPoint kp(corner, 1.0f);
       if (calculate_harris_response_and_octave(image_pyramid, kp, nlevels_, scale_factors, patch_size_,
                                                harris_block_size_)
-          && calculate_ic_angle(image_pyramid.at(kp.octave), kp, umax, half_patch_size)) {
+          && calculate_ic_angle(image_pyramid.at(kp.octave), kp, scale_factors.at(kp.octave), umax, half_patch_size)) {
         keypoints.push_back(kp);
       }
     }
