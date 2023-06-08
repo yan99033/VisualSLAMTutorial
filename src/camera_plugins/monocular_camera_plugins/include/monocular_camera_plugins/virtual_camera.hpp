@@ -24,7 +24,7 @@ namespace monocular_camera_plugins {
     void load_from_folder(const std::string& folder, const std::string& ext = ".png") override;
 
   private:
-    size_t i_;
+    size_t i_{0};
 
     std::vector<std::string> files_;  //!< Files in a folder
   };
