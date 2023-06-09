@@ -1,14 +1,15 @@
 A visual SLAM framework provides the foundation for integrating different components within it. 
-For example, A visual SLAM system consists of camera tracking, mapping, loop closing, and visualization components. The framework connects the components such that we get the camera motion and the structure of the environment from a stream of images in real-time.
+For example, A visual SLAM system consists of camera tracking, mapping, loop closing, and visualization components. 
+The framework connects the components such that we get the camera motion and the structure of the environment from a stream of images in real-time.
 
 
 \section{Problem}
 
 The outcome of this document is twofold: 
-First, we want to find a \textit{good} way to connect the visual SLAM components. 
+First, we want to define a good way to connect the visual SLAM components. 
 Second, while achieving the first outcome, we also define the structure of a repository in which the code is stored.
 As a general rule of thumb, the \textit{good}ness of the framework is prioritized on the ease-of-use while maintaining the real-time capability.
-Specifically, each component in the framework can be defined as a module, which can be customized or replaced for enhanced performance, so long as the interface (the inputs and outputs) is unchanged.
+Specifically, each component in the framework can be defined as a plugin, which can be customized or replaced for enhanced performance, so long as the interfaces (the inputs and outputs) are unchanged.
 
 \section{Literature review}
 
@@ -825,11 +826,3 @@ We define the plugins as follows.
 \end{lstlisting}
   \end{itemize} 
 \end{itemize}
-
-\subsection{ROS2 study}
-
-To ensure ROS2 is the right fit for the visual SLAM framework, we need to experiment with the modularity and the memory-sharing mechanism provided by it.
-\href{https://github.com/ros-planning/navigation2}{Nav2} provides examples of creating action servers (e.g., planner and controller), each of which could have several plugins to accomplish various tasks.
-The action servers are ROS2 nodes managed by their \href{https://github.com/ros2/demos/blob/humble/lifecycle/README.rst}{lifecycle manager} to activate or deactivate the nodes on demand.
-The nodes are loaded as \href{https://docs.ros.org/en/humble/How-To-Guides/Launching-composable-nodes.html}{composable nodes} to allow for \href{https://docs.ros.org/en/humble/Tutorials/Demos/Intra-Process-Communication.html}{intra-communication} among the nodes.
-Therefore, we could use action servers to represent the core components in the visual SLAM system and potentially use intra-process communication to reduce the overhead from unnecessary data copy between nodes.
