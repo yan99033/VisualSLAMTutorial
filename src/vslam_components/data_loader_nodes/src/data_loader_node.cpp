@@ -62,15 +62,15 @@ namespace vslam_components {
       im_msg.data.assign(image.datastart, image.dataend);
 
       // Create a frame
-      auto msg = std::make_unique<vslam_msgs::msg::Frame>();
-      msg->id = ++count_;
-      RCLCPP_INFO(this->get_logger(), "Publishing frame: %u", msg->id);
-      msg->image = im_msg;
-      msg->cam_info = cam_info_msg_;
-      msg->header.stamp = now();
+      vslam_msgs::msg::Frame msg;
+      msg.id = ++count_;
+      RCLCPP_INFO(this->get_logger(), "Publishing frame: %u", msg.id);
+      msg.image = im_msg;
+      msg.cam_info = cam_info_msg_;
+      msg.header.stamp = now();
 
       // Publish frame
-      frame_pub_->publish(std::move(msg));
+      frame_pub_->publish(msg);
     }
   }  // namespace data_loader_nodes
 }  // namespace vslam_components
