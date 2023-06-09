@@ -2,10 +2,11 @@
 #define VSLAM_PLUGINS_BASE__VISUALIZER_HPP_
 
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_plugins_base/base.hpp"
 
 namespace vslam_visualizer {
   namespace base {
-    class Visualizer {
+    class Visualizer : public virtual vslam_plugin::base::Plugin {
     public:
       using FrameVec = std::vector<vslam_msgs::msg::Frame>;
 

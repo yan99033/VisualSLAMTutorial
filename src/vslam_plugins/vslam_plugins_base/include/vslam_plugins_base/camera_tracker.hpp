@@ -1,13 +1,12 @@
 #ifndef VSLAM_PLUGINS_BASE__CAMERA_TRACKER_HPP_
 #define VSLAM_PLUGINS_BASE__CAMERA_TRACKER_HPP_
 
-// #include <sophus/se3.hpp>
-
 #include "vslam_datastructure/point.hpp"
+#include "vslam_plugins_base/base.hpp"
 
 namespace vslam_camera_tracker {
   namespace base {
-    class CameraTracker {
+    class CameraTracker : public virtual vslam_plugin::base::Plugin {
     public:
       virtual void initialize() = 0;
 

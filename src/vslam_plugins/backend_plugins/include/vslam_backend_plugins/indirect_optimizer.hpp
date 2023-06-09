@@ -45,6 +45,8 @@ namespace vslam_backend_plugins {
     /// Export all the keyframes to frame msgs to refresh the visualizer
     std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const override;
 
+    inline std::string get_plugin_name() override { return "vslam_backend_plugins::IndirectOptimizer"; }
+
   private:
     // Use it for reading and writing keyframes
     mutable std::mutex keyframe_mutex_;

@@ -3,10 +3,11 @@
 
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
+#include "vslam_plugins_base/base.hpp"
 
 namespace vslam_backend {
   namespace base {
-    class Backend {
+    class Backend : public virtual vslam_plugin::base::Plugin {
     public:
       /// Initialize the back-end
       virtual void initialize() = 0;

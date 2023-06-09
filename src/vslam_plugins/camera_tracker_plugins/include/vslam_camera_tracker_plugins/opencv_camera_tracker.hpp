@@ -20,6 +20,8 @@ namespace vslam_camera_tracker_plugins {
     bool track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
                            cv::Mat& T_2_1) override;
 
+    inline std::string get_plugin_name() override { return "vslam_camera_tracker_plugins::OpenCVCameraTracker"; }
+
   private:
     static constexpr const double find_ess_mat_prob_{0.999};
     static constexpr const double find_ess_mat_thresh_{1.0};

@@ -4,9 +4,11 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include "vslam_plugins_base/base.hpp"
+
 namespace vslam_place_recognition {
   namespace base {
-    class PlaceRecognition {
+    class PlaceRecognition : public virtual vslam_plugin::base::Plugin {
     public:
       struct Result {
         long unsigned int kf_id;

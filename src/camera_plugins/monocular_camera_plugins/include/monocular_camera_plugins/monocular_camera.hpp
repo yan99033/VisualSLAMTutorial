@@ -5,6 +5,10 @@ namespace monocular_camera_plugins {
   namespace abstract {
     class MonocularCamera : public virtual camera_plugins::base::MonocularCamera {
     protected:
+      /// Open the USB camera
+      /**
+       * \param camera_id the USB camera ID
+       */
       virtual void open_camera(int camera_id) = 0;
     };
   }  // namespace abstract
@@ -13,7 +17,6 @@ namespace monocular_camera_plugins {
   public:
     ~MonocularCamera();
 
-    // Read the parameter files
     void initialize(const std::string& params_file) override;
 
     cv::Mat grab_image() override;

@@ -18,6 +18,8 @@ namespace vslam_feature_matcher_plugins {
     vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,
                                                 const vslam_datastructure::Points& points2) override;
 
+    inline std::string get_plugin_name() override { return "vslam_feature_matcher_plugins::OpenCVFeatureMatcher"; }
+
   private:
     cv::Ptr<cv::DescriptorMatcher> feature_matcher_;
   };

@@ -2,10 +2,11 @@
 #define VSLAM_PLUGINS_BASE__FEATURE_EXTRACTOR_HPP_
 
 #include "vslam_datastructure/point.hpp"
+#include "vslam_plugins_base/base.hpp"
 
 namespace vslam_feature_extractor {
   namespace base {
-    class FeatureExtractor {
+    class FeatureExtractor : public virtual vslam_plugin::base::Plugin {
     public:
       virtual void initialize(int num_features, const vslam_datastructure::Point::Type type) = 0;
       virtual vslam_datastructure::Points extract_features(const cv::Mat& image) = 0;
