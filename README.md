@@ -4,6 +4,13 @@ A visual SLAM (simultaneous localization and mapping) framework provides the fou
 For example, A visual SLAM system comprises camera tracking, mapping, loop closing via place recognition, and visualization components. 
 The framework connects the components such that we get the camera motion and the structure of the environment from a stream of images in real-time.
 
+### Table of contents
+- [Objective](#objective)
+- [Framework](#framework)
+- [Setup](#setup)
+- [Build](#build)
+- [Run](#run)
+
 ## Objective
 
 The main goal of this project is to create an ease-of-use framework to learn visual SLAM while allowing for customizability for better performance.
@@ -37,7 +44,8 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
 
 Run `colcon build` to build the packages.
 
-### Run 
+## Run
+
 - Move the `orbvoc.dbow3` vocabulary file from [build/thirdparty/_deps/dbow3-src](build/thirdparty/_deps/dbow3-src) to the root directory
 - Create a copy of the [KITTI camera parameters](src/camera_plugins//monocular_camera_plugins/params/kitti_camera.yaml.example) (and remove the .example extension) and modify the parameters accordingly.
 - Create a copy of the [vslam_demo parameters](src/vslam_demos/params/test_kitti.yaml.example) (and remove the .example extension) and modify the parameters accordingly.
