@@ -2,10 +2,11 @@
 #define VSLAM_PLUGINS_BASE__MAPPER_HPP_
 
 #include "vslam_datastructure/point.hpp"
+#include "vslam_plugins_base/base.hpp"
 
 namespace vslam_mapper {
   namespace base {
-    class Mapper {
+    class Mapper : public virtual vslam_plugin::base::Plugin {
     public:
       virtual void initialize() = 0;
       virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points,

@@ -17,8 +17,10 @@ namespace vslam_mapper_plugins {
     virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_1_w,
                                                const cv::Mat& T_2_1, const cv::Mat& K) override;
 
+    inline std::string get_plugin_name() override { return "vslam_mapper_plugins::OpenCVMapper"; }
+
   private:
-    static constexpr const double proj_err_thresh_{8.0};
+    static constexpr const double proj_err_thresh_{4.0};
   };
 }  // namespace vslam_mapper_plugins
 

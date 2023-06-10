@@ -25,6 +25,8 @@ namespace vslam_visualizer_plugins {
 
     void replace_all_keyframes(const FrameVec& frame_msgs) override;
 
+    inline std::string get_plugin_name() override { return "vslam_visualizer_plugins::RViz"; }
+
   private:
     /// Visualizer node
     rclcpp::Node::SharedPtr node_{nullptr};

@@ -8,6 +8,11 @@ namespace monocular_camera_plugins {
   namespace abstract {
     class VirtualCamera : public virtual camera_plugins::base::MonocularCamera {
     protected:
+      /// Get the filenames in a folder
+      /**
+       * \param folder path to a folder containing the images
+       * \param ext image extension (e.g., ".png" or ".jpg")
+       */
       virtual void load_from_folder(const std::string& folder, const std::string& ext) = 0;
     };
   }  // namespace abstract
@@ -24,9 +29,11 @@ namespace monocular_camera_plugins {
     void load_from_folder(const std::string& folder, const std::string& ext = ".png") override;
 
   private:
+    /// The current index in the files_ vector
     size_t i_{0};
 
-    std::vector<std::string> files_;  //!< Files in a folder
+    /// filenames in a sequential order
+    std::vector<std::string> files_;
   };
 
 }  // namespace monocular_camera_plugins

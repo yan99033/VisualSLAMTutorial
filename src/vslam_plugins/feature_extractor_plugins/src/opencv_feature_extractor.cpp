@@ -9,9 +9,8 @@ namespace {
 
   bool calculate_ic_angle(const cv::Mat& img, cv::KeyPoint& kp, const double scale_factor,
                           const std::vector<int>& u_max, int half_k) {
-    if ((cvRound(kp.pt.x * scale_factor - kp.size) <= 0) || (cvRound(kp.pt.x * scale_factor + kp.size) >= img.cols)
-        || (cvRound(kp.pt.y * scale_factor - kp.size) <= 0)
-        || (cvRound(kp.pt.y * scale_factor + kp.size) >= img.rows)) {
+    if ((cvRound(kp.pt.x - kp.size) <= 0) || (cvRound(kp.pt.x + kp.size) >= img.cols)
+        || (cvRound(kp.pt.y - kp.size) <= 0) || (cvRound(kp.pt.y + kp.size) >= img.rows)) {
       return false;
     }
 

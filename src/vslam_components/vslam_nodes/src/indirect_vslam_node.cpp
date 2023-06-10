@@ -113,36 +113,39 @@ namespace vslam_components {
   namespace vslam_nodes {
     IndirectVSlamNode::IndirectVSlamNode(const rclcpp::NodeOptions& options) : Node("vslam_node", options) {
       // Feature extractor
-      feature_extractor_
-          = plugin_loader_.feature_extractor(declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
+      feature_extractor_ = feature_extractor_loader_.createSharedInstance(
+          declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
       feature_extractor_->initialize(declare_parameter("feature_extractor.num_features", 2000),
                                      vslam_datastructure::Point::Type::orb);
       // Feature matcher
-      feature_matcher_ = plugin_loader_.feature_matcher(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
+
+      feature_matcher_
+          = feature_matcher_loader_.createSharedInstance(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
       feature_matcher_->initialize(vslam_datastructure::Point::Type::orb);
 
       // Camera tracker
-      camera_tracker_ = plugin_loader_.camera_tracker(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
+      camera_tracker_
+          = camera_tracker_loader_.createSharedInstance(declare_parameter("camera_tracker_plugin_name", "UNDEFINED"));
       camera_tracker_->initialize();
 
       // Mapper
-      mapper_ = plugin_loader_.mapper(declare_parameter("mapper_plugin_name", "UNDEFINED"));
+      mapper_ = mapper_loader_.createSharedInstance(declare_parameter("mapper_plugin_name", "UNDEFINED"));
       mapper_->initialize();
 
       // Back-end
-      backend_ = plugin_loader_.backend(declare_parameter("backend_plugin_name", "UNDEFINED"));
+      backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
       backend_->initialize();
 
       // Place recognition
-      place_recognition_
-          = plugin_loader_.place_recognition(declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+      place_recognition_ = place_recognition_loader_.createSharedInstance(
+          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
       place_recognition_->initialize(declare_parameter("place_recognition.input", ""),
                                      declare_parameter("place_recognition.top_k", 3),
                                      declare_parameter("place_recognition.score_thresh", 0.9),
                                      declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
 
       // Visualizer
-      visualizer_ = plugin_loader_.visualizer(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
+      visualizer_ = visualizer_loader_.createSharedInstance(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
       visualizer_->initialize();
 
       // Frame subscriber and publishers
@@ -253,7 +256,7 @@ namespace vslam_components {
         cv::Mat T_c_p;
         vslam_datastructure::MatchedPoints matched_points;
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-        if (!camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        if (!track_camera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           current_keyframe_->active_tracking_state = false;
           state_ = State::relocalization;
           return;
@@ -310,7 +313,7 @@ namespace vslam_components {
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
         bool tracked{false};
         // Track current frame relative to the current keyframe
-        if (camera_tracker(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        if (track_camera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           tracked = true;
           current_keyframe_->active_tracking_state = true;
           state_ = State::tracking;
@@ -318,7 +321,7 @@ namespace vslam_components {
           if (loop_keyframe_ != nullptr) {
             // Track current frame relative to the keyframe found using place recognition
             std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
-            if (camera_tracker(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+            if (track_camera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
               tracked = true;
               state_ = State::tracking;
 
@@ -362,10 +365,10 @@ namespace vslam_components {
       std::cout << "end of frame callback" << std::endl;
     }
 
-    bool IndirectVSlamNode::camera_tracker(const vslam_datastructure::Frame* const frame1,
-                                           const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
-                                           vslam_datastructure::MatchedPoints& matched_points,
-                                           vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
+    bool IndirectVSlamNode::track_camera(const vslam_datastructure::Frame* const frame1,
+                                         const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
+                                         vslam_datastructure::MatchedPoints& matched_points,
+                                         vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
       if (frame1 == nullptr || frame2 == nullptr) {
         return false;
       }
@@ -505,7 +508,7 @@ namespace vslam_components {
 
       vslam_datastructure::MatchedPoints matched_points;
       vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-      if (!camera_tracker(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
+      if (!track_camera(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
         return false;
       }
 

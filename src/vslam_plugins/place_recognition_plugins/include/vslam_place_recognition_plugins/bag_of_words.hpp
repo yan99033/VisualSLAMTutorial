@@ -19,6 +19,8 @@ namespace vslam_place_recognition_plugins {
     // Given the visual features, find the top_k matches
     std::vector<Result> query(const cv::Mat& visual_features) override;
 
+    inline std::string get_plugin_name() override { return "vslam_place_recognition_plugins::BagOfWords"; }
+
   private:
     DBoW3::Vocabulary vocab_;
     std::unique_ptr<DBoW3::Database> database_;
