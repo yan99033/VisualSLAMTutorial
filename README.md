@@ -8,19 +8,20 @@ The framework connects the components such that we get the camera motion and the
 
 The main goal of this project is to create an ease-of-use framework to learn visual SLAM while allowing for customizability for better performance.
 To this end, we define the components in the framework as plugins, which can be modified so long as the interfaces (i.e., the inputs and outputs) are unchanged.
+Academic researchers could also use it to write new plugins to verify hypotheses.
 
 ## Framework
 
-We organize the visual SLAM components as individual plugins/libraries to test them in isolation before integrating them into the framework. 
+We organize the visual SLAM components as individual plugins/libraries that can be tested before integrating them into the framework. 
 The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html) to run them in a single process. The nodes and plugins are described as follows:
 - **data loader node** takes a list of images from a folder or an image stream from a camera and converts them into the Frame message, which contains the image and the camera information.
 
-- **vslam node** processes the incoming Frame messages to track the camera motion and structure of the scene. The system begins in the initialization state, where we set the current frame as the tentative keyframe and attempt initialization in the next frame. Any failure in tracking and mapping resets the state back to initialization. Once the system is initialized, we track the camera pose of the images against the keyframe and create new keyframe and map points (structure of the scene) as needed. In a parallel thread, we check if the camera revisits a previously mapped area and optimize the camera motion and structure globally. In the event of failure to find correspondences between two subsequent frames, the system enters the relocalization state, where we attempt to regain camera tracking. This node consists of seven plugins:
+- **vslam node** processes the incoming Frame messages to track the camera motion and map the structure (represented by points). The system begins in the initialization state, where we set the current frame as the tentative keyframe and attempt initialization in the next frame. Any failure in tracking and mapping resets the state back to initialization. Once the system is initialized, we track the camera pose of the images against the keyframe and create new keyframe and map points (structure of the scene) as needed. In a parallel thread, we check if the camera revisits a previously mapped area and optimize the camera motion and structure globally. In the event of failure to find correspondences between two subsequent frames, the system enters the relocalization state, where we attempt to regain camera tracking. This node consists of seven plugins:
   - **feature extraction plugin** calculates the keypoints (e.g., corners or high-gradient image regions) and, optionally, their descriptors in the image.
-  - **feature matcher plugin** finds feature correspondences between the current frame and the nearest keyframe in the back-end during the tracking state. 
-  - **camera tracker plugin** calculates the relative pose between the current frame and the current keyframe. 
+  - **feature matcher plugin** finds feature correspondences between the keypoints in the current frame and the nearest keyframe in the back-end during the tracking state. 
+  - **camera tracker plugin** calculates the relative pose between the current frame and the current keyframe based on the feature correspondences. 
   - **mapper plugin** triangulates a set of new map points based on the relative pose and the feature correspondences.
-  - **place recognition plugin** finds the keyframe image similar to the current frame image.
+  - **place recognition plugin** finds the old keyframe image similar to the image in the current frame.
   - **back-end plugin** runs local bundle adjustment and pose-graph optimizations.
   - **visualizer plugin** gets the Frame messages and update the visualizer accordingly.
 
