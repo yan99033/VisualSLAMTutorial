@@ -9,8 +9,9 @@ namespace {
 
   bool calculate_ic_angle(const cv::Mat& img, cv::KeyPoint& kp, const double scale_factor,
                           const std::vector<int>& u_max, int half_k) {
-    if ((cvRound(kp.pt.x - kp.size) <= 0) || (cvRound(kp.pt.x + kp.size) >= img.cols)
-        || (cvRound(kp.pt.y - kp.size) <= 0) || (cvRound(kp.pt.y + kp.size) >= img.rows)) {
+    if ((cvRound(kp.pt.x * scale_factor - kp.size) <= 0) || (cvRound(kp.pt.x * scale_factor + kp.size) >= img.cols)
+        || (cvRound(kp.pt.y * scale_factor - kp.size) <= 0)
+        || (cvRound(kp.pt.y * scale_factor + kp.size) >= img.rows)) {
       return false;
     }
 
@@ -54,6 +55,8 @@ namespace {
     float scale = 1.f / ((1 << 2) * harris_block_size * 255.f);
     float scale_sq_sq = scale * scale * scale * scale;
 
+    bool is_good{false};
+
     for (size_t octave = 0; octave < nlevels; octave++) {
       cv::Mat img = image_pyr.at(octave);
       CV_CheckTypeEQ(img.type(), CV_8UC1, "");
@@ -94,9 +97,11 @@ namespace {
         kp.response = response;
         kp.octave = octave;
         kp.size = static_cast<float>(patch_size) / scale_factors.at(octave);
+
+        is_good = true;
       }
     }
-    return true;
+    return is_good;
   }
 }  // namespace
 

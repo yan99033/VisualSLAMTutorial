@@ -1,7 +1,6 @@
 #ifndef VSLAM_PLUGINS_BASE__FEATURE_MATCHER_HPP_
 #define VSLAM_PLUGINS_BASE__FEATURE_MATCHER_HPP_
 
-#include "vslam_datastructure/frame_pair.hpp"
 #include "vslam_datastructure/point.hpp"
 #include "vslam_plugins_base/base.hpp"
 

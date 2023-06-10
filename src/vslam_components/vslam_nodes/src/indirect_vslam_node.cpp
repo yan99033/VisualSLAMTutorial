@@ -361,8 +361,6 @@ namespace vslam_components {
 
       // Publish frame markers
       visualizer_->add_live_frame(*frame_msg);
-
-      std::cout << "end of frame callback" << std::endl;
     }
 
     bool IndirectVSlamNode::track_camera(const vslam_datastructure::Frame* const frame1,
