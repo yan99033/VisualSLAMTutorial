@@ -1,7 +1,7 @@
 camera_node:
   ros__parameters:
     plugin_name: "monocular_camera_plugins::VirtualCamera"
-    params_file: "kitti_camera.yaml"
+    params_file: "/path/to/kitti_camera.yaml"
     
 indirect_vslam_node:
   ros__parameters:
@@ -10,9 +10,9 @@ indirect_vslam_node:
 
     place_recognition:
       input: "orbvoc.dbow3"
-      top_k: 3
-      ignore_last_n_keyframes: 10
-      score_thresh: 0.02
+      top_k: 1
+      ignore_last_n_keyframes: 100
+      score_thresh: 0.03
 
     # Plugins
     feature_extractor_plugin_name: "vslam_feature_extractor_plugins::OpenCVFeatureExtractor"
