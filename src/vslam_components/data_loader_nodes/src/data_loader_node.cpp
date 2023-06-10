@@ -30,7 +30,7 @@ namespace vslam_components {
       timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz),
                                  std::bind(&DataLoaderNode::on_timer, this));
 
-      RCLCPP_INFO(this->get_logger(), "Going to publish the frames at %llu hz \n", frame_rate_hz);
+      RCLCPP_INFO(this->get_logger(), "Going to publish the frames at %lu hz \n", frame_rate_hz);
 
       const auto plugin_name = declare_parameter("plugin_name", "UNDEFINED");
       const auto cam_params_file = declare_parameter("params_file", "");
