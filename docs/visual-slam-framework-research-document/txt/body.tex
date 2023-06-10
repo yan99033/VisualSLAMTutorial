@@ -1,31 +1,17 @@
 A visual SLAM framework provides the foundation for integrating different components within it. 
-For example, A visual SLAM system consists of camera tracking, mapping, loop closing, and visualization components. 
-The framework connects the components such that we get the camera motion and the structure of the environment from a stream of images in real-time.
+For example, A visual SLAM system comprises camera tracking, mapping, loop closing via place recognition, and visualization components. 
+The framework connects the components such that we get the camera motion and the structure of the environment from a stream of images in real time.
 
+\section{Objective}
 
-\section{Problem}
+The main goal of this project is to create an ease-of-use framework to learn visual SLAM while allowing for customizability for better performance.
+To this end, we define the components in the framework as plugins, which can be modified so long as the interfaces (i.e., the inputs and outputs) are unchanged.
+I will provide a one-year commitment to support the community, hoping the framework will incorporate more features and improve through optimization and fixing bugs.
 
-The outcome of this document is twofold: 
-First, we want to define a good way to connect the visual SLAM components. 
-Second, while achieving the first outcome, we also define the structure of a repository in which the code is stored.
-As a general rule of thumb, the \textit{good}ness of the framework is prioritized on the ease-of-use while maintaining the real-time capability.
-Specifically, each component in the framework can be defined as a plugin, which can be customized or replaced for enhanced performance, so long as the interfaces (the inputs and outputs) are unchanged.
+\section{Framework}
 
-\section{Literature review}
-
-A good visual SLAM framework allows for integrating the camera tracking, mapping, loop closing and visualization components and the intercommunication between them.
-A good starting point is to study the self-driving car or autopilot projects on GitHub, notably \href{https://github.com/ApolloAuto/apollo}{Apollo by Baidu} and \href{https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto}{Autoware.Auto}\footnote{New versions of Autoware are under development, which can be found \href{https://github.com/autowarefoundation/autoware}{here}}.
-They use their own middleware (\href{https://cyber-rt.readthedocs.io/en/latest/index.html}{Cyber RT}) and \href{https://docs.ros.org/en/humble/}{ROS2}. 
-Wu et al.~\cite{wu2021oops} show that ROS2 is better than Cyber RT in terms of latency and CPU usage and recommend the use of shared memory (specifically intra-process (IAP) in ROS2) over data serialization/deserialization for the best latency and reliability.
-Additionally, ROS2 is commonly adopted in robotics projects, with the support of new sensor integration. 
-
-Among the existing visual SLAM systems, ORB-SLAM3 is one of the most practical and open-source visual SLAM system.
-The practicality comes from the well-engineered algorithms designed to handle edge cases like improved camera tracking through multi-map merging and robust loop closure detection.
-
-\section{Discussion}
-To promote flexibility, we can organize the visual SLAM components as individual modules/libraries so that we can test them in isolation before integrating into the framework. 
-We create the modules as composable nodes to enable intra-process communication between the nodes. 
-In addition, we use plugins to dynamically load classes into the node.
+To promote flexibility, we can organize the visual SLAM components as individual modules/libraries to test them in isolation before integrating them into the framework. 
+We create the modules as composable nodes to run them in a single process.
 
 \begin{figure}[h]
     \centering
@@ -38,9 +24,7 @@ Figure~\ref{fig:vslam_pipeline} shows the proposed visual SLAM pipeline with fou
 The role of each node is described as follows:
 \begin{itemize}
   \item \textbf{data\_loader\_node} takes in a list of images from a folder and converts them into the Frame message, which contains the image and the camera information.
-  
-  \item \textbf{camera\_node} acts similarly as the \textbf{data\_loader\_node} except the image data comes from a camera.
-  
+    
   \item \textbf{vslam\_node} processes the incoming Frame messages to recover the camera motion and structure of the scene. It consists of six plugins: 
     \begin{itemize}
       \item \textbf{feature\_extraction\_plugin} calculates the features (e.g., corners or high-gradient image regions) in the image.
@@ -55,10 +39,11 @@ The role of each node is described as follows:
       \item \textbf{place\_recognition\_plugin} is used in two cases. 
         When a new keyframe is created, it attempts to find a similar-looking image in the database to create loop constraints.
         In the relocalization mode, it is used to find the candidate keyframe to recover tracking.
-      \item \textbf{back\_end\_node} optimizes the tracking constraints and loop constraints.
+      \item \textbf{back\_end\_plugin} optimizes the tracking constraints and loop constraints.
+      \item \textbf{visualization\_plugin} gets the frame messages and updates the visualizer accordingly.
     \end{itemize}
 
-  \item \textbf{visualization\_node} subscribes to live tracking frames and the back-end constraints and updates the visualizer accordingly.
+ 
 \end{itemize}
 
 
