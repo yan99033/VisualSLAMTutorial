@@ -2,7 +2,7 @@
 
 namespace vslam_utils {
   namespace conversions {
-    cv::Mat to_transformation_matrix(const cv::Mat& R, const cv::Mat& t) {
+    cv::Mat toTransformationMatrix(const cv::Mat& R, const cv::Mat& t) {
       // Create an identity matrix
       cv::Mat T = cv::Mat::eye(4, 4, CV_64F);
 

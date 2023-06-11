@@ -51,7 +51,7 @@ namespace vslam_utils {
       }
     }
 
-    cv::Mat to_transformation_matrix(const cv::Mat& R, const cv::Mat& t);
+    cv::Mat toTransformationMatrix(const cv::Mat& R, const cv::Mat& t);
 
   }  // namespace conversions
 

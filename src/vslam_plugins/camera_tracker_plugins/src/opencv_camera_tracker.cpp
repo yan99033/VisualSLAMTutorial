@@ -10,7 +10,7 @@ using CvPoint3dVec = std::vector<cv::Point3d>;
 using PointPtrVec = std::vector<vslam_datastructure::MapPoint::SharedPtr>;
 
 namespace {
-  std::pair<CvPoint2dVec, CvPoint2dVec> get_2d2d_correspondences(
+  std::pair<CvPoint2dVec, CvPoint2dVec> get2d2dCorrespondences(
       const vslam_datastructure::MatchedPoints& matched_points) {
     CvPoint2dVec cv_points_2d_1;
     CvPoint2dVec cv_points_2d_2;
@@ -22,7 +22,7 @@ namespace {
     return {cv_points_2d_1, cv_points_2d_2};
   }
 
-  std::tuple<PointPtrVec, CvPoint3dVec, CvPoint2dVec> get_3d2d_correspondences(
+  std::tuple<PointPtrVec, CvPoint3dVec, CvPoint2dVec> get3d2dCorrespondences(
       const vslam_datastructure::MatchedPoints& matched_points) {
     CvPoint3dVec cv_points_3d_1;
     CvPoint2dVec cv_points_2d_2;
@@ -54,9 +54,9 @@ namespace {
 
 namespace vslam_camera_tracker_plugins {
 
-  bool OpenCVCameraTracker::track_camera_2d2d(const vslam_datastructure::MatchedPoints& matched_points,
-                                              const cv::Mat& K, cv::Mat& T_2_1) {
-    const auto [cv_points_2d_1, cv_points_2d_2] = get_2d2d_correspondences(matched_points);
+  bool OpenCVCameraTracker::trackCamera2d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                            cv::Mat& T_2_1) {
+    const auto [cv_points_2d_1, cv_points_2d_2] = get2d2dCorrespondences(matched_points);
 
     cv::Mat inlier_mask;
     cv::Mat R;
@@ -78,14 +78,14 @@ namespace vslam_camera_tracker_plugins {
       return false;
     }
 
-    T_2_1 = vslam_utils::conversions::to_transformation_matrix(R, t);
+    T_2_1 = vslam_utils::conversions::toTransformationMatrix(R, t);
 
     return true;
   }
 
-  bool OpenCVCameraTracker::track_camera_3d2d(const vslam_datastructure::MatchedPoints& matched_points,
-                                              const cv::Mat& K, cv::Mat& T_2_1) {
-    auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get_3d2d_correspondences(matched_points);
+  bool OpenCVCameraTracker::trackCamera3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
+                                            cv::Mat& T_2_1) {
+    auto [points_3d_1_ptr, cv_points_3d_1, cv_points_2d_2] = get3d2dCorrespondences(matched_points);
 
     cv::Mat rpy;
     cv::Mat t;
@@ -112,7 +112,7 @@ namespace vslam_camera_tracker_plugins {
       points_3d_1_ptr.at(*it)->set_inlier();
     }
 
-    T_2_1 = vslam_utils::conversions::to_transformation_matrix(R, t);
+    T_2_1 = vslam_utils::conversions::toTransformationMatrix(R, t);
 
     return true;
   }

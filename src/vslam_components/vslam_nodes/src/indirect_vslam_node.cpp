@@ -214,7 +214,7 @@ namespace vslam_components {
 
         // Get the tracked camera pose and check the tracking quality
         cv::Mat T_c_p;
-        if (!camera_tracker_->track_camera_2d2d(matched_points, current_frame->K(), T_c_p)) {
+        if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
           backend_->removeKeyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
@@ -382,7 +382,7 @@ namespace vslam_components {
       }
 
       // Get the tracked camera pose and check the tracking quality
-      if (!camera_tracker_->track_camera_3d2d(matched_points, frame2->K(), T_2_1)) {
+      if (!camera_tracker_->trackCamera3d2d(matched_points, frame2->K(), T_2_1)) {
         RCLCPP_INFO(get_logger(), "Bad tracking quality");
         return false;
       }
