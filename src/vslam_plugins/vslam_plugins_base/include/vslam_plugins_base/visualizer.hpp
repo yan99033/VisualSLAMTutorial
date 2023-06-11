@@ -14,9 +14,9 @@ namespace vslam_visualizer {
 
       virtual void add_live_frame(const vslam_msgs::msg::Frame& frame_msg) = 0;
 
-      virtual void add_keyframe(const vslam_msgs::msg::Frame& frame_msg) = 0;
+      virtual void addKeyfame(const vslam_msgs::msg::Frame& frame_msg) = 0;
 
-      virtual void remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) = 0;
+      virtual void removeKeyframe(const vslam_msgs::msg::Frame& frame_msg) = 0;
 
       virtual void replace_all_keyframes(const FrameVec& frame_msgs) = 0;
 

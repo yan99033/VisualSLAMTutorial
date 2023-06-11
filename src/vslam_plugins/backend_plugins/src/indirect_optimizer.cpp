@@ -28,9 +28,9 @@ namespace vslam_backend_plugins {
     std::cerr << "Terminated IndirectOptimizer" << std::endl;
   }
 
-  void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::local_ba_loop, this); }
+  void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::localBALoop, this); }
 
-  void IndirectOptimizer::add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
+  void IndirectOptimizer::addKeyfame(vslam_datastructure::Frame::SharedPtr keyframe) {
     assert(keyframe->is_keyframe());
 
     {
@@ -46,14 +46,14 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void IndirectOptimizer::remove_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
+  void IndirectOptimizer::removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
     std::lock_guard<std::mutex> lck(keyframe_mutex_);
     if (keyframes_.find(keyframe->id()) != keyframes_.end()) {
       keyframes_.erase(keyframe->id());
     }
   }
 
-  vslam_datastructure::Frame::SharedPtr IndirectOptimizer::get_keyframe(const long unsigned int id) const {
+  vslam_datastructure::Frame::SharedPtr IndirectOptimizer::getKeyframe(const long unsigned int id) const {
     std::lock_guard<std::mutex> lck(keyframe_mutex_);
     if (keyframes_.find(id) != keyframes_.end()) {
       return keyframes_.at(id);
@@ -62,7 +62,7 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void IndirectOptimizer::local_ba_loop() {
+  void IndirectOptimizer::localBALoop() {
     while (!exit_thread_) {
       {
         std::unique_lock<std::mutex> lck(local_ba_mutex_);
@@ -73,7 +73,7 @@ namespace vslam_backend_plugins {
         break;
       }
 
-      auto [core_keyframes, core_mappoints] = get_core_keyframes_mappoints();
+      auto [core_keyframes, core_mappoints] = getCoreKeyframesMappoints();
       if (core_keyframes.size() < num_core_kfs_) {
         std::this_thread::yield();
         continue;
@@ -84,14 +84,14 @@ namespace vslam_backend_plugins {
         return current_keyframe_->id();
       }();
 
-      run_bundle_adjustment_impl(core_keyframes, core_mappoints, current_kf_id);
+      runBundleAdjustmentImpl(core_keyframes, core_mappoints, current_kf_id);
 
       run_local_ba_ = false;
     }
   }
 
   std::pair<IndirectOptimizer::CoreKfsSet, IndirectOptimizer::CoreMpsSet>
-  IndirectOptimizer::get_core_keyframes_mappoints() {
+  IndirectOptimizer::getCoreKeyframesMappoints() {
     assert(num_core_kfs_ > 0);
 
     std::lock_guard<std::mutex> lck(keyframe_mutex_);
@@ -119,8 +119,8 @@ namespace vslam_backend_plugins {
     return {core_keyframes, core_mappoints};
   }
 
-  void IndirectOptimizer::add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                              const cv::Mat& T_1_2, const double sim3_scale) {
+  void IndirectOptimizer::addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                            const cv::Mat& T_1_2, const double sim3_scale) {
     if (loop_optimization_running_) {
       return;
     }
@@ -140,12 +140,12 @@ namespace vslam_backend_plugins {
       return current_keyframe_->id();
     }();
 
-    run_pose_graph_optimization_impl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_kf_id);
+    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_kf_id);
 
     loop_optimization_running_ = false;
   }
 
-  std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::get_all_keyframe_msgs() const {
+  std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::getAllKeyframeMsgs() const {
     std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
     for (const auto& [_, kf] : keyframes_) {
       vslam_msgs::msg::Frame keyframe_msg;
@@ -155,12 +155,6 @@ namespace vslam_backend_plugins {
 
     return keyframe_msgs;
   }
-
-  // void IndirectOptimizer::remove_outlier_mappoints() {
-  //   for (auto& [_, kf] : keyframes_) {
-  //     if
-  //   }
-  // }
 
 }  // namespace vslam_backend_plugins
 

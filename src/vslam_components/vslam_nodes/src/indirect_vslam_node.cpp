@@ -197,13 +197,13 @@ namespace vslam_components {
       if (state_ == State::init) {
         current_frame->set_keyframe();
 
-        backend_->add_keyframe(current_frame);
+        backend_->addKeyfame(current_frame);
         current_keyframe_ = current_frame;
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
         if (!current_keyframe_->has_points() || !current_frame->has_points()) {
-          backend_->remove_keyframe(current_keyframe_);
+          backend_->removeKeyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
           return;
@@ -215,7 +215,7 @@ namespace vslam_components {
         // Get the tracked camera pose and check the tracking quality
         cv::Mat T_c_p;
         if (!camera_tracker_->track_camera_2d2d(matched_points, current_frame->K(), T_c_p)) {
-          backend_->remove_keyframe(current_keyframe_);
+          backend_->removeKeyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
           return;
@@ -230,7 +230,7 @@ namespace vslam_components {
 
         // Check if we have enough initial map points
         if (new_mps.size() < min_num_kf_mps_) {
-          backend_->remove_keyframe(current_keyframe_);
+          backend_->removeKeyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
           return;
@@ -284,7 +284,7 @@ namespace vslam_components {
           current_keyframe_->set_mappoints(new_mps, first_indices);
           const auto new_old_mps = current_keyframe_->mappoints(first_indices);
           current_frame->set_mappoints(new_old_mps, second_indices, true);
-          backend_->add_keyframe(current_frame);
+          backend_->addKeyfame(current_frame);
           current_keyframe_->active_tracking_state = false;
           current_keyframe_ = current_frame;
           current_keyframe_->active_tracking_state = true;
@@ -293,7 +293,7 @@ namespace vslam_components {
           vslam_msgs::msg::Frame keyframe_msg;
           current_keyframe_->to_msg(&keyframe_msg);
 
-          visualizer_->add_keyframe(keyframe_msg);
+          visualizer_->addKeyfame(keyframe_msg);
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -350,7 +350,7 @@ namespace vslam_components {
               current_keyframe_->set_mappoints(new_mps, first_indices);
               const auto new_old_mps = current_keyframe_->mappoints(first_indices);
               current_frame->set_mappoints(new_old_mps, second_indices, true);
-              backend_->add_keyframe(current_frame);
+              backend_->addKeyfame(current_frame);
               current_keyframe_->active_tracking_state = false;
               current_keyframe_ = current_frame;
               current_keyframe_->active_tracking_state = true;
@@ -418,7 +418,7 @@ namespace vslam_components {
         auto curr_kf_id = keyframe_id_queue_->receive();
 
         // Get the keyframe from the backend
-        const auto current_keyframe = backend_->get_keyframe(curr_kf_id);
+        const auto current_keyframe = backend_->getKeyframe(curr_kf_id);
 
         if (current_keyframe == nullptr) {
           RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
@@ -433,7 +433,7 @@ namespace vslam_components {
         // Verify any potential loops
         if (results.size() > 0) {
           for (const auto& [prev_kf_id, score] : results) {
-            const auto previous_keyframe = backend_->get_keyframe(prev_kf_id);
+            const auto previous_keyframe = backend_->getKeyframe(prev_kf_id);
 
             if (previous_keyframe == nullptr) {
               RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
@@ -458,7 +458,7 @@ namespace vslam_components {
               bool refresh_visual{false};
               if (curr_kf_id - last_kf_loop_found_ > skip_n_after_loop_found_) {
                 // Run pose-graph optimization
-                backend_->add_loop_constraint(prev_kf_id, curr_kf_id, T_p_c, scale);
+                backend_->addLoopConstraint(prev_kf_id, curr_kf_id, T_p_c, scale);
                 last_kf_loop_found_ = curr_kf_id;
 
                 // Fuse the matched new map points with the existing ones
@@ -481,7 +481,7 @@ namespace vslam_components {
 
               if (refresh_visual) {
                 // Refresh the display
-                const auto keyframe_msgs = backend_->get_all_keyframe_msgs();
+                const auto keyframe_msgs = backend_->getAllKeyframeMsgs();
 
                 visualizer_->replace_all_keyframes(keyframe_msgs);
               }

@@ -17,35 +17,35 @@ namespace vslam_backend_plugins {
     /// Indirect optimizer initializer
     void initialize() override;
 
-    /// Add a new keyframe to back-end
+    /// Add a new keyframe
     /**
-     * /param keyframe a new keyframe
+     * \param[in] frame a new keyframe
      */
-    void add_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
+    void addKeyfame(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
-    /// Remove a keyframe to back-end
+    /// Remove a keyframe
     /**
-     * /param keyframe an existing keyframe
+     * \param[in] frame the keyframe to be removed
      */
-    void remove_keyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
+    void removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
     /// Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
-    vslam_datastructure::Frame::SharedPtr get_keyframe(const long unsigned int id) const override;
+    vslam_datastructure::Frame::SharedPtr getKeyframe(const long unsigned int id) const override;
 
     /// Add a loop constraint and run pose-graph optimization
     /**
-     * /param kf_id_1 first keyframe
-     * /param kf_id_2 second keyframe
-     * /param T_1_2 relative transformation from the first to second keyframe
-     * /param sim3_scale relative scale from the first to second keyframe
+     * \param[in] kf_id_1 the first keyframe id
+     * \param[in] kf_id_2 the second keyframe id
+     * \param[in] T_1_2 relative transformation from the first to the second keyframe
+     * \param[in] sim3_scale the similarity transform scale
      */
-    void add_loop_constraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
-                             const double sim3_scale) override;
+    void addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
+                           const double sim3_scale) override;
 
-    /// Export all the keyframes to frame msgs to refresh the visualizer
-    std::vector<vslam_msgs::msg::Frame> get_all_keyframe_msgs() const override;
+    /// Convert all the keyframes to frame msgs to refresh the visualizer
+    std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const override;
 
-    inline std::string get_plugin_name() override { return "vslam_backend_plugins::IndirectOptimizer"; }
+    inline std::string getPluginName() override { return "vslam_backend_plugins::IndirectOptimizer"; }
 
   private:
     // Use it for reading and writing keyframes
@@ -64,23 +64,19 @@ namespace vslam_backend_plugins {
     std::thread local_ba_thread_;
 
     /// A loop that is running in the local BA thread
-    void local_ba_loop();
+    void localBALoop();
 
     /// Get the latest `num_core_kfs_` core keyframes and their map points
     /**
      * \return core keyframes and map points
      */
-    /// @return
-    std::pair<CoreKfsSet, CoreMpsSet> get_core_keyframes_mappoints();
+    std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
 
     /// Number of core keyframes used in local BA
     size_t num_core_kfs_{5};
 
     /// A flag to indicate if the pose-graph optimization is running
     std::atomic_bool loop_optimization_running_{false};
-
-    /// Remove outlier map points (excluding the core map points)
-    void remove_outlier_mappoints();
 
     /// A boolean to stop the thread
     std::atomic_bool exit_thread_{false};

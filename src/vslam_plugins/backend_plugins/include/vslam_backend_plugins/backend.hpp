@@ -15,11 +15,27 @@ namespace vslam_backend_plugins {
       using CoreKfsSet = std::set<vslam_datastructure::Frame*, Cmp<vslam_datastructure::Frame>>;
       using CoreMpsSet = std::set<vslam_datastructure::MapPoint*, Cmp<vslam_datastructure::MapPoint>>;
 
-      virtual void run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
-                                              const long unsigned int current_kf_id)
+      /// Implementation of bundle adjustment
+      /**
+       * \param core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
+       *    fixed during optimization
+       * \param core_mappoints core map points to optimize.
+       * \param current_kf_id id of the current keyframe
+       */
+      virtual void runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
+                                           const long unsigned int current_kf_id)
           = 0;
 
-      virtual void run_pose_graph_optimization_impl(
+      /// Implementation of pose graph optimization
+      /**
+       * \param kf_id_1 the first keyframe id of the loop constraint
+       * \param kf_id_2 the second keyframe id of the loop constraint
+       * \param T_1_2 the relative pose constraint
+       * \param sim3_scale the Sim(3) scale of the loop constraint
+       * \param keyframes the keyframes in the back-end
+       * \param current_kf_id id of the current keyframe
+       */
+      virtual void runPoseGraphOptimizationImpl(
           const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
           const double sim3_scale, std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
           const long unsigned int current_kf_id)
@@ -31,13 +47,29 @@ namespace vslam_backend_plugins {
   protected:
     ~Optimizer();
 
-    void run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
-                                    const long unsigned int current_kf_id) override;
+    /// Implementation of bundle adjustment
+    /**
+     * \param core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
+     *    fixed during optimization
+     * \param core_mappoints core map points to optimize.
+     * \param current_kf_id id of the current keyframe
+     */
+    void runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
+                                 const long unsigned int current_kf_id) override;
 
-    void run_pose_graph_optimization_impl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                          const cv::Mat& T_1_2, const double sim3_scale,
-                                          std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
-                                          const long unsigned int current_kf_id) override;
+    /// Implementation of pose graph optimization
+    /**
+     * \param kf_id_1 the first keyframe id of the loop constraint
+     * \param kf_id_2 the second keyframe id of the loop constraint
+     * \param T_1_2 the relative pose constraint
+     * \param sim3_scale the Sim(3) scale of the loop constraint
+     * \param keyframes the keyframes in the back-end
+     * \param current_kf_id id of the current keyframe
+     */
+    void runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                      const cv::Mat& T_1_2, const double sim3_scale,
+                                      std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
+                                      const long unsigned int current_kf_id) override;
 
     // All keyframes (can be looked up using their id)
     std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;

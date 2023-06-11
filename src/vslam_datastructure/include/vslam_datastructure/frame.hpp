@@ -66,7 +66,7 @@ namespace vslam_datastructure {
     /// Set the camera pose
     void set_pose(const cv::Mat& T_f_w);
 
-    /// COnvert the frame msg to frame data
+    /// Convert the frame msg to frame data
     /**
      * Set the id, timestamp, image
      */

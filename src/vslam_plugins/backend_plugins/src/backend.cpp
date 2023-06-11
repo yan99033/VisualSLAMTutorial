@@ -21,8 +21,8 @@ namespace vslam_backend_plugins {
     std::cerr << "Terminated Optimizer" << std::endl;
   }
 
-  void Optimizer::run_bundle_adjustment_impl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
-                                             const long unsigned int current_kf_id) {
+  void Optimizer::runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
+                                          const long unsigned int current_kf_id) {
     // Setup g2o optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -187,7 +187,7 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Optimizer::run_pose_graph_optimization_impl(
+  void Optimizer::runPoseGraphOptimizationImpl(
       const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2, const double sim3_scale,
       std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
       const long unsigned int current_kf_id) {

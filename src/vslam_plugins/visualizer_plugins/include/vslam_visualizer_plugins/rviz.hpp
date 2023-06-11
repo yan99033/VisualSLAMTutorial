@@ -21,13 +21,13 @@ namespace vslam_visualizer_plugins {
 
     void add_live_frame(const vslam_msgs::msg::Frame& frame_msg) override;
 
-    void add_keyframe(const vslam_msgs::msg::Frame& frame_msg) override;
+    void addKeyfame(const vslam_msgs::msg::Frame& frame_msg) override;
 
-    void remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) override;
+    void removeKeyframe(const vslam_msgs::msg::Frame& frame_msg) override;
 
     void replace_all_keyframes(const FrameVec& frame_msgs) override;
 
-    inline std::string get_plugin_name() override { return "vslam_visualizer_plugins::RViz"; }
+    inline std::string getPluginName() override { return "vslam_visualizer_plugins::RViz"; }
 
   private:
     /// Visualizer node

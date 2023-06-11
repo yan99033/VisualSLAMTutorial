@@ -159,7 +159,7 @@ namespace vslam_visualizer_plugins {
     tf_broadcaster_->sendTransform(transform_stamped);
   }
 
-  void RViz::add_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
+  void RViz::addKeyfame(const vslam_msgs::msg::Frame& frame_msg) {
     Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
     Mat3x16 cam_vertices = get_camera_vertices(marker_scale_, T_w_c);
     const auto pose_marker
@@ -173,10 +173,10 @@ namespace vslam_visualizer_plugins {
     mappoint_publisher_->publish(mps_marker);
   }
 
-  void RViz::remove_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
+  void RViz::removeKeyframe(const vslam_msgs::msg::Frame& frame_msg) {
     (void)frame_msg;
 
-    std::cerr << "RViz::remove_keyframe: not supported! Use `RViz::replace_all_keyframes` instead" << std::endl;
+    std::cerr << "RViz::removeKeyframe: not supported! Use `RViz::replace_all_keyframes` instead" << std::endl;
   }
 
   void RViz::replace_all_keyframes(const FrameVec& frame_msgs) {

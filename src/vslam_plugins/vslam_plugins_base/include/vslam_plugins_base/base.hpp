@@ -7,7 +7,7 @@ namespace vslam_plugin {
   namespace base {
     class Plugin {
     public:
-      virtual inline std::string get_plugin_name() = 0;
+      virtual inline std::string getPluginName() = 0;
     };
   }  // namespace base
 

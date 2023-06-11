@@ -32,7 +32,7 @@ namespace vslam_feature_extractor_plugins {
 
     vslam_datastructure::Points extract_features(const cv::Mat& image) override;
 
-    inline std::string get_plugin_name() override { return "vslam_feature_extractor_plugins::OpenCVFeatureExtractor"; }
+    inline std::string getPluginName() override { return "vslam_feature_extractor_plugins::OpenCVFeatureExtractor"; }
 
   protected:
     /// Maximum number of features to extract in an image
