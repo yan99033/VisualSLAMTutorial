@@ -94,6 +94,30 @@ namespace {
     return mps_marker;
   }
 
+  geometry_msgs::msg::TransformStamped to_transform_stamped(const Eigen::Isometry3d& T_w_c,
+                                                            const Eigen::Matrix3d& cam_axes_transform,
+                                                            const std::string& map_frame_id,
+                                                            const std::string& cam_frame_id,
+                                                            const builtin_interfaces::msg::Time& stamp) {
+    Eigen::Vector3d translation = cam_axes_transform * T_w_c.translation();
+    Eigen::Matrix3d rotation_matrix = cam_axes_transform * T_w_c.rotation() * cam_axes_transform.inverse();
+    Eigen::Quaternion<double> quat = Eigen::Quaternion<double>(rotation_matrix);
+
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped.header.stamp = stamp;
+    transform_stamped.header.frame_id = map_frame_id;
+    transform_stamped.child_frame_id = cam_frame_id;
+    transform_stamped.transform.translation.x = translation.x();
+    transform_stamped.transform.translation.y = translation.y();
+    transform_stamped.transform.translation.z = translation.z();
+    transform_stamped.transform.rotation.x = quat.x();
+    transform_stamped.transform.rotation.y = quat.y();
+    transform_stamped.transform.rotation.z = quat.z();
+    transform_stamped.transform.rotation.w = quat.w();
+
+    return transform_stamped;
+  }
+
   Eigen::Isometry3d to_eigen_isometry3d(const geometry_msgs::msg::Pose& T_w_f) {
     // Convert the pose to an Eigen matrix
     Eigen::Isometry3d eigen_T_w_f;
@@ -114,6 +138,7 @@ namespace vslam_visualizer_plugins {
     live_frame_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("live_frame", 10);
     keyframe_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("keyframes", 10);
     mappoint_publisher_ = node_->create_publisher<visualization_msgs::msg::Marker>("mappoints", 10);
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*node_);
   }
 
   void RViz::add_live_frame(const vslam_msgs::msg::Frame& frame_msg) {
@@ -123,21 +148,27 @@ namespace vslam_visualizer_plugins {
 
     Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
     Mat3x16 cam_vertices = get_camera_vertices(live_cam_marker_scale_, T_w_c);
-    const auto pose_marker = to_pose_marker(cam_vertices, frame_id_, line_thickness_, live_cam_marker_ns_, -1,
+    const auto pose_marker = to_pose_marker(cam_vertices, map_frame_id_, line_thickness_, live_cam_marker_ns_, -1,
                                             live_cam_marker_rgb_, rclcpp::Duration({10000000}), cam_axes_transform_);
     live_frame_publisher_->publish(pose_marker);
+
+    geometry_msgs::msg::TransformStamped transform_stamped
+        = to_transform_stamped(T_w_c, cam_axes_transform_, map_frame_id_, cam_frame_id_, frame_msg.header.stamp);
+
+    // Send the transformation
+    tf_broadcaster_->sendTransform(transform_stamped);
   }
 
   void RViz::add_keyframe(const vslam_msgs::msg::Frame& frame_msg) {
     Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
     Mat3x16 cam_vertices = get_camera_vertices(marker_scale_, T_w_c);
     const auto pose_marker
-        = to_pose_marker(cam_vertices, frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
+        = to_pose_marker(cam_vertices, map_frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
                          keyframe_cam_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
     keyframe_publisher_->publish(pose_marker);
 
     const auto mps_marker
-        = to_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, keyframe_mps_marker_ns_, frame_msg.id,
+        = to_mappoints_marker(frame_msg.mappoints, map_frame_id_, marker_scale_, keyframe_mps_marker_ns_, frame_msg.id,
                               mappoint_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
     mappoint_publisher_->publish(mps_marker);
   }
@@ -155,7 +186,7 @@ namespace vslam_visualizer_plugins {
 
     // Remove the old markers
     visualization_msgs::msg::Marker del_marker;
-    del_marker.header.frame_id = frame_id_;
+    del_marker.header.frame_id = map_frame_id_;
     del_marker.action = visualization_msgs::msg::Marker::DELETEALL;
     keyframe_publisher_->publish(del_marker);
     mappoint_publisher_->publish(del_marker);
@@ -169,12 +200,12 @@ namespace vslam_visualizer_plugins {
       Eigen::Isometry3d T_w_c = to_eigen_isometry3d(frame_msg.pose);
       Mat3x16 cam_vertices = get_camera_vertices(marker_scale_, T_w_c);
       const auto pose_marker
-          = to_pose_marker(cam_vertices, frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
+          = to_pose_marker(cam_vertices, map_frame_id_, line_thickness_, keyframe_cam_marker_ns_, frame_msg.id,
                            keyframe_cam_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
 
       const auto mps_marker
-          = to_mappoints_marker(frame_msg.mappoints, frame_id_, marker_scale_, keyframe_mps_marker_ns_, frame_msg.id,
-                                mappoint_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
+          = to_mappoints_marker(frame_msg.mappoints, map_frame_id_, marker_scale_, keyframe_mps_marker_ns_,
+                                frame_msg.id, mappoint_marker_rgb_, rclcpp::Duration({0}), cam_axes_transform_);
 
       if (i == 0) {
         combined_pose_markers = pose_marker;

@@ -1,6 +1,8 @@
 #ifndef VSLAM_VISUALIZER_PLUGINS__RVIZ_HPP_
 #define VSLAM_VISUALIZER_PLUGINS__RVIZ_HPP_
 
+#include <tf2_ros/transform_broadcaster.h>
+
 #include <Eigen/Dense>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -43,8 +45,14 @@ namespace vslam_visualizer_plugins {
     /// Map point publisher
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr mappoint_publisher_;
 
+    /// Camera pose publisher
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
     /// The frame id of the global map frame
-    std::string frame_id_{"map"};
+    std::string map_frame_id_{"map"};
+
+    /// The frame id of the camera frame
+    std::string cam_frame_id_{"cam"};
 
     /// Live camera marker scale
     double live_cam_marker_scale_{10.0};
