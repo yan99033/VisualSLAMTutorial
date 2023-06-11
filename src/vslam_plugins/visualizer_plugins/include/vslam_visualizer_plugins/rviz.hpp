@@ -69,12 +69,16 @@ namespace vslam_visualizer_plugins {
     /// Keyframe camera marker namespace
     std::string keyframe_cam_marker_ns_{"keyframe_poses"};
 
+    /// Keyframe camera marker colour
     std::array<double, 3> keyframe_cam_marker_rgb_{0.0, 1.0, 0.0};
 
+    /// Map point marker namespace
     std::string keyframe_mps_marker_ns_{"keyframe_mps"};
 
+    /// Map point marker colour
     std::array<double, 3> mappoint_marker_rgb_{0.0, 0.0, 0.0};
 
+    /// Line thickness of the markers
     double line_thickness_{1.0};
   };
 }  // namespace vslam_visualizer_plugins
