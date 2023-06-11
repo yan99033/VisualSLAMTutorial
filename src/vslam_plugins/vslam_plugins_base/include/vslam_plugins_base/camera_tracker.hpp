@@ -8,7 +8,7 @@ namespace vslam_camera_tracker {
   namespace base {
     class CameraTracker : public virtual vslam_plugin::base::Plugin {
     public:
-      /// Initialize the camera tracker
+      /// Camera tracker initializer
       virtual void initialize() = 0;
 
       /// Track the relative transformation (T_2_1) given a vector containing the 2D-2D correspondences between frame1
@@ -38,9 +38,12 @@ namespace vslam_camera_tracker {
       virtual bool trackCamera3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
                                    cv::Mat& T_2_1)
           = 0;
+
+      /// Destructor
       virtual ~CameraTracker() {}
 
     protected:
+      /// Constructor
       CameraTracker() {}
     };
   }  // namespace base

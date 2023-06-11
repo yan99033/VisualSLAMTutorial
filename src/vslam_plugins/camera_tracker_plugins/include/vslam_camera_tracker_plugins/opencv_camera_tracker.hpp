@@ -13,7 +13,7 @@ namespace vslam_camera_tracker_plugins {
   public:
     ~OpenCVCameraTracker() { std::cerr << "Terminated OpenCVCameraTracker" << std::endl; }
 
-    /// Initialize the camera tracker
+    /// Camera tracker initializer
     void initialize() override {}
 
     /// Track the relative transformation (T_2_1) given a vector containing the 2D-2D correspondences between frame1
@@ -42,6 +42,7 @@ namespace vslam_camera_tracker_plugins {
     bool trackCamera3d2d(const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& K,
                          cv::Mat& T_2_1) override;
 
+    /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_camera_tracker_plugins::OpenCVCameraTracker"; }
 
   private:

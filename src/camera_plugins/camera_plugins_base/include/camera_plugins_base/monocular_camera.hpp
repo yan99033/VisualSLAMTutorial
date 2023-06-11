@@ -8,7 +8,7 @@ namespace camera_plugins {
   namespace base {
     class MonocularCamera {
     public:
-      /// Initialize the camera
+      /// Camera initializer
       /**
        * Every camera has unique characteristics (e.g., focal lengths, principal point and distortion coefficient)
        * as well as a unique camera ID
@@ -19,7 +19,7 @@ namespace camera_plugins {
       /**
        * \return An undistorted image
        */
-      virtual cv::Mat grab_image() = 0;
+      virtual cv::Mat grabImage() = 0;
 
       /// Get the camera matrix
       /**
@@ -27,9 +27,11 @@ namespace camera_plugins {
        */
       virtual cv::Mat K() = 0;
 
+      /// Destructor
       virtual ~MonocularCamera() {}
 
     protected:
+      /// Constructor
       MonocularCamera() {}
     };
   }  // namespace base

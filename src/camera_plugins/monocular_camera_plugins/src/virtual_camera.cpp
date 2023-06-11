@@ -25,12 +25,12 @@ namespace monocular_camera_plugins {
     std::string image_folder;
     params_fs_["image_folder"] >> image_folder;
 
-    load_from_folder(image_folder);
+    loadFromFolder(image_folder);
 
     params_fs_.release();
   }
 
-  cv::Mat VirtualCamera::grab_image() {
+  cv::Mat VirtualCamera::grabImage() {
     // Stop at the end of the sequence
     if (i_ >= files_.size() - 1) {
       return cv::Mat();
@@ -44,7 +44,7 @@ namespace monocular_camera_plugins {
     return image;
   }
 
-  void VirtualCamera::load_from_folder(const std::string &folder, const std::string &ext) {
+  void VirtualCamera::loadFromFolder(const std::string &folder, const std::string &ext) {
     for (const auto &f : std::filesystem::directory_iterator(folder)) {
       if (f.path().extension() == ext) {
         files_.push_back(f.path());

@@ -21,7 +21,7 @@ namespace vslam_place_recognition_plugins {
   }
 
   // Add the visual features of the current frame to the database for future retrieval
-  void BagOfWords::add_to_database(long unsigned int kf_id, const cv::Mat& visual_features) {
+  void BagOfWords::addToDatabase(long unsigned int kf_id, const cv::Mat& visual_features) {
     DBoW3::EntryId entry_id = database_->add(visual_features);
 
     keyframe_index_pairs_[entry_id] = kf_id;

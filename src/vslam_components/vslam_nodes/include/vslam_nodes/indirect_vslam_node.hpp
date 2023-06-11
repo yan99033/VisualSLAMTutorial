@@ -46,25 +46,30 @@ namespace vslam_components {
 
       /// Callback function used by the frame subscriber to get a new frame
       /**
-       * \param frame_msg frame message (defined in vslam_interfaces)
+       * \param frame_msg[in] frame message (defined in vslam_interfaces)
        */
-      void frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg);
+      void frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg);
 
       /// Check the goodness of the mapped points so far to determine the matching and tracking qualities
-      bool check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
-                             size_t& num_mps);
+      /**
+       * \param[in] matched_points point correspondences
+       * \param[in] goodness_threshold return true if the number of inlier map points is greater than this
+       * \param[out] num_mps number of inlier map points found
+       */
+      bool checkMpsQuality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
+                           size_t& num_mps);
 
       /// Camera frame tracker to calculate the relative transform and the matched points
       /**
-       * \param frame1 frame1 (usually the current keyframe)
-       * \param frame2 frame2 (usually the current frame)
-       * \param matched_points Point correspondences
-       * \param matched_index_pairs Index of the matched points in frame1 and frame2
+       * \param frame1[in] frame1 (usually the current keyframe)
+       * \param frame2[in] frame2 (usually the current frame)
+       * \param matched_points[out] Point correspondences
+       * \param matched_index_pairs[out] Index of the matched points in frame1 and frame2
        * \return a boolean indicating the goodness of the tracking
        */
-      bool track_camera(const vslam_datastructure::Frame* const frame1, const vslam_datastructure::Frame* const frame2,
-                        cv::Mat& T_2_1, vslam_datastructure::MatchedPoints& matched_points,
-                        vslam_datastructure::MatchedIndexPairs& matched_index_pairs);
+      bool trackCamera(const vslam_datastructure::Frame* const frame1, const vslam_datastructure::Frame* const frame2,
+                       cv::Mat& T_2_1, vslam_datastructure::MatchedPoints& matched_points,
+                       vslam_datastructure::MatchedIndexPairs& matched_index_pairs);
 
       /// Frame subscriber to get new frames from dataloader
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
@@ -105,18 +110,25 @@ namespace vslam_components {
       std::thread place_recognition_thread_;
 
       /// Place recognition loop running in parallel along the main thread to detect loop closure
-      void place_recognition_loop();
+      void placeRecognitionLoop();
 
       /// Verify the loop between the current keyframe and the loop keyframe candidate.
-      /// Steps in the verification:
-      /// - Track the relative transformation
-      /// - Get the map point correspondences (if tracking is good)
-      /// - Calculate the Sim(3) scale between the corresponding map points (if the number of correspondences is above a
-      ///     threshold)
-      /// - return true if the Sim(3) scale is good
-      bool verify_loop(const vslam_datastructure::Frame* const current_keyframe,
-                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
-                       std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
+      /**
+       * Steps involved in the verification:
+       * - Track the relative transformation
+       * - Get the map point correspondences (if tracking is good)
+       * - Calculate the Sim(3) scale between the corresponding map points (if the number of correspondences is above a
+       *  threshold)
+       * - return true if the Sim(3) scale is good
+       * \param[in] current_keyframe current keyframe
+       * \param[in] previous_keyframe previous keyframe (found by place recognition)
+       * \param[out] T_c_p relative transformation between the current and previous keyframe
+       * \param[out] scale Sim(3) scale
+       * \param[out] mappoint_index_pairs the corresponding indices of the matched points
+       */
+      bool verifyLoop(const vslam_datastructure::Frame* const current_keyframe,
+                      const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
+                      std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
 
       /// The id of the keyframe successfully merged into the loop after place recognition and pose-graph optimization
       long unsigned int last_kf_loop_found_{0};
@@ -132,39 +144,53 @@ namespace vslam_components {
       /// Flag to exit the place recognition thread
       std::atomic_bool exit_thread_{false};
 
-      /// Feature extraction plugin
+      /// Feature extraction plugin loader
       pluginlib::ClassLoader<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_loader_{
           "vslam_plugins_base", "vslam_feature_extractor::base::FeatureExtractor"};
+
+      /// Feature extraction plugin
       std::shared_ptr<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_;
 
-      /// Feature matcher plugin
+      /// Feature matcher plugin loader
       pluginlib::ClassLoader<vslam_feature_matcher::base::FeatureMatcher> feature_matcher_loader_{
           "vslam_plugins_base", "vslam_feature_matcher::base::FeatureMatcher"};
+
+      /// Feature matcher plugin
       std::shared_ptr<vslam_feature_matcher::base::FeatureMatcher> feature_matcher_;
 
-      /// Camera tracker plugin
+      /// Camera tracker plugin loader
       pluginlib::ClassLoader<vslam_camera_tracker::base::CameraTracker> camera_tracker_loader_{
           "vslam_plugins_base", "vslam_camera_tracker::base::CameraTracker"};
+
+      /// Camera tracker plugin
       std::shared_ptr<vslam_camera_tracker::base::CameraTracker> camera_tracker_;
 
-      /// Mapper plugin
+      /// Mapper plugin laoder
       pluginlib::ClassLoader<vslam_mapper::base::Mapper> mapper_loader_{"vslam_plugins_base",
                                                                         "vslam_mapper::base::Mapper"};
+
+      /// Mapper plugin
       std::shared_ptr<vslam_mapper::base::Mapper> mapper_;
 
-      /// Back-end plugin
+      /// Back-end plugin loader
       pluginlib::ClassLoader<vslam_backend::base::Backend> backend_loader_{"vslam_plugins_base",
                                                                            "vslam_backend::base::Backend"};
+
+      /// Back-end plugin
       std::shared_ptr<vslam_backend::base::Backend> backend_;
 
-      /// Place recognition plugin
+      /// Place recognition plugin loader
       pluginlib::ClassLoader<vslam_place_recognition::base::PlaceRecognition> place_recognition_loader_{
           "vslam_plugins_base", "vslam_place_recognition::base::PlaceRecognition"};
+
+      /// Place recognition plugin
       std::shared_ptr<vslam_place_recognition::base::PlaceRecognition> place_recognition_;
 
-      /// Visualizer plugin
+      /// Visualizer plugin loader
       pluginlib::ClassLoader<vslam_visualizer::base::Visualizer> visualizer_loader_{
           "vslam_plugins_base", "vslam_visualizer::base::Visualizer"};
+
+      /// Visualizer plugin
       std::shared_ptr<vslam_visualizer::base::Visualizer> visualizer_;
     };
   }  // namespace vslam_nodes

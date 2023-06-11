@@ -45,6 +45,7 @@ namespace vslam_backend_plugins {
     /// Convert all the keyframes to frame msgs to refresh the visualizer
     std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const override;
 
+    /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_backend_plugins::IndirectOptimizer"; }
 
   private:

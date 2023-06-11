@@ -30,7 +30,7 @@ namespace monocular_camera_plugins {
 
     params_fs_.release();
 
-    open_camera(camera_id);
+    openCamera(camera_id);
 
     double fov_rad = fov * CV_PI / 180.;
     double focal = image_height_out / 2. / tan(fov_rad / 2.);

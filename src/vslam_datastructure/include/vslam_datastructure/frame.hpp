@@ -61,16 +61,20 @@ namespace vslam_datastructure {
      * \param[in] S_f_w optimized Sim(3) pose from pose graph optimization
      * \param[in] T_f_w scaled SE(3) pose
      */
-    void update_sim3_pose_and_mps(const cv::Mat& S_f_w, const cv::Mat& T_f_w);
+    void updateSim3PoseAndMps(const cv::Mat& S_f_w, const cv::Mat& T_f_w);
 
     /// Set the camera pose
-    void set_pose(const cv::Mat& T_f_w);
+    /**
+     * \param[in] T_f_w camera pose in the world frame
+     */
+    void setPose(const cv::Mat& T_f_w);
 
     /// Convert the frame msg to frame data
     /**
      * Set the id, timestamp, image
+     * \param[in] frame_msg Frame message
      */
-    void from_msg(vslam_msgs::msg::Frame* frame_msg);
+    void fromMsg(vslam_msgs::msg::Frame* const frame_msg);
 
     /// Convert the frame data to frame msg
     /**
@@ -80,50 +84,85 @@ namespace vslam_datastructure {
      */
     // skip_loaded
     // no_points flag to skip the 2d keypoints and 3d map points
-    void to_msg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false, const bool no_mappoints = false);
+    void toMsg(vslam_msgs::msg::Frame* frame_msg, const bool skip_loaded = false, const bool no_mappoints = false);
 
     /// Set the points
-    void set_points(Points& points);
+    /**
+     * \param[in] points a vector of points
+     */
+    void setPoints(Points& points);
 
     /// Get points
+    /**
+     * \return a vector of points
+     */
     inline const Points& points() const { return points_; }
 
-    /// Get map points
+    /// Get map points of the indices
+    /**
+     * \param[in] indices of the points containing the map points
+     * \return a vector of map points
+     */
     MapPoints mappoints(const std::vector<size_t> point_indices);
 
     /// Set map points to the existing points
     /**
      * Use the set_host flag to make this frame as the host keyframe to the map points
+     * \param[in] mappoints map points to be assigned to the points
+     * \param[in] point_indices the indices of the points that are associated with the map points
+     * \param[in] set_host set true if the map points belong to this frame
      */
-    void set_mappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices,
-                       const bool set_host = false);
+    void setMappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices, const bool set_host = false);
 
     /// Fuse the old map points with the provided new map points
-    void fuse_mappoints(const MappointIndexPairs& mappoint_index_pairs);
+    /**
+     * \param[in] mappoint_index_pairs the indices of the points and the new map points to replace the old ones
+     */
+    void fuseMappoints(const MappointIndexPairs& mappoint_index_pairs);
 
     /// Check if there are points available to match or map
-    inline bool has_points() const { return !points_.empty(); }
+    inline bool hasPoints() const { return !points_.empty(); }
 
     /// Get the frame id
+    /**
+     * \return the frame id
+     */
     inline long unsigned int id() const { return id_; }
 
     /// Set the frame as keyframe
-    void set_keyframe();
+    void setKeyframe();
 
     /// A boolean to indicate if the frame is a keyframe
-    inline bool is_keyframe() const { return is_keyframe_; }
+    /**
+     * \return true if this frame is a keyframe
+     */
+    inline bool isKeyframe() const { return is_keyframe_; }
 
     /// Set the parent keyframe of this frame
-    void set_parent_keyframe(Frame* const frame);
+    /**
+     * \param frame[in] the pointer to the parent keyframe
+     */
+    void setParentKeyframe(Frame* const frame);
 
     /// Set a pose constraint to a close keyframe
-    void add_T_this_other_kf(const Frame* const next_kf, const cv::Mat& T_this_next);
+    /**
+     * \param[in] next_kf the other keyframe
+     * \param[in] T_this_next the relative transformation between this and the other keyframe
+     */
+    void addTThisOtherKf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
     /// Get pose constraints
-    inline const KeyframeConstraintsMap& T_this_other_kfs() const { return T_this_other_kfs_; }
+    /**
+     * \return the pose constraints between this and other keyframes
+     */
+    inline const KeyframeConstraintsMap& TThisOtherKfs() const { return T_this_other_kfs_; }
 
     /// Transform a map point in the world coordinate frame to this camera's coordinate frame
-    cv::Point3d mappoint_world_to_cam(const cv::Point3d& world_pos) const;
+    /**
+     * \param[in] world_pos the position of a map point in the world coordinate frame
+     * \return the position of the map point in the camera's coordinate frame
+     */
+    cv::Point3d mappointWorldToCam(const cv::Point3d& world_pos) const;
 
     /**
      * The active state denotes the frame and its map points must not be removed.
@@ -139,7 +178,7 @@ namespace vslam_datastructure {
 
   private:
     /// Iterate through the map points and set the projection constraints
-    void set_mappoint_projections();
+    void setMappointProjections();
 
     /// frame id
     long unsigned int id_{0};

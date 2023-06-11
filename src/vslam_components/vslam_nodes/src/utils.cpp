@@ -9,8 +9,8 @@
 namespace vslam_components {
   namespace vslam_nodes {
     namespace utils {
-      double calculate_sim3_scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters,
-                                  size_t ransac_n) {
+      double calculateSim3Scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters,
+                                size_t ransac_n) {
         // Rotation and translation
         cv::Matx33d R = T_2_1.rowRange(0, 3).colRange(0, 3);
         cv::Mat t = T_2_1.rowRange(0, 3).colRange(3, 4);

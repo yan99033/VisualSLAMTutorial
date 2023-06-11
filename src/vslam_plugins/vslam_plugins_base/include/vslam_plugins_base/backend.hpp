@@ -9,7 +9,7 @@ namespace vslam_backend {
   namespace base {
     class Backend : public virtual vslam_plugin::base::Plugin {
     public:
-      /// Initialize the back-end
+      /// Back-end initializer
       virtual void initialize() = 0;
 
       /// Add a new keyframe
@@ -41,9 +41,11 @@ namespace vslam_backend {
       /// Convert all the keyframes to frame msgs to refresh the visualizer
       virtual std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const = 0;
 
+      /// Destructor
       virtual ~Backend() {}
 
     protected:
+      /// Constructor
       Backend() {}
     };
   }  // namespace base

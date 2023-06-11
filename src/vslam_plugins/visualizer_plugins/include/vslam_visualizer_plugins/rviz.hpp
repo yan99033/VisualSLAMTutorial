@@ -17,16 +17,35 @@ namespace vslam_visualizer_plugins {
   public:
     ~RViz();
 
+    /// RViz visualizer initializer
     void initialize() override;
 
-    void add_live_frame(const vslam_msgs::msg::Frame& frame_msg) override;
+    /// Add a live camera pose to the visualizer (which may not be a keyframe)
+    /**
+     * \param[in] frame_msg Frame message
+     */
+    void addLiveFrame(const vslam_msgs::msg::Frame& frame_msg) override;
 
+    /// Add a keyframe camera pose and its map points to the visualizer
+    /**
+     * \param[in] frame_msg Frame message
+     */
     void addKeyfame(const vslam_msgs::msg::Frame& frame_msg) override;
 
+    /// Remove a keyframe camera pose and its map points to the visualizer
+    /**
+     * \warning NOT implemented
+     * \param[in] frame_msg Frame message
+     */
     void removeKeyframe(const vslam_msgs::msg::Frame& frame_msg) override;
 
-    void replace_all_keyframes(const FrameVec& frame_msgs) override;
+    /// Replace all keyframes and their map points in the visualizer
+    /**
+     * \param[in] frame_msgs a vector of type Frame message
+     */
+    void replaceAllKeyframes(const FrameVec& frame_msgs) override;
 
+    /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_visualizer_plugins::RViz"; }
 
   private:

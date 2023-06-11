@@ -11,13 +11,22 @@ namespace vslam_feature_matcher_plugins {
 
   class OpenCVFeatureMatcher : public virtual vslam_feature_matcher::base::FeatureMatcher {
   public:
+    /// Destructor
     ~OpenCVFeatureMatcher() { std::cerr << "Terminated OpenCVFeatureMatcher" << std::endl; }
 
+    /// Feature matcher initializer
     void initialize(const vslam_datastructure::Point::Type point_type) override;
 
-    vslam_datastructure::Matches match_features(const vslam_datastructure::Points& points1,
-                                                const vslam_datastructure::Points& points2) override;
+    /// Match features between two sets of points
+    /**
+     * \param[in] points1 a vector of points from frame 1
+     * \param[in] points2 a vector of points from frame 2
+     * \return matches between the two vector of points
+     */
+    vslam_datastructure::Matches matchFeatures(const vslam_datastructure::Points& points1,
+                                               const vslam_datastructure::Points& points2) override;
 
+    /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_feature_matcher_plugins::OpenCVFeatureMatcher"; }
 
   private:

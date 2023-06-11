@@ -10,23 +10,37 @@ namespace monocular_camera_plugins {
     protected:
       /// Get the filenames in a folder
       /**
-       * \param folder path to a folder containing the images
-       * \param ext image extension (e.g., ".png" or ".jpg")
+       * \param folder[in] path to a folder containing the images
+       * \param ext[in] image extension (e.g., ".png" or ".jpg")
        */
-      virtual void load_from_folder(const std::string& folder, const std::string& ext) = 0;
+      virtual void loadFromFolder(const std::string& folder, const std::string& ext) = 0;
     };
   }  // namespace abstract
 
   class VirtualCamera : public virtual abstract::VirtualCamera, public MonocularCamera {
   public:
+    /// Virtual camera initializer
     void initialize(const std::string& params_file) override;
 
-    cv::Mat grab_image() override;
+    /// Grab the next image from the folder
+    /**
+     * \return An undistorted image
+     */
+    cv::Mat grabImage() override;
 
+    /// Get the camera matrix
+    /**
+     * \return Camera matrix
+     */
     cv::Mat K() override { return K_.clone(); }
 
   protected:
-    void load_from_folder(const std::string& folder, const std::string& ext = ".png") override;
+    /// Get the filenames in a folder
+    /**
+     * \param folder[in] path to a folder containing the images
+     * \param ext[in] image extension (e.g., ".png" or ".jpg")
+     */
+    void loadFromFolder(const std::string& folder, const std::string& ext = ".png") override;
 
   private:
     /// The current index in the files_ vector

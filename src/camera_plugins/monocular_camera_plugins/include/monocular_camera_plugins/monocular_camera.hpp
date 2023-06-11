@@ -7,9 +7,9 @@ namespace monocular_camera_plugins {
     protected:
       /// Open the USB camera
       /**
-       * \param camera_id the USB camera ID
+       * \param[in] camera_id the USB camera ID
        */
-      virtual void open_camera(int camera_id) = 0;
+      virtual void openCamera(int camera_id) = 0;
     };
   }  // namespace abstract
 
@@ -17,27 +17,51 @@ namespace monocular_camera_plugins {
   public:
     ~MonocularCamera();
 
+    /// Monocular camera initializer
     void initialize(const std::string& params_file) override;
 
-    cv::Mat grab_image() override;
+    /// Grab the next image from the camera
+    /**
+     * \return An undistorted image
+     */
+    cv::Mat grabImage() override;
 
+    /// Get the camera matrix
+    /**
+     * \return Camera matrix
+     */
     cv::Mat K() override { return K_.clone(); }
 
   protected:
-    void open_camera(int camera_id) override;
+    /// Open the USB camera
+    /**
+     * \param[in] camera_id the USB camera ID
+     */
+    void openCamera(int camera_id) override;
 
+    /// File storage object for keeping the parameters
     cv::FileStorage params_fs_;
 
+    /// Image height
     int image_height_{-1};
+
+    /// Image width
     int image_width_{-1};
+
+    /// Camera id
     int camera_id_{-1};
 
-    // Undistorter
+    /// Undistorter
     std::unique_ptr<vslam_utils::camera::Undistorter> undistorter_{nullptr};
 
+    /// Camera matrix
     cv::Mat K_;
 
   private:
+    /// Capture video from cameras
+    /**
+     * \sa https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html
+     */
     cv::VideoCapture video_capture_;
 
     // Keeping the last image allows us to use it if VideoCapture fails to retrieve an image

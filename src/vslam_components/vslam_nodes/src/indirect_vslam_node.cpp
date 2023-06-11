@@ -10,26 +10,43 @@
 using std::placeholders::_1;
 
 namespace {
-  std::vector<size_t> get_first_indices(const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
+  /// Get the first indices in the index pairs
+  /**
+   * \param[in] index_pairs a vector containing pairs of indices
+   * \return a vector containing the first indices in the pairs
+   */
+  std::vector<size_t> getFirstIndices(const std::vector<std::pair<size_t, size_t>>& index_pairs) {
     std::vector<size_t> first_indices;
-    for (const auto& [idx1, _] : indice_pairs) {
+    for (const auto& [idx1, _] : index_pairs) {
       first_indices.push_back(idx1);
     }
     return first_indices;
   }
 
-  std::pair<std::vector<size_t>, std::vector<size_t>> get_first_and_second_indices(
-      const std::vector<std::pair<size_t, size_t>>& indice_pairs) {
+  /// Get the first and second indices in the index pairs
+  /**
+   * \param[in] index_pairs a vector containing pairs of indices
+   * \return a pair of vector containing the first and second indices in the pairs
+   */
+  std::pair<std::vector<size_t>, std::vector<size_t>> getFirstAndSecondIndices(
+      const std::vector<std::pair<size_t, size_t>>& index_pairs) {
     std::vector<size_t> first_indices;
     std::vector<size_t> second_indices;
-    for (const auto& [idx1, idx2] : indice_pairs) {
+    for (const auto& [idx1, idx2] : index_pairs) {
       first_indices.push_back(idx1);
       second_indices.push_back(idx2);
     }
     return {first_indices, second_indices};
   }
 
-  std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_correspondences(
+  /// Get the corresponding map points from the point correspondences
+  /**
+   * \param[in] matched_points point correspondences
+   * \param[in] frame1 frame 1
+   * \param[in] frame2 frame 2
+   * \return a vector containing pairs of corresponding map points
+   */
+  std::vector<std::pair<cv::Point3d, cv::Point3d>> mappointCorrespondences(
       const vslam_datastructure::MatchedPoints& matched_points, const vslam_datastructure::Frame* const frame1,
       const vslam_datastructure::Frame* const frame2) {
     std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_pairs;
@@ -49,7 +66,7 @@ namespace {
     cv::Point3d t_2_w_pt = cv::Point3d(t_2_w);
 
     for (const auto& match : matched_points) {
-      if (match.point1->has_mappoint() && match.point2->has_mappoint()) {
+      if (match.point1->hasMappoint() && match.point2->hasMappoint()) {
         cv::Point3d mp1 = match.point1->mappoint()->pos();
         mp1 = R_1_w * mp1 + t_1_w_pt;
 
@@ -62,7 +79,14 @@ namespace {
     return mappoint_pairs;
   }
 
-  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs_to_fuse(
+  /// Get the corresponding map point indices and their map points to fuse (replacing the old map points with
+  /// corresponding new ones)
+  /**
+   * map point indices are the indices to the old map points and they are replaced by the new map points
+   * \param[in] matched_points point correspondences
+   * \param[in] matched_index_pairs Index of the matched points in frame1 and frame2
+   */
+  std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappointIndexPairsToFuse(
       const vslam_datastructure::MatchedPoints& matched_points,
       const vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
     assert(matched_points.size() == matched_index_pairs.size());
@@ -70,12 +94,12 @@ namespace {
     std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
 
     for (size_t i = 0; i < matched_points.size(); i++) {
-      if (!matched_points.at(i).point1->has_mappoint()) {
+      if (!matched_points.at(i).point1->hasMappoint()) {
         continue;
       }
 
       // Skip if the point has a map point but it is not the host of the map point
-      if (matched_points.at(i).point2->has_mappoint() && !matched_points.at(i).point2->is_mappoint_host()) {
+      if (matched_points.at(i).point2->hasMappoint() && !matched_points.at(i).point2->isMappointHost()) {
         continue;
       }
 
@@ -86,7 +110,14 @@ namespace {
     return mappoint_index_pairs;
   }
 
-  bool rotation_matrix_exceed_threshold(const cv::Mat& R, const double angle_threshold_rad) {
+  /// Check if the magnitude of the rotation exceeds the threshold
+  /**
+   * Calculate the magnitude of the rotation matrix by the angle of the axis-angle representation
+   * \param[in] R rotation matrix
+   * \param[in] angle_threshold_rad angle threshold
+   * \return true if the rotation exceeds the threshold
+   */
+  bool rotationMatrixExceedThreshold(const cv::Mat& R, const double angle_threshold_rad) {
     assert(R.rows == 3 && R.cols == 3);
 
     // Calculate the angle component of the axis-angle representation
@@ -96,7 +127,12 @@ namespace {
     return angle > angle_threshold_rad;
   }
 
-  cv::Mat extract_descriptors(const vslam_datastructure::Points& points) {
+  /// Extract and concatenate descriptors from a vector of points
+  /**
+   * \param[in] points a vector of points
+   * \return descriptors
+   */
+  cv::Mat extractDescriptors(const vslam_datastructure::Points& points) {
     std::vector<cv::Mat> descriptors_vec;
     for (const auto& pt : points) {
       descriptors_vec.push_back(pt->descriptor);
@@ -150,9 +186,9 @@ namespace vslam_components {
 
       // Frame subscriber and publishers
       frame_subscriber_ = create_subscription<vslam_msgs::msg::Frame>(
-          "in_frame", 10, std::bind(&IndirectVSlamNode::frame_callback, this, _1));
+          "in_frame", 10, std::bind(&IndirectVSlamNode::frameCallback, this, _1));
 
-      place_recognition_thread_ = std::thread(&IndirectVSlamNode::place_recognition_loop, this);
+      place_recognition_thread_ = std::thread(&IndirectVSlamNode::placeRecognitionLoop, this);
     }
 
     IndirectVSlamNode::~IndirectVSlamNode() {
@@ -178,7 +214,7 @@ namespace vslam_components {
       std::cerr << "Terminated vslam node" << std::endl;
     }
 
-    void IndirectVSlamNode::frame_callback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
+    void IndirectVSlamNode::frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg) {
       RCLCPP_INFO(this->get_logger(), "Getting frame %u", frame_msg->id);
 
       // Create a cv::Mat from the image message (without copying).
@@ -187,22 +223,22 @@ namespace vslam_components {
                      frame_msg->image.data.data());
 
       // Extract features in the image
-      auto points = feature_extractor_->extract_features(cv_mat);
+      auto points = feature_extractor_->extractFeatures(cv_mat);
 
       // Create a new frame
       auto current_frame = std::make_shared<vslam_datastructure::Frame>();
-      current_frame->from_msg(frame_msg.get());
-      current_frame->set_points(points);
+      current_frame->fromMsg(frame_msg.get());
+      current_frame->setPoints(points);
 
       if (state_ == State::init) {
-        current_frame->set_keyframe();
+        current_frame->setKeyframe();
 
         backend_->addKeyfame(current_frame);
         current_keyframe_ = current_frame;
 
         state_ = State::attempt_init;
       } else if (state_ == State::attempt_init) {
-        if (!current_keyframe_->has_points() || !current_frame->has_points()) {
+        if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
           backend_->removeKeyframe(current_keyframe_);
           current_keyframe_ = nullptr;
           state_ = State::init;
@@ -210,7 +246,7 @@ namespace vslam_components {
         }
 
         auto [matched_points, matched_index_pairs]
-            = feature_matcher_->match_features(current_keyframe_->points(), current_frame->points());
+            = feature_matcher_->matchFeatures(current_keyframe_->points(), current_frame->points());
 
         // Get the tracked camera pose and check the tracking quality
         cv::Mat T_c_p;
@@ -224,7 +260,7 @@ namespace vslam_components {
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->set_pose(T_c_w);
+        current_frame->setPose(T_c_w);
 
         auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
 
@@ -236,17 +272,17 @@ namespace vslam_components {
           return;
         }
 
-        current_keyframe_->set_mappoints(new_mps, get_first_indices(matched_index_pairs), true);
+        current_keyframe_->setMappoints(new_mps, getFirstIndices(matched_index_pairs), true);
 
         // write pose to the frame message
         constexpr bool skip_loaded = true;
-        current_frame->to_msg(frame_msg.get(), skip_loaded);
+        current_frame->toMsg(frame_msg.get(), skip_loaded);
 
         current_keyframe_->active_tracking_state = true;
 
         state_ = State::tracking;
       } else if (state_ == State::tracking) {
-        if (!current_keyframe_->has_points() || !current_frame->has_points()) {
+        if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
           RCLCPP_INFO(get_logger(), "Current frame has no point to track");
           current_keyframe_->active_tracking_state = false;
           state_ = State::relocalization;
@@ -256,7 +292,7 @@ namespace vslam_components {
         cv::Mat T_c_p;
         vslam_datastructure::MatchedPoints matched_points;
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-        if (!track_camera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        if (!trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           current_keyframe_->active_tracking_state = false;
           state_ = State::relocalization;
           return;
@@ -265,25 +301,25 @@ namespace vslam_components {
         // Camera pose
         cv::Mat T_p_w = current_keyframe_->T_f_w();
         cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->set_pose(T_c_w);
+        current_frame->setPose(T_c_w);
 
         // Check if we need a new keyframe
         const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
         size_t num_kf_mps{0};
-        if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
-            || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
+        if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
+            || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
           // Set constraints between adjacent keyframes
-          current_keyframe_->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
-          current_frame->add_T_this_other_kf(current_keyframe_.get(), T_c_p);
-          current_frame->set_parent_keyframe(current_keyframe_.get());
+          current_keyframe_->addTThisOtherKf(current_frame.get(), T_c_p.inv());
+          current_frame->addTThisOtherKf(current_keyframe_.get(), T_c_p);
+          current_frame->setParentKeyframe(current_keyframe_.get());
 
           // Set the current frame as keyframe
-          current_frame->set_keyframe();
+          current_frame->setKeyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
-          const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-          current_keyframe_->set_mappoints(new_mps, first_indices);
+          const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
+          current_keyframe_->setMappoints(new_mps, first_indices);
           const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-          current_frame->set_mappoints(new_old_mps, second_indices, true);
+          current_frame->setMappoints(new_old_mps, second_indices, true);
           backend_->addKeyfame(current_frame);
           current_keyframe_->active_tracking_state = false;
           current_keyframe_ = current_frame;
@@ -291,7 +327,7 @@ namespace vslam_components {
 
           // Add the frame to visual update queue
           vslam_msgs::msg::Frame keyframe_msg;
-          current_keyframe_->to_msg(&keyframe_msg);
+          current_keyframe_->toMsg(&keyframe_msg);
 
           visualizer_->addKeyfame(keyframe_msg);
 
@@ -305,7 +341,7 @@ namespace vslam_components {
         // write pose to the frame message
         constexpr bool skip_loaded = true;
         constexpr bool no_points = true;
-        current_frame->to_msg(frame_msg.get(), skip_loaded, no_points);
+        current_frame->toMsg(frame_msg.get(), skip_loaded, no_points);
       } else {
         RCLCPP_INFO(this->get_logger(), "Relocalizating");
         cv::Mat T_c_p;
@@ -313,7 +349,7 @@ namespace vslam_components {
         vslam_datastructure::MatchedIndexPairs matched_index_pairs;
         bool tracked{false};
         // Track current frame relative to the current keyframe
-        if (track_camera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        if (trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
           tracked = true;
           current_keyframe_->active_tracking_state = true;
           state_ = State::tracking;
@@ -321,7 +357,7 @@ namespace vslam_components {
           if (loop_keyframe_ != nullptr) {
             // Track current frame relative to the keyframe found using place recognition
             std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
-            if (track_camera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+            if (trackCamera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
               tracked = true;
               state_ = State::tracking;
 
@@ -336,20 +372,20 @@ namespace vslam_components {
           if (tracked) {
             const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
             size_t num_kf_mps{0};
-            if (!check_mps_quality(matched_points, min_num_kf_mps_, num_kf_mps)
-                || rotation_matrix_exceed_threshold(R_c_p, max_rotation_rad_)) {
+            if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
+                || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
               // Set constraints between adjacent keyframes
-              current_keyframe_->add_T_this_other_kf(current_frame.get(), T_c_p.inv());
-              current_frame->add_T_this_other_kf(current_keyframe_.get(), T_c_p);
-              current_frame->set_parent_keyframe(current_keyframe_.get());
+              current_keyframe_->addTThisOtherKf(current_frame.get(), T_c_p.inv());
+              current_frame->addTThisOtherKf(current_keyframe_.get(), T_c_p);
+              current_frame->setParentKeyframe(current_keyframe_.get());
 
               // Set the current frame as keyframe
-              current_frame->set_keyframe();
+              current_frame->setKeyframe();
               const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
-              const auto [first_indices, second_indices] = get_first_and_second_indices(matched_index_pairs);
-              current_keyframe_->set_mappoints(new_mps, first_indices);
+              const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
+              current_keyframe_->setMappoints(new_mps, first_indices);
               const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-              current_frame->set_mappoints(new_old_mps, second_indices, true);
+              current_frame->setMappoints(new_old_mps, second_indices, true);
               backend_->addKeyfame(current_frame);
               current_keyframe_->active_tracking_state = false;
               current_keyframe_ = current_frame;
@@ -360,23 +396,23 @@ namespace vslam_components {
       }
 
       // Publish frame markers
-      visualizer_->add_live_frame(*frame_msg);
+      visualizer_->addLiveFrame(*frame_msg);
     }
 
-    bool IndirectVSlamNode::track_camera(const vslam_datastructure::Frame* const frame1,
-                                         const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
-                                         vslam_datastructure::MatchedPoints& matched_points,
-                                         vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
+    bool IndirectVSlamNode::trackCamera(const vslam_datastructure::Frame* const frame1,
+                                        const vslam_datastructure::Frame* const frame2, cv::Mat& T_2_1,
+                                        vslam_datastructure::MatchedPoints& matched_points,
+                                        vslam_datastructure::MatchedIndexPairs& matched_index_pairs) {
       if (frame1 == nullptr || frame2 == nullptr) {
         return false;
       }
 
       std::tie(matched_points, matched_index_pairs)
-          = feature_matcher_->match_features(frame1->points(), frame2->points());
+          = feature_matcher_->matchFeatures(frame1->points(), frame2->points());
 
       // Check if we have enough map points for camera tracking
       size_t num_matched_mps{0};
-      if (!check_mps_quality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+      if (!checkMpsQuality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
         RCLCPP_INFO(get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
         return false;
       }
@@ -389,7 +425,7 @@ namespace vslam_components {
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};
-      if (!check_mps_quality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+      if (!checkMpsQuality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
         RCLCPP_INFO(get_logger(), "Insufficient amount of inlier points (%lu) used for tracking", num_matched_inliers);
         return false;
       }
@@ -397,10 +433,10 @@ namespace vslam_components {
       return true;
     }
 
-    bool IndirectVSlamNode::check_mps_quality(const vslam_datastructure::MatchedPoints& matched_points,
-                                              const size_t goodness_thresh, size_t& num_mps) {
+    bool IndirectVSlamNode::checkMpsQuality(const vslam_datastructure::MatchedPoints& matched_points,
+                                            const size_t goodness_thresh, size_t& num_mps) {
       for (const auto& match : matched_points) {
-        if (match.point1->has_mappoint()) {
+        if (match.point1->hasMappoint()) {
           num_mps++;
         }
 
@@ -412,7 +448,7 @@ namespace vslam_components {
       return false;
     }
 
-    void IndirectVSlamNode::place_recognition_loop() {
+    void IndirectVSlamNode::placeRecognitionLoop() {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
         auto curr_kf_id = keyframe_id_queue_->receive();
@@ -426,9 +462,9 @@ namespace vslam_components {
         }
 
         // Query from database
-        cv::Mat visual_features = extract_descriptors(current_keyframe->points());
+        cv::Mat visual_features = extractDescriptors(current_keyframe->points());
         auto results = place_recognition_->query(visual_features);
-        place_recognition_->add_to_database(curr_kf_id, visual_features);
+        place_recognition_->addToDatabase(curr_kf_id, visual_features);
 
         // Verify any potential loops
         if (results.size() > 0) {
@@ -445,7 +481,7 @@ namespace vslam_components {
             RCLCPP_DEBUG(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
                          score);
             std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>> mappoint_index_pairs;
-            if (verify_loop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
+            if (verifyLoop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, mappoint_index_pairs)) {
               RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
                           prev_kf_id, score, scale);
 
@@ -463,7 +499,7 @@ namespace vslam_components {
 
                 // Fuse the matched new map points with the existing ones
                 if (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state) {
-                  previous_keyframe->fuse_mappoints(mappoint_index_pairs);
+                  previous_keyframe->fuseMappoints(mappoint_index_pairs);
 
                   refresh_visual = true;
                 }
@@ -473,7 +509,7 @@ namespace vslam_components {
                 if ((scale < 1.1 && scale > 0.9)
                     && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
                   // Fuse the matched new map points with the existing ones
-                  previous_keyframe->fuse_mappoints(mappoint_index_pairs);
+                  previous_keyframe->fuseMappoints(mappoint_index_pairs);
 
                   refresh_visual = true;
                 }
@@ -483,7 +519,7 @@ namespace vslam_components {
                 // Refresh the display
                 const auto keyframe_msgs = backend_->getAllKeyframeMsgs();
 
-                visualizer_->replace_all_keyframes(keyframe_msgs);
+                visualizer_->replaceAllKeyframes(keyframe_msgs);
               }
             }
           }
@@ -491,7 +527,7 @@ namespace vslam_components {
       }
     }
 
-    bool IndirectVSlamNode::verify_loop(
+    bool IndirectVSlamNode::verifyLoop(
         const vslam_datastructure::Frame* const current_keyframe,
         const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_p_c, double& scale,
         std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs) {
@@ -499,14 +535,14 @@ namespace vslam_components {
         return false;
       }
 
-      if (!current_keyframe->has_points() || !previous_keyframe->has_points()) {
+      if (!current_keyframe->hasPoints() || !previous_keyframe->hasPoints()) {
         RCLCPP_INFO(this->get_logger(), "there is no point to track in verifying a potential loop");
         return false;
       }
 
       vslam_datastructure::MatchedPoints matched_points;
       vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-      if (!track_camera(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
+      if (!trackCamera(current_keyframe, previous_keyframe, T_p_c, matched_points, matched_index_pairs)) {
         return false;
       }
 
@@ -515,7 +551,7 @@ namespace vslam_components {
       }
 
       // Calculate the scale
-      const auto mappoint_pairs = mappoint_correspondences(matched_points, current_keyframe, previous_keyframe);
+      const auto mappoint_pairs = mappointCorrespondences(matched_points, current_keyframe, previous_keyframe);
 
       if (mappoint_pairs.size() < min_num_mps_sim3_scale_) {
         RCLCPP_INFO(this->get_logger(),
@@ -525,12 +561,12 @@ namespace vslam_components {
         return false;
       }
 
-      scale = utils::calculate_sim3_scale(mappoint_pairs, T_p_c);
+      scale = utils::calculateSim3Scale(mappoint_pairs, T_p_c);
 
       if (scale <= 0) {
         return false;
       } else {
-        mappoint_index_pairs = mappoint_index_pairs_to_fuse(matched_points, matched_index_pairs);
+        mappoint_index_pairs = mappointIndexPairsToFuse(matched_points, matched_index_pairs);
         return true;
       }
     }

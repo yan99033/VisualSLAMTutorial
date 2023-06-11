@@ -7,8 +7,8 @@ namespace {
   // Credit:
   // https://github.com/opencv/opencv/blob/f5a92cb43f6ac6b60f401613cc80cea3a04cf59b/modules/features2d/src/orb.cpp
 
-  bool calculate_ic_angle(const cv::Mat& img, cv::KeyPoint& kp, const double scale_factor,
-                          const std::vector<int>& u_max, int half_k) {
+  bool calculateICAngle(const cv::Mat& img, cv::KeyPoint& kp, const double scale_factor, const std::vector<int>& u_max,
+                        int half_k) {
     if ((cvRound(kp.pt.x * scale_factor - kp.size) <= 0) || (cvRound(kp.pt.x * scale_factor + kp.size) >= img.cols)
         || (cvRound(kp.pt.y * scale_factor - kp.size) <= 0)
         || (cvRound(kp.pt.y * scale_factor + kp.size) >= img.rows)) {
@@ -42,9 +42,9 @@ namespace {
     return true;
   }
 
-  bool calculate_harris_response_and_octave(const CvMatPyr image_pyr, cv::KeyPoint& kp, const size_t nlevels,
-                                            const std::vector<double>& scale_factors, const int patch_size,
-                                            const int harris_block_size, const float harris_k = 0.04) {
+  bool calculateHarrisResponseAndOctave(const CvMatPyr image_pyr, cv::KeyPoint& kp, const size_t nlevels,
+                                        const std::vector<double>& scale_factors, const int patch_size,
+                                        const int harris_block_size, const float harris_k = 0.04) {
     assert(!image_pyr.empty() && (image_pyr.size() == nlevels) && (scale_factors.size() == nlevels));
 
     // Set the initial response to zero so that we can find a higher response later
@@ -119,12 +119,12 @@ namespace vslam_feature_extractor_plugins {
     }
   }
 
-  vslam_datastructure::Points OpenCVFeatureExtractor::extract_features(const cv::Mat& image) {
+  vslam_datastructure::Points OpenCVFeatureExtractor::extractFeatures(const cv::Mat& image) {
     // Convert the image to greyscale
     cv::Mat grey_image;
     cv::cvtColor(image, grey_image, cv::COLOR_BGR2GRAY);
 
-    auto keypoints = calculate_keypoints(grey_image);
+    auto keypoints = calculateKeypoints(grey_image);
 
     cv::Mat descriptors;
     feature_detector_->compute(grey_image, keypoints, descriptors);
@@ -137,7 +137,7 @@ namespace vslam_feature_extractor_plugins {
     return ft_points;
   }
 
-  OpenCVFeatureExtractor::KeyPoints OpenCVFeatureExtractor::calculate_keypoints(const cv::Mat& grey_image) {
+  OpenCVFeatureExtractor::KeyPoints OpenCVFeatureExtractor::calculateKeypoints(const cv::Mat& grey_image) {
     std::vector<cv::Point2d> corners;
     cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_);
 
@@ -180,9 +180,8 @@ namespace vslam_feature_extractor_plugins {
     keypoints.reserve(corners.size());
     for (const auto& corner : corners) {
       cv::KeyPoint kp(corner, 1.0f);
-      if (calculate_harris_response_and_octave(image_pyramid, kp, nlevels_, scale_factors, patch_size_,
-                                               harris_block_size_)
-          && calculate_ic_angle(image_pyramid.at(kp.octave), kp, scale_factors.at(kp.octave), umax, half_patch_size)) {
+      if (calculateHarrisResponseAndOctave(image_pyramid, kp, nlevels_, scale_factors, patch_size_, harris_block_size_)
+          && calculateICAngle(image_pyramid.at(kp.octave), kp, scale_factors.at(kp.octave), umax, half_patch_size)) {
         keypoints.push_back(kp);
       }
     }

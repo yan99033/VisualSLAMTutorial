@@ -44,14 +44,14 @@ namespace vslam_backend_plugins {
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
     unsigned long int vertex_edge_id{0};
     for (auto mp : core_mappoints) {
-      if (mp == nullptr || mp->is_outlier()) {
+      if (mp == nullptr || mp->isOutlier()) {
         continue;
       }
 
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->has_frame()) {
+        if (pt == nullptr || !pt->hasFrame()) {
           continue;
         }
         num_valid_projections++;
@@ -69,7 +69,7 @@ namespace vslam_backend_plugins {
 
       // Projections
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->has_frame()) {
+        if (pt == nullptr || !pt->hasFrame()) {
           continue;
         }
 
@@ -137,7 +137,7 @@ namespace vslam_backend_plugins {
                                                                                    T_f_w.translation());
 
       if (kf_p) {
-        kf_p->set_pose(cv_T_f_w);
+        kf_p->setPose(cv_T_f_w);
       }
     }
 
@@ -147,7 +147,7 @@ namespace vslam_backend_plugins {
         auto mp_p = core_mp_vertices[mp_vertex];
 
         if (mp_p) {
-          mp_p->set_outlier();
+          mp_p->setOutlier();
         }
       }
     }
@@ -157,14 +157,14 @@ namespace vslam_backend_plugins {
     for (auto [mp_vertex, mp_p] : core_mp_vertices) {
       auto mp = mp_vertex->estimate();
       if (mp_p && mp.hasNaN()) {
-        mp_p->set_outlier();
+        mp_p->setOutlier();
         continue;
       }
 
-      if (mp_p && !mp_p->is_outlier()) {
+      if (mp_p && !mp_p->isOutlier()) {
         auto pt_3d = vslam_utils::conversions::eigenVector3dToCvPoint3d(mp);
 
-        mp_p->set_pos(pt_3d);
+        mp_p->setPos(pt_3d);
         inlier_mappoints++;
       }
     }
@@ -178,7 +178,7 @@ namespace vslam_backend_plugins {
 
         // Relative pose constraint
         const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_w_f();
-        kf1->add_T_this_other_kf(kf2, T_1_2);
+        kf1->addTThisOtherKf(kf2, T_1_2);
       }
     }
 
@@ -222,7 +222,7 @@ namespace vslam_backend_plugins {
     for (const auto& [kf_id, kf] : keyframes) {
       auto v_sim3_this = kf_vertices.at(kf_id);
 
-      for (const auto& [other_kf, T_this_other] : kf->T_this_other_kfs()) {
+      for (const auto& [other_kf, T_this_other] : kf->TThisOtherKfs()) {
         if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
           continue;
         }
@@ -288,16 +288,16 @@ namespace vslam_backend_plugins {
       cv::Mat S_f_w = temp_T_f_w.clone();
       S_f_w.rowRange(0, 3).colRange(0, 3) *= scale;
 
-      kf->update_sim3_pose_and_mps(S_f_w, T_f_w);
+      kf->updateSim3PoseAndMps(S_f_w, T_f_w);
     }
 
     auto kfs_it = keyframes.find(current_kf_id);
     while (kfs_it != keyframes.begin()) {
       auto this_kf = kfs_it->second;
       // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
-      for (auto [other_kf, old_T_this_other] : this_kf->T_this_other_kfs()) {
+      for (auto [other_kf, old_T_this_other] : this_kf->TThisOtherKfs()) {
         const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
-        this_kf->add_T_this_other_kf(other_kf, T_this_other);
+        this_kf->addTThisOtherKf(other_kf, T_this_other);
       }
 
       kfs_it--;
@@ -307,8 +307,8 @@ namespace vslam_backend_plugins {
     auto kf_1 = keyframes.at(kf_id_1);
     auto kf_2 = keyframes.at(kf_id_2);
     const cv::Mat T_1_2_updated = kf_1->T_f_w() * kf_2->T_w_f();
-    kf_1->add_T_this_other_kf(kf_2.get(), T_1_2_updated);
-    kf_2->add_T_this_other_kf(kf_1.get(), T_1_2_updated.inv());
+    kf_1->addTThisOtherKf(kf_2.get(), T_1_2_updated);
+    kf_2->addTThisOtherKf(kf_1.get(), T_1_2_updated.inv());
   }
 
 }  // namespace vslam_backend_plugins

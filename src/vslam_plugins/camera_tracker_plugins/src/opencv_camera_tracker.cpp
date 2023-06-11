@@ -28,8 +28,8 @@ namespace {
     CvPoint2dVec cv_points_2d_2;
     PointPtrVec points_3d_1_ptr;
     for (const auto& match : matched_points) {
-      if (match.point1->has_mappoint()) {
-        assert(match.point1->has_frame());
+      if (match.point1->hasMappoint()) {
+        assert(match.point1->hasFrame());
 
         // Transform the 3d point in point1 to local
         cv::Point3d pt_3d_1 = match.point1->mappoint()->pos();
@@ -44,7 +44,7 @@ namespace {
         points_3d_1_ptr.push_back(match.point1->mappoint());
 
         // Mark it as outlier first and decide later
-        match.point1->mappoint()->set_outlier();
+        match.point1->mappoint()->setOutlier();
       }
     }
 
@@ -109,7 +109,7 @@ namespace vslam_camera_tracker_plugins {
     cv::Rodrigues(rpy, R);
 
     for (cv::MatConstIterator_<int> it = inliers.begin<int>(); it != inliers.end<int>(); ++it) {
-      points_3d_1_ptr.at(*it)->set_inlier();
+      points_3d_1_ptr.at(*it)->setInlier();
     }
 
     T_2_1 = vslam_utils::conversions::toTransformationMatrix(R, t);

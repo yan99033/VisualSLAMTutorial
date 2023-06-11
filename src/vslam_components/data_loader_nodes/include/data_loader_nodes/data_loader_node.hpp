@@ -20,7 +20,7 @@ namespace vslam_components {
       class DataLoaderNode {
       protected:
         /// Periodically call this function to publish data
-        virtual void on_timer() = 0;
+        virtual void onTimer() = 0;
       };
     }  // namespace abstract
 
@@ -31,7 +31,7 @@ namespace vslam_components {
       ~DataLoaderNode();
 
     protected:
-      void on_timer() override;
+      void onTimer() override;
 
     private:
       /// Frame count

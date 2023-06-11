@@ -24,7 +24,7 @@ namespace vslam_visualizer_plugins {
          Visualizer::p4[3])
             .finished();
 
-  Mat3x16 Visualizer::get_camera_vertices(const double scale, const Eigen::Isometry3d& T_w_c) {
+  Mat3x16 Visualizer::getCameraVertices(const double scale, const Eigen::Isometry3d& T_w_c) {
     Mat4x16 cam_marker_vertices = cam_marker_vertices_;
     cam_marker_vertices.topRows(3) = scale * cam_marker_vertices.topRows(3);
     cam_marker_vertices = T_w_c.matrix() * cam_marker_vertices;

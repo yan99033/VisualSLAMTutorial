@@ -4,8 +4,12 @@
 #include <iostream>
 
 namespace {
-  std::pair<std::vector<cv::KeyPoint>, cv::Mat> extract_keypoints_descriptors(
-      const vslam_datastructure::Points& points) {
+  /// Concatenate the keypoint descriptors into a matrix
+  /**
+   * \param points[in] a vector of points
+   * \return a pair of type keypoints and descriptors
+   */
+  std::pair<std::vector<cv::KeyPoint>, cv::Mat> extractKeypointsDescriptors(const vslam_datastructure::Points& points) {
     std::vector<cv::KeyPoint> keypoints;
     std::vector<cv::Mat> descriptors_vec;
     for (const auto& pt : points) {
@@ -18,10 +22,18 @@ namespace {
     return {keypoints, descriptors};
   }
 
-  vslam_datastructure::Matches create_matched_points(const vslam_datastructure::Points& points1,
-                                                     const vslam_datastructure::Points& points2,
-                                                     const std::vector<cv::DMatch>& matches,
-                                                     const std::vector<char>& mask) {
+  /// Create matched points and indices from the match results
+  /**
+   * \param[in] points1 a vector of points from frame 1
+   * \param[in] points2 a vector of points from frame 2
+   * \param[in] matches match results
+   * \param[in] mask the inlier mask of the match results
+   * \return matches which consists of point correspondences and the corresponding indices
+   */
+  vslam_datastructure::Matches createMatchedPoints(const vslam_datastructure::Points& points1,
+                                                   const vslam_datastructure::Points& points2,
+                                                   const std::vector<cv::DMatch>& matches,
+                                                   const std::vector<char>& mask) {
     if (!mask.empty() && (mask.size() != matches.size())) {
       throw std::runtime_error("Invalid mask " + std::to_string(mask.size()) + " or matches size "
                                + std::to_string(matches.size()));
@@ -58,22 +70,22 @@ namespace vslam_feature_matcher_plugins {
     }
   }
 
-  vslam_datastructure::Matches OpenCVFeatureMatcher::match_features(const vslam_datastructure::Points& points1,
-                                                                    const vslam_datastructure::Points& points2) {
+  vslam_datastructure::Matches OpenCVFeatureMatcher::matchFeatures(const vslam_datastructure::Points& points1,
+                                                                   const vslam_datastructure::Points& points2) {
     if (points1.empty() || points2.empty()) {
       return {vslam_datastructure::MatchedPoints(), vslam_datastructure::MatchedIndexPairs()};
     }
 
     // Get keypoints and descriptors
-    auto [keypoints1, descriptors1] = extract_keypoints_descriptors(points1);
-    auto [keypoints2, descriptors2] = extract_keypoints_descriptors(points2);
+    auto [keypoints1, descriptors1] = extractKeypointsDescriptors(points1);
+    auto [keypoints2, descriptors2] = extractKeypointsDescriptors(points2);
 
     // Match descriptors
     std::vector<cv::DMatch> matches;
     std::vector<char> matcher_mask;
     feature_matcher_->match(descriptors1, descriptors2, matches, matcher_mask);
 
-    const auto [matched_points, matched_index_pairs] = create_matched_points(points1, points2, matches, matcher_mask);
+    const auto [matched_points, matched_index_pairs] = createMatchedPoints(points1, points2, matches, matcher_mask);
 
     return {matched_points, matched_index_pairs};
   }

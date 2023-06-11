@@ -19,11 +19,11 @@ namespace vslam_datastructure {
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
-    /// Copy from another mappoint (TODO: do we still need it?)
-    void copy_from(MapPoint* other);
-
     /// Set the position of the map point
-    void set_pos(const cv::Point3d& pt_3d);
+    /**
+     * \param[in] pos_3d position of the map point
+     */
+    void setPos(const cv::Point3d& pos_3d);
 
     /// Get the position of the map point
     /**
@@ -32,14 +32,20 @@ namespace vslam_datastructure {
     cv::Point3d pos();
 
     /// Add a projection from `this` map point to a point in a frame
-    void add_projection(Point* point);
+    /**
+     * \param[in] point add a new projection from the map point to the point in a frame
+     */
+    void addProjection(Point* point);
 
     /// Remove the projection of the point
-    void remove_projection(Point* point);
+    /**
+     * \param[in] point remove the existing projection from the map point to the point in a frame
+     */
+    void removeProjection(Point* point);
 
     /// Get the projections
     /**
-     * \note Do not modify the projections, i.e., calling MapPoint::add_projection or MapPoint::remove_projection while
+     * \note Do not modify the projections, i.e., calling MapPoint::addProjection or MapPoint::removeProjection while
      * iterating through the projections
      *
      * \return projections
@@ -47,16 +53,16 @@ namespace vslam_datastructure {
     inline const std::set<Point*>& projections() const { return projections_; }
 
     /// Make the map point an inlier
-    inline void set_inlier() { is_outlier_ = false; };
+    inline void setInlier() { isOutlier_ = false; };
 
     /// Make the map point an outlier
-    inline void set_outlier() { is_outlier_ = true; }
+    inline void setOutlier() { isOutlier_ = true; }
 
     /// Check if the map point is an outlier
     /**
      * \return a boolean indicating if the map point is an outlier
      */
-    inline bool is_outlier() const { return is_outlier_; }
+    inline bool isOutlier() const { return isOutlier_; }
 
     /// Map point id
     /**
@@ -65,30 +71,33 @@ namespace vslam_datastructure {
     inline long unsigned int id() const { return id_; }
 
     /// Set the host keyframe id
-    void set_host_keyframe_id(const long unsigned int host_keyframe_id);
+    /**
+     * \param[in] host_keyframe_id the host keyframe id of this map point
+     */
+    void setHostKeyframeId(const long unsigned int host_keyframe_id);
 
     /// Check if the keyframe id matches the map point host keyframe id
     /**
      *  \param keyframe_id a keyframe id
      *  \return a boolean indicating if the id matches the host keyframe id
      */
-    bool is_host(const long unsigned int keyframe_id);
+    bool isHost(const long unsigned int keyframe_id);
 
     /// Check if the map point is associated with a host keyframe id
     /**
      * \return a boolean indicating if the map point is associated with a host keyframe id
      */
-    inline bool has_host() const { return host_keyframe_id_.has_value(); }
+    inline bool hasHost() const { return host_keyframe_id_.has_value(); }
 
   private:
     /// Mutex for synchronizing reading and writing mappoint data
     std::mutex mutex_;
 
     /// 3D position of the map point
-    cv::Point3d pt_3d_;
+    cv::Point3d pos_3d_;
 
     /// A flag to indicate if the map point is an outlier
-    std::atomic_bool is_outlier_{false};
+    std::atomic_bool isOutlier_{false};
 
     /// The corresponding points in the keyframes
     std::set<Point*> projections_;
@@ -133,9 +142,9 @@ namespace vslam_datastructure {
 
     /// Set the frame pointer (non-owning) of the point
     /**
-     * \param frame frame pointer
+     * \param[in] frame frame pointer
      */
-    void set_frame(Frame* frame);
+    void setFrame(Frame* frame);
 
     /// Get the frame pointer
     Frame* frame();
@@ -144,38 +153,53 @@ namespace vslam_datastructure {
     MapPoint::SharedPtr mappoint();
 
     /// Set the map point of the point
-    void set_mappoint(MapPoint::SharedPtr mappoint);
+    /**
+     * \param[in] mappoint Shared pointer to a map point
+     */
+    void setMappoint(MapPoint::SharedPtr mappoint);
 
     /// Check if there is a map point associated with the point
     /**
      * \return A boolean indicating if there is a map point
      */
-    bool has_mappoint();
+    bool hasMappoint();
 
     /// Check if there is a frame associated with the point
     /**
      * \return A boolean indicating if there is a frame
      */
-    bool has_frame();
+    bool hasFrame();
 
     /// A boolean indicating if the host of the map point (if there is one associated) is 'this' point
-    bool is_mappoint_host();
+    /**
+     * \return A boolean indicating if the this point host the map point
+     */
+    bool isMappointHost();
 
   private:
+    /// Map point of this point
     MapPoint::SharedPtr mappoint_;
 
-    Frame* frame_;  //!< non-owning frame pointer
+    /// The frame of this point
+    Frame* frame_;
 
+    /// Point id
     long unsigned int id{point_count_++};
 
+    /// Number of points so far
     static long unsigned int point_count_;
 
+    /// Mutex for reading and writing point data
     std::mutex mutex_;
   };
   using Points = std::vector<Point::SharedPtr>;
 
+  /// Point correspondence
   struct MatchedPoint {
+    /// Point in frame 1
     Point::SharedPtr point1;
+
+    /// Point in frame 2
     Point::SharedPtr point2;
   };
   using MatchedPoints = std::vector<MatchedPoint>;

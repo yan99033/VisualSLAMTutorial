@@ -31,7 +31,7 @@ namespace vslam_backend_plugins {
   void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::localBALoop, this); }
 
   void IndirectOptimizer::addKeyfame(vslam_datastructure::Frame::SharedPtr keyframe) {
-    assert(keyframe->is_keyframe());
+    assert(keyframe->isKeyframe());
 
     {
       std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
@@ -108,7 +108,7 @@ namespace vslam_backend_plugins {
       core_keyframes.insert(kf.get());
 
       for (auto pt : kf->points()) {
-        if (pt->has_mappoint() && pt->mappoint()->projections().size() > 1) {
+        if (pt->hasMappoint() && pt->mappoint()->projections().size() > 1) {
           core_mappoints.insert(pt->mappoint().get());
         }
       }
@@ -149,7 +149,7 @@ namespace vslam_backend_plugins {
     std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
     for (const auto& [_, kf] : keyframes_) {
       vslam_msgs::msg::Frame keyframe_msg;
-      kf->to_msg(&keyframe_msg, true);
+      kf->toMsg(&keyframe_msg, true);
       keyframe_msgs.push_back(keyframe_msg);
     }
 

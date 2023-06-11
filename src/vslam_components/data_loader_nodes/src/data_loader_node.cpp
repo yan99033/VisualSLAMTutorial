@@ -28,7 +28,7 @@ namespace vslam_components {
         throw std::runtime_error("frame_rate_hz must be greater than zero");
       }
       timer_ = create_wall_timer(std::chrono::duration<double>(1. / frame_rate_hz),
-                                 std::bind(&DataLoaderNode::on_timer, this));
+                                 std::bind(&DataLoaderNode::onTimer, this));
 
       RCLCPP_INFO(this->get_logger(), "Going to publish the frames at %lu hz \n", frame_rate_hz);
 
@@ -45,8 +45,8 @@ namespace vslam_components {
       std::cerr << "Terminated DataLoaderNode" << std::endl;
     }
 
-    void DataLoaderNode::on_timer() {
-      const auto image = camera_->grab_image();
+    void DataLoaderNode::onTimer() {
+      const auto image = camera_->grabImage();
 
       if (image.empty()) {
         RCLCPP_INFO_ONCE(this->get_logger(), "Received an empty image. Skip publishing \n");

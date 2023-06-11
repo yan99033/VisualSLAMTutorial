@@ -6,8 +6,10 @@
 namespace monocular_camera_plugins {
   // For more information about the camera, see here
   // https://github.com/astar-ai/calicam
+  /// \note I haven't done extensive tests with the camera yet
   class CaliCam : public MonocularCamera {
   public:
+    /// Calicam initializer
     void initialize(const std::string& params) override;
   };
 }  // namespace monocular_camera_plugins

@@ -24,7 +24,7 @@ namespace monocular_camera_plugins {
     params_fs_["image_height"] >> image_height_;
     params_fs_["image_width"] >> image_width_;
 
-    open_camera(camera_id);
+    openCamera(camera_id);
 
     cv::Mat K;
     params_fs_["K"] >> K;
@@ -38,7 +38,7 @@ namespace monocular_camera_plugins {
     params_fs_.release();
   }
 
-  cv::Mat MonocularCamera::grab_image() {
+  cv::Mat MonocularCamera::grabImage() {
     cv::Mat image;
 
     video_capture_ >> image;
@@ -47,7 +47,7 @@ namespace monocular_camera_plugins {
     return image;
   }
 
-  void MonocularCamera::open_camera(int camera_id) {
+  void MonocularCamera::openCamera(int camera_id) {
     if (video_capture_.isOpened()) {
       return;
     }
