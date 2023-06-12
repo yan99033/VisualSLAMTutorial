@@ -37,7 +37,7 @@ namespace monocular_camera_plugins {
     }
 
     cv::Mat image = cv::imread(files_.at(i_), cv::IMREAD_COLOR);
-    image = undistorter_->undistort_image(image);
+    image = undistorter_->undistortImage(image);
 
     i_++;
 

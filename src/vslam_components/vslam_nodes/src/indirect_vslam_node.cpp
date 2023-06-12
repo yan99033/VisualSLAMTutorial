@@ -219,7 +219,7 @@ namespace vslam_components {
 
       // Create a cv::Mat from the image message (without copying).
       cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
-                     vslam_utils::conversions::encoding2mat_type(frame_msg->image.encoding),
+                     vslam_utils::conversions::encodingToCvMatType(frame_msg->image.encoding),
                      frame_msg->image.data.data());
 
       // Extract features in the image

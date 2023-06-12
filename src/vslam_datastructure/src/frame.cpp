@@ -101,7 +101,7 @@ namespace vslam_datastructure {
     ros_timestamp_nanosec_ = frame_msg->header.stamp.nanosec;
 
     cv::Mat cv_mat(frame_msg->image.height, frame_msg->image.width,
-                   vslam_utils::conversions::encoding2mat_type(frame_msg->image.encoding),
+                   vslam_utils::conversions::encodingToCvMatType(frame_msg->image.encoding),
                    frame_msg->image.data.data());
     image_ = cv_mat.clone();
 
@@ -123,7 +123,7 @@ namespace vslam_datastructure {
 
       frame_msg->image.height = image_.rows;
       frame_msg->image.width = image_.cols;
-      frame_msg->image.encoding = vslam_utils::conversions::mat_type2encoding(image_.type());
+      frame_msg->image.encoding = vslam_utils::conversions::cvMatTypeToEncoding(image_.type());
       frame_msg->image.is_bigendian = false;
       frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
       frame_msg->image.data.assign(image_.datastart, image_.dataend);

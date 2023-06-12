@@ -68,11 +68,12 @@ namespace vslam_camera_tracker_plugins {
     cv::Mat rpy;
     cv::Rodrigues(R, rpy);
 
-    std::cout << "-----------------------" << std::endl;
-    std::cout << "Nister 5-pt solution: " << std::endl;
-    std::cout << "rotation: " << rpy.t() << std::endl;
-    std::cout << "translation: " << t.t() << std::endl;
-    std::cout << "-----------------------" << std::endl;
+    // std::cout << "-----------------------" << std::endl;
+    // std::cout << "Nister 5-pt solution: " << std::endl;
+    // std::cout << "rotation: " << rpy.t() << std::endl;
+    // std::cout << "translation: " << t.t() << std::endl;
+    // std::cout << "num inliers: " << num_inliers << " / " << matched_points.size() << std::endl;
+    // std::cout << "-----------------------" << std::endl;
 
     if (static_cast<double>(num_inliers) / static_cast<double>(matched_points.size()) < inlier_ratio_) {
       return false;
@@ -94,12 +95,12 @@ namespace vslam_camera_tracker_plugins {
     cv::solvePnPRansac(cv_points_3d_1, cv_points_2d_2, K, cv::Mat(), rpy, t, use_extrinsic_guess_,
                        pnp_ransac_num_iters_, pnp_reproj_err_thresh_, pnp_confidence_, inliers);
 
-    std::cout << "-----------------------" << std::endl;
-    std::cout << "pnp solution: " << std::endl;
-    std::cout << "rotation: " << rpy.t() << std::endl;
-    std::cout << "translation: " << t.t() << std::endl;
-    std::cout << "num inliers: " << inliers.total() << " / " << cv_points_3d_1.size() << std::endl;
-    std::cout << "-----------------------" << std::endl;
+    // std::cout << "-----------------------" << std::endl;
+    // std::cout << "pnp solution: " << std::endl;
+    // std::cout << "rotation: " << rpy.t() << std::endl;
+    // std::cout << "translation: " << t.t() << std::endl;
+    // std::cout << "num inliers: " << inliers.total() << " / " << cv_points_3d_1.size() << std::endl;
+    // std::cout << "-----------------------" << std::endl;
 
     if (static_cast<double>(inliers.total()) / static_cast<double>(cv_points_3d_1.size()) < inlier_ratio_) {
       return false;

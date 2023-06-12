@@ -56,7 +56,7 @@ namespace vslam_components {
       sensor_msgs::msg::Image im_msg;
       im_msg.height = image.rows;
       im_msg.width = image.cols;
-      im_msg.encoding = vslam_utils::conversions::mat_type2encoding(image.type());
+      im_msg.encoding = vslam_utils::conversions::cvMatTypeToEncoding(image.type());
       im_msg.is_bigendian = false;
       im_msg.step = static_cast<sensor_msgs::msg::Image::_step_type>(image.step);
       im_msg.data.assign(image.datastart, image.dataend);
