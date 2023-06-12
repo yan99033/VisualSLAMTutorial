@@ -8,6 +8,6 @@
   </class>
 
   <class type="monocular_camera_plugins::VirtualCamera" base_class_type="camera_plugins::base::MonocularCamera">
-    <description>This is a virtual camera plugin. This can be used to load images from a folder.</description>
+    <description>This is a virtual camera plugin. Use this to load images from a folder.</description>
   </class>
 </library>

@@ -22,26 +22,32 @@ find_package(vslam_msgs REQUIRED)
 find_package(vslam_utils REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include_directories(include)
-
-# create ament index resource which references the libraries in the binary dir
-set(LIB_NAME data_loader_nodes)
-add_library(${LIB_NAME} SHARED
-  src/data_loader_node.cpp)
-target_link_libraries(
-  ${LIB_NAME} ${OpenCV_LIBRARIES}
-)
-target_compile_definitions(${LIB_NAME}
-  PRIVATE "COMPOSITION_BUILDING_DLL")
-ament_target_dependencies(${LIB_NAME}
+set(dependencies
   rclcpp
   rclcpp_components
   pluginlib
   camera_plugins_base
   vslam_msgs
-  vslam_utils)
+  vslam_utils
+  OpenCV
+)
 
-rclcpp_components_register_nodes(${LIB_NAME} "vslam_components::data_loader_nodes::DataLoaderNode")
+set(sources
+  src/data_loader_node.cpp
+)
+
+include_directories(include)
+
+# create ament index resource which references the libraries in the binary dir
+add_library(${PROJECT_NAME} SHARED ${sources})
+target_compile_definitions(${PROJECT_NAME}
+  PRIVATE "COMPOSITION_BUILDING_DLL")
+ament_target_dependencies(
+  ${PROJECT_NAME}
+  ${dependencies}
+)
+
+rclcpp_components_register_nodes(${PROJECT_NAME} "vslam_components::data_loader_nodes::DataLoaderNode")
 
 
 if(BUILD_TESTING)
@@ -56,8 +62,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(TARGETS
-  data_loader_nodes
+install(
+  TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)

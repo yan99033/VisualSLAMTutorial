@@ -51,7 +51,7 @@ ament_target_dependencies(${PROJECT_NAME}
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "vslam_components::vslam_nodes::IndirectVSlamNode")
 
-add_executable(indirect_vslam_node src/indirect_vslam_node.cpp src/utils.cpp)
+add_executable(indirect_vslam_node ${sources})
 ament_target_dependencies(indirect_vslam_node ${dependencies})
 
 if(BUILD_TESTING)
