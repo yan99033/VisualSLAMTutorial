@@ -13,7 +13,8 @@ namespace {
   void addKeypointsToImageFrameMsg(vslam_msgs::msg::Frame& frame_msg) {
     // Create a cv::Mat from the image message (without copying).
     cv::Mat cv_mat(frame_msg.image.height, frame_msg.image.width,
-                   vslam_utils::conversions::encoding2mat_type(frame_msg.image.encoding), frame_msg.image.data.data());
+                   vslam_utils::conversions::encodingToCvMatType(frame_msg.image.encoding),
+                   frame_msg.image.data.data());
 
     // Add 2D keypoints to the image message and publish
     for (const auto& kp : frame_msg.keypoints) {

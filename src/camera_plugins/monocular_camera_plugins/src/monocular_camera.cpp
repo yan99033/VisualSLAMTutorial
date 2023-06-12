@@ -42,7 +42,7 @@ namespace monocular_camera_plugins {
     cv::Mat image;
 
     video_capture_ >> image;
-    image = undistorter_->undistort_image(image.clone());
+    image = undistorter_->undistortImage(image.clone());
 
     return image;
   }
