@@ -48,7 +48,6 @@ Run `colcon build` to build the packages.
 
 - Create a copy of the [KITTI camera parameters](src/camera_plugins//monocular_camera_plugins/params/kitti_camera.yaml.example) (and remove the .example extension) and modify the parameters accordingly.
 - Create a copy of the [vslam_demo parameters](src/vslam_demos/params/test_kitti.yaml.example) (and remove the .example extension) and modify the parameters accordingly.
-- 
 - Launch the demo
   ```bash
   source install/setup.bash
