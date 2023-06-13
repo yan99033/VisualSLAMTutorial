@@ -214,7 +214,7 @@ namespace vslam_backend_plugins {
     optimizer.setVerbose(false);
     typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 3>> BlockSolverType;
     typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
-    auto solver = new g2o::OptimizationAlgorithmGaussNewton(  // OptimizationAlgorithmLevenberg(
+    auto solver = new g2o::OptimizationAlgorithmGaussNewton(
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     optimizer.setAlgorithm(solver);
 
