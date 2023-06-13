@@ -1,3 +1,6 @@
+#ifndef MONOCULAR_CAMERA_PLUGINS__MONOCULAR_CAMERA_HPP_
+#define MONOCULAR_CAMERA_PLUGINS__MONOCULAR_CAMERA_HPP_
+
 #include "camera_plugins_base/monocular_camera.hpp"
 #include "vslam_utils/undistorter.hpp"
 
@@ -68,3 +71,5 @@ namespace monocular_camera_plugins {
     cv::Mat last_image_;
   };
 }  // namespace monocular_camera_plugins
+
+#endif  // MONOCULAR_CAMERA_PLUGINS__MONOCULAR_CAMERA_HPP_
