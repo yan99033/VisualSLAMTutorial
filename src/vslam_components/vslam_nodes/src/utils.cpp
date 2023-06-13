@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "vslam_nodes/utils.h"
+#include "vslam_nodes/utils.hpp"
 
 #include <limits>
 #include <opencv2/core/mat.hpp>

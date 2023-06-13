@@ -22,7 +22,7 @@
 
 #include "vslam_msgs/msg/vector2d.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
-#include "vslam_nodes/utils.h"
+#include "vslam_nodes/utils.hpp"
 #include "vslam_utils/converter.hpp"
 
 using std::placeholders::_1;
