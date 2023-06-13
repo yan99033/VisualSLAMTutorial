@@ -17,14 +17,14 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-set(msg_files
-  "msg/Frame.msg"
-  "msg/Vector2d.msg"
-  "msg/Vector3d.msg"
-)
-rosidl_generate_interfaces(${PROJECT_NAME}
+set(msg_files "msg/Frame.msg" "msg/Vector2d.msg" "msg/Vector3d.msg")
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}
   ${msg_files}
-  DEPENDENCIES std_msgs sensor_msgs geometry_msgs
+  DEPENDENCIES
+  std_msgs
+  sensor_msgs
+  geometry_msgs
   ADD_LINTER_TESTS
 )
 
