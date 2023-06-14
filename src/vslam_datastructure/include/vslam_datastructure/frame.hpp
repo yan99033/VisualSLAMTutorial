@@ -173,6 +173,12 @@ namespace vslam_datastructure {
      */
     void addTThisOtherKf(const Frame* const next_kf, const cv::Mat& T_this_next);
 
+    /// Remove a pose constraint to a close keyframe
+    /**
+     * \param[in] next_kf the other keyframe
+     */
+    void removeTThisOtherKf(const Frame* const next_kf);
+
     /// Get pose constraints
     /**
      * \return the pose constraints between this and other keyframes

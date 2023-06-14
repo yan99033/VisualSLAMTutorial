@@ -179,6 +179,9 @@ namespace vslam_datastructure {
      */
     void setMappoint(MapPoint::SharedPtr mappoint);
 
+    /// Delete the map point of the point
+    void deleteMappoint();
+
     /// Check if there is a map point associated with the point
     /**
      * \return A boolean indicating if there is a map point

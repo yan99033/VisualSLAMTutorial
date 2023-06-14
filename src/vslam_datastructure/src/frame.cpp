@@ -263,8 +263,25 @@ namespace vslam_datastructure {
   }
 
   void Frame::addTThisOtherKf(const Frame* const next_kf, const cv::Mat& T_this_next) {
+    if (!next_kf) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lck(data_mutex_);
     T_this_other_kfs_[next_kf] = T_this_next;
+  }
+
+  void Frame::removeTThisOtherKf(const Frame* const next_kf) {
+    if (!next_kf) {
+      return;
+    }
+
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    if (T_this_other_kfs_.find(next_kf) == T_this_other_kfs_.end()) {
+      return;
+    }
+
+    T_this_other_kfs_.erase(next_kf);
   }
 
   cv::Point3d Frame::mappointWorldToCam(const cv::Point3d& world_pos) const {
