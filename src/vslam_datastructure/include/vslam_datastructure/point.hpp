@@ -149,6 +149,9 @@ namespace vslam_datastructure {
      */
     Point(const cv::KeyPoint& keypoint, const cv::Mat& descriptor = cv::Mat(), const Type type = Type::undefined);
 
+    /// Destructor
+    ~Point() noexcept;
+
     /// keypoint (unprotected; use responsibly)
     cv::KeyPoint keypoint;
 

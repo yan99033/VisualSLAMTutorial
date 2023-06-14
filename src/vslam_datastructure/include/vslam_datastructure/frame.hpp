@@ -40,7 +40,11 @@ namespace vslam_datastructure {
     using SharedPtr = std::shared_ptr<Frame>;
     using KeyframeConstraintsMap = std::unordered_map<const Frame*, cv::Mat>;
 
+    /// Constructor
     Frame() = default;
+
+    /// Destructor
+    ~Frame() noexcept;
 
     /// Get the 4x4 camera pose
     /**

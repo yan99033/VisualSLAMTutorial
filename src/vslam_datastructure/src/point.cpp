@@ -66,6 +66,11 @@ namespace vslam_datastructure {
   Point::Point(const cv::KeyPoint& keypoint, const cv::Mat& descriptor, const Type type)
       : keypoint(keypoint), descriptor(descriptor), type(type) {}
 
+  Point::~Point() {
+    // Release resources
+    mappoint_.reset();
+  }
+
   void Point::setFrame(Frame* frame) {
     std::lock_guard<std::mutex> lck(mutex_);
     frame_ = frame;

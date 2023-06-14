@@ -59,6 +59,11 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
+  Frame::~Frame() {
+    // Release resources
+    points_.clear();
+  }
+
   cv::Mat Frame::T_f_w() const {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return T_f_w_.clone();
