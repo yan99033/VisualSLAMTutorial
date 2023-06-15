@@ -116,7 +116,7 @@ namespace vslam_components {
       double max_rotation_rad_{0.174533};
 
       /// Minimum number of map point correspondences required for calculating Sim(3) scale
-      size_t min_num_mps_sim3_scale_{50};
+      size_t min_num_mps_sim3_scale_{25};
 
       /// Signal queue for keyframes to find potential loop
       vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
