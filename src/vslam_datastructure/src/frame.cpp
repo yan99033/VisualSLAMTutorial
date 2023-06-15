@@ -291,6 +291,27 @@ namespace vslam_datastructure {
     return R * world_pos + cv::Point3d(t);
   }
 
+  bool Frame::isBad() const {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+    return is_bad_;
+  }
+
+  void Frame::setBad() {
+    std::lock_guard<std::mutex> lck(data_mutex_);
+
+    is_bad_ = true;
+
+    // Delete map points
+    for (auto& pt : points_) {
+      if (pt->hasMappoint() && pt->isMappointHost()) {
+        pt->deleteMappoint();
+      }
+    }
+
+    // Delete pose constraints
+    T_this_other_kfs_.clear();
+  }
+
   void Frame::setMappointProjections() {
     for (auto& pt : points_) {
       if (pt->hasMappoint()) {
