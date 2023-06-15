@@ -91,6 +91,12 @@ namespace vslam_backend_plugins {
      */
     std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
 
+    /// Cleanup the outlier map points and keyframes
+    void cleanUpStaleKeyframesMappoints();
+
+    /// Flag indicating stale keyframes and map points are being cleaned up
+    std::atomic_bool cleaning_stale_keyframes_mappoints_{false};
+
     /// Number of core keyframes used in local BA
     size_t num_core_kfs_{5};
 

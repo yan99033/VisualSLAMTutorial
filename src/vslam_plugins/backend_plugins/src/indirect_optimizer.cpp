@@ -104,6 +104,12 @@ namespace vslam_backend_plugins {
 
       runBundleAdjustmentImpl(core_keyframes, core_mappoints, current_kf_id);
 
+      if (!cleaning_stale_keyframes_mappoints_) {
+        cleaning_stale_keyframes_mappoints_ = true;
+        cleanUpStaleKeyframesMappoints();
+        cleaning_stale_keyframes_mappoints_ = false;
+      }
+
       run_local_ba_ = false;
     }
   }
@@ -137,6 +143,49 @@ namespace vslam_backend_plugins {
     return {core_keyframes, core_mappoints};
   }
 
+  void IndirectOptimizer::cleanUpStaleKeyframesMappoints() {
+    std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
+
+    for (auto& [_, kf_ptr] : keyframes_) {
+      if (!kf_ptr.get()) {
+        continue;
+      }
+
+      // If the keyframe is being optimized or used for camera tracking, stop processing the rest
+      if (kf_ptr->active_tracking_state || kf_ptr->active_ba_state) {
+        break;
+      }
+
+      std::set<vslam_datastructure::Frame*> projected_keyframes;
+
+      for (const auto& pt : kf_ptr->points()) {
+        if (pt->hasMappoint() && pt->isMappointHost()) {
+          // if there are less than two projections, remove the map point
+          if (pt->mappoint()->projections().size() < 2) {
+            pt->deleteMappoint();
+            continue;
+          }
+
+          for (const auto other_pt : pt->mappoint()->projections()) {
+            assert(other_pt->frame());
+
+            projected_keyframes.insert(other_pt->frame());
+          }
+        }
+      }
+
+      /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
+      if (projected_keyframes.size() < 3 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
+        keyframes_to_remove.push_back(kf_ptr);
+      }
+    }
+
+    for (auto& kf : keyframes_to_remove) {
+      //
+      removeKeyframe(kf);
+    }
+  }
+
   void IndirectOptimizer::addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                             const cv::Mat& T_1_2, const double sim3_scale) {
     if (loop_optimization_running_) {
@@ -159,6 +208,12 @@ namespace vslam_backend_plugins {
     }();
 
     runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_kf_id);
+
+    if (!cleaning_stale_keyframes_mappoints_ && !run_local_ba_) {
+      cleaning_stale_keyframes_mappoints_ = true;
+      cleanUpStaleKeyframesMappoints();
+      cleaning_stale_keyframes_mappoints_ = false;
+    }
 
     loop_optimization_running_ = false;
   }
