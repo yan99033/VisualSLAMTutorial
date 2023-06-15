@@ -108,8 +108,6 @@ namespace vslam_components {
         }
 
         if (num_outliers / static_cast<double>(mappoint_pairs.size()) > 0.3) {
-          std::cout << "num outliers: " << num_outliers << " / " << mappoint_pairs.size() << std::endl;
-
           return 0.0;
         }
 
