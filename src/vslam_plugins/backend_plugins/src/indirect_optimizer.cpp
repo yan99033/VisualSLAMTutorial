@@ -55,7 +55,6 @@ namespace vslam_backend_plugins {
       std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
       keyframes_[keyframe->id()] = keyframe;
       current_keyframe_ = keyframe;
-      current_keyframe_id_ = current_keyframe_->id();
     }
 
     if (!run_local_ba_ && !loop_optimization_running_) {
@@ -98,7 +97,7 @@ namespace vslam_backend_plugins {
         continue;
       }
 
-      runBundleAdjustmentImpl(core_keyframes, core_mappoints, current_keyframe_id_);
+      runBundleAdjustmentImpl(core_keyframes, core_mappoints);
 
       if (!cleaning_stale_keyframes_mappoints_) {
         cleaning_stale_keyframes_mappoints_ = true;
@@ -173,14 +172,8 @@ namespace vslam_backend_plugins {
       /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 3 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
         kf_ptr->setBad();
-        std::cout << "Set keyframe " << kf_ptr->id() << " as bad" << std::endl;
       }
     }
-
-    // for (auto& kf : keyframes_to_remove) {
-    //   //
-    //   removeKeyframe(kf);
-    // }
   }
 
   void IndirectOptimizer::addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
@@ -199,7 +192,7 @@ namespace vslam_backend_plugins {
 
     loop_optimization_running_ = true;
 
-    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_keyframe_id_);
+    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_);
 
     if (!cleaning_stale_keyframes_mappoints_ && !run_local_ba_) {
       cleaning_stale_keyframes_mappoints_ = true;

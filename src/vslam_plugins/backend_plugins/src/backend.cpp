@@ -45,8 +45,7 @@ namespace vslam_backend_plugins {
     std::cerr << "Terminated Optimizer" << std::endl;
   }
 
-  void Optimizer::runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints,
-                                          const long unsigned int current_kf_id) {
+  void Optimizer::runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints) {
     // Setup g2o optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -114,7 +113,7 @@ namespace vslam_backend_plugins {
           if (core_keyframes.find(pt->frame()) != core_keyframes.end()) {
             // Core keyframes
             core_kf_vertices[kf_vertex] = pt->frame();
-            kf_vertex->setFixed(pt->frame()->id() == current_kf_id || pt->frame()->active_tracking_state);
+            kf_vertex->setFixed(pt->frame()->active_tracking_state);
           } else {
             // Non-core keyframes
             non_core_kfs.insert(pt->frame());
@@ -218,8 +217,7 @@ namespace vslam_backend_plugins {
 
   void Optimizer::runPoseGraphOptimizationImpl(
       const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2, const double sim3_scale,
-      std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes,
-      const long unsigned int current_kf_id) {
+      std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes) {
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -229,6 +227,8 @@ namespace vslam_backend_plugins {
 #else
     typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
 #endif
+
+    long unsigned int curr_kf_id;
 
     auto solver = new g2o::OptimizationAlgorithmGaussNewton(
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
@@ -245,13 +245,13 @@ namespace vslam_backend_plugins {
       g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
       v_sim3->setId(vertex_edge_id++);
       v_sim3->setEstimate(utils::cvMatToSim3(kf->T_f_w(), 1.0));
-      v_sim3->setFixed(kf_id == current_kf_id);
+      v_sim3->setFixed(kf->active_tracking_state);
       v_sim3->setMarginalized(false);
       optimizer.addVertex(v_sim3);
 
       kf_vertices[kf_id] = v_sim3;
 
-      if (kf_id >= current_kf_id) {
+      if (kf->active_tracking_state) {
         break;
       }
     }
@@ -281,7 +281,8 @@ namespace vslam_backend_plugins {
         optimizer.addEdge(e_sim3);
       }
 
-      if (kf_id >= current_kf_id) {
+      if (kf->active_tracking_state) {
+        curr_kf_id = kf_id;
         break;
       }
     }
@@ -333,7 +334,7 @@ namespace vslam_backend_plugins {
       kf->updateSim3PoseAndMps(S_f_w, T_f_w);
     }
 
-    auto kfs_it = keyframes.find(current_kf_id);
+    auto kfs_it = keyframes.find(curr_kf_id);
     while (kfs_it != keyframes.begin()) {
       auto this_kf = kfs_it->second;
 
