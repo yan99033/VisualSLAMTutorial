@@ -55,6 +55,7 @@ namespace vslam_backend_plugins {
       std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
       keyframes_[keyframe->id()] = keyframe;
       current_keyframe_ = keyframe;
+      current_keyframe_id_ = current_keyframe_->id();
     }
 
     if (!run_local_ba_ && !loop_optimization_running_) {
@@ -97,12 +98,7 @@ namespace vslam_backend_plugins {
         continue;
       }
 
-      const long unsigned int current_kf_id = [&] {
-        std::lock_guard<std::mutex> lck(keyframe_mutex_);
-        return current_keyframe_->id();
-      }();
-
-      runBundleAdjustmentImpl(core_keyframes, core_mappoints, current_kf_id);
+      runBundleAdjustmentImpl(core_keyframes, core_mappoints, current_keyframe_id_);
 
       if (!cleaning_stale_keyframes_mappoints_) {
         cleaning_stale_keyframes_mappoints_ = true;
@@ -202,12 +198,7 @@ namespace vslam_backend_plugins {
 
     loop_optimization_running_ = true;
 
-    const long unsigned int current_kf_id = [&] {
-      std::lock_guard<std::mutex> lck(keyframe_mutex_);
-      return current_keyframe_->id();
-    }();
-
-    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_kf_id);
+    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_, current_keyframe_id_);
 
     if (!cleaning_stale_keyframes_mappoints_ && !run_local_ba_) {
       cleaning_stale_keyframes_mappoints_ = true;
