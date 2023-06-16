@@ -121,7 +121,7 @@ namespace vslam_backend_plugins {
     while (kfs_it != keyframes_.rend() && core_keyframes.size() < num_core_kfs_) {
       auto kf = kfs_it->second;
 
-      if (!kf.get()) {
+      if (!kf.get() || kf->isBad()) {
         continue;
       }
 
@@ -143,7 +143,7 @@ namespace vslam_backend_plugins {
     std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
 
     for (auto& [_, kf_ptr] : keyframes_) {
-      if (!kf_ptr.get()) {
+      if (!kf_ptr.get() || kf_ptr->isBad()) {
         continue;
       }
 
@@ -172,14 +172,15 @@ namespace vslam_backend_plugins {
 
       /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 3 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
-        keyframes_to_remove.push_back(kf_ptr);
+        kf_ptr->setBad();
+        std::cout << "Set keyframe " << kf_ptr->id() << " as bad" << std::endl;
       }
     }
 
-    for (auto& kf : keyframes_to_remove) {
-      //
-      removeKeyframe(kf);
-    }
+    // for (auto& kf : keyframes_to_remove) {
+    //   //
+    //   removeKeyframe(kf);
+    // }
   }
 
   void IndirectOptimizer::addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,

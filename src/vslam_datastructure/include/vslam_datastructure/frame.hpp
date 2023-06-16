@@ -204,6 +204,13 @@ namespace vslam_datastructure {
      */
     std::atomic_bool active_ba_state{false};
 
+    /// Check if this frame is bad
+    bool isBad() const;
+
+    /// Mark this frame as bad
+    /// This removes the map points that are associated with this (key)frame and remove the relative pose constraints
+    void setBad();
+
   private:
     /// Iterate through the map points and set the projection constraints
     void setMappointProjections();
@@ -245,6 +252,9 @@ namespace vslam_datastructure {
      *  [ 0,  0,  1]]
      */
     cv::Mat K_;
+
+    /// A boolean to indicate if the frame is bad
+    bool is_bad_{false};
 
     /// A boolean to indicate if the frame is a keyframe
     bool is_keyframe_{false};
