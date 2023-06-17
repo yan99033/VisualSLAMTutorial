@@ -40,8 +40,7 @@ def generate_launch_description():
                     ('/in_frame', '/raw_frame'),
                     ('/out_frame', '/live_frame'),
                     ('/out_keyframe', '/keyframe')
-                ],
-                extra_arguments=[{'use_intra_process_comms': True}],),
+                ]),
             ComposableNode(
                 package='data_loader_nodes',
                 plugin='vslam_components::data_loader_nodes::DataLoaderNode',
@@ -49,8 +48,7 @@ def generate_launch_description():
                 parameters=[params],
                 remappings=[
                     ('/out_frame', '/raw_frame'),
-                ],
-                extra_arguments=[{'use_intra_process_comms': True}],)
+                ])
         ],
         output='screen',
     )
@@ -66,7 +64,6 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', default_rviz_config],
-        output='screen'
     )
 
     # vslam_frontend_nodes
