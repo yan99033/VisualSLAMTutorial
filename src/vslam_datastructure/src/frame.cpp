@@ -28,7 +28,7 @@
 #include "vslam_utils/converter.hpp"
 
 namespace {
-  cv::Point2f project_point_3d2d(const cv::Point3d& pt_3d, const cv::Mat& K, const cv::Mat& T_f_w) {
+  cv::Point2f projectPoint3d2d(const cv::Point3d& pt_3d, const cv::Mat& K, const cv::Mat& T_f_w) {
     cv::Mat pt_projected = (cv::Mat_<double>(3, 1) << pt_3d.x, pt_3d.y, pt_3d.z);
     pt_projected = K * (T_f_w.rowRange(0, 3).colRange(0, 3) * pt_projected + T_f_w.rowRange(0, 3).colRange(3, 4));
     pt_projected /= pt_projected.at<double>(2, 0);
@@ -36,7 +36,7 @@ namespace {
     return {static_cast<float>(pt_projected.at<double>(0, 0)), static_cast<float>(pt_projected.at<double>(1, 0))};
   }
 
-  geometry_msgs::msg::Pose transformation_mat_to_pose_msg(const cv::Mat& T) {
+  geometry_msgs::msg::Pose transformationMatToPoseMsg(const cv::Mat& T) {
     // Rotation matrix and translation vector
     cv::Mat R = T(cv::Rect(0, 0, 3, 3));
     cv::Mat t = T(cv::Rect(3, 0, 1, 3));
@@ -152,7 +152,7 @@ namespace vslam_datastructure {
       frame_msg->image.data.assign(image_.datastart, image_.dataend);
     }
 
-    frame_msg->pose = transformation_mat_to_pose_msg(T_f_w_.inv());
+    frame_msg->pose = transformationMatToPoseMsg(T_f_w_.inv());
     for (const auto& pt : points_) {
       if (pt->hasMappoint()) {
         if (!no_mappoints) {
@@ -316,7 +316,7 @@ namespace vslam_datastructure {
     for (auto& pt : points_) {
       if (pt->hasMappoint()) {
         // Project the map point to its 2D keypoint and see if it is an inlier
-        const auto pt_2d = project_point_3d2d(pt->mappoint()->pos(), K_, T_f_w_);
+        const auto pt_2d = projectPoint3d2d(pt->mappoint()->pos(), K_, T_f_w_);
 
         // Add projection if the reprojection error is low
         if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_) {
