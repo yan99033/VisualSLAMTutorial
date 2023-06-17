@@ -39,16 +39,16 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
   - [Installation instructions for macOS](https://github.com/RoboStack/ros-humble)
 
 - Download [KITTI odometry dataset (color, 65 GB)](https://www.cvlibs.net/datasets/kitti/eval_odometry.php)
-
-- Clone this repository into a ROS 2 workspace
-  - Create a ROS 2 workspace (e.g., `mkdir -p ~/ros2_ws/src`)
-  - Go to the source directory (e.g., `cd ~/ros2_ws/src`)
-  - Clone this repository (`git clone https://github.com/yan99033/VisualSLAMTutorial.git`)
+- Clone this repository in your home directory
+    ```bash
+    cd ~/
+    git clone https://github.com/yan99033/VisualSLAMTutorial.git
+    ```
 
 ## Build
 
-- Go to the root of the ROS 2 workspace (e.g., `cd ~/ros2_ws`)
-- Run `colcon build` to build the packages.
+- Go to the root of the project directory (`cd ~/VisualSLAMTutorial`)
+- Run `colcon build  --cmake-args -DCMAKE_BUILD_TYPE=Release` to build the packages.
 
 ## Run
 
@@ -56,6 +56,7 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
 - Create a copy of the [vslam_demo parameters](src/vslam_demos/params/test_kitti.yaml.example) (and remove the .example extension) and modify the parameters accordingly.
 - Launch the demo
   ```bash
+  cd ~/VisualSLAMTutorial
   source install/setup.bash
   ros2 launch vslam_demos vslam_from_folder.launch.py params:=<path_to_test_kitti_yaml_file>
   ```
