@@ -250,9 +250,6 @@ namespace vslam_datastructure {
 
     ///  max reprojection error in pixel to associate a map point with a keypoint
     static constexpr double max_reproj_err_{8.0};
-
-    /// The parent keyframe
-    Frame* parent_;
   };
 
 }  // namespace vslam_datastructure
