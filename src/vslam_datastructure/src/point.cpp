@@ -92,6 +92,10 @@ namespace vslam_datastructure {
   }
 
   void Point::deleteMappoint() {
+    if (!mappoint_) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lck(mutex_);
     mappoint_.reset();
   }

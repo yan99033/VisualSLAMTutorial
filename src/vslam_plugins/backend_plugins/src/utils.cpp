@@ -18,6 +18,8 @@
 
 #include "vslam_backend_plugins/utils.hpp"
 
+#include "vslam_datastructure/point.hpp"
+
 namespace vslam_backend_plugins {
   namespace utils {
     g2o::SE3Quat cvMatToSE3Quat(const cv::Mat& pose) {
@@ -39,5 +41,67 @@ namespace vslam_backend_plugins {
 
       return g2o::Sim3(R, t, scale);
     }
+
+    std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(
+        vslam_datastructure::Frame* const frame, const size_t min_projections, const size_t top_k_projections) {
+      if (!frame || frame->isBad()) {
+        return std::unordered_set<const vslam_datastructure::Frame*>();
+      }
+
+      std::map<vslam_datastructure::Frame*, size_t> projection_counts;
+
+      for (const auto& pt : frame->points()) {
+        if (!pt->hasMappoint()) {
+          continue;
+        }
+
+        for (const auto& other_pt : pt->mappoint()->projections()) {
+          assert(other_pt->frame());
+
+          if (other_pt->frame()->isBad() || other_pt->frame() == frame) {
+            continue;
+          }
+
+          if (projection_counts.find(other_pt->frame()) == projection_counts.end()) {
+            projection_counts[other_pt->frame()] = 1;
+          } else {
+            projection_counts[other_pt->frame()] += 1;
+          }
+        }
+      }
+
+      // Remove the frames that the projection count lower than the threshold
+      for (auto it = projection_counts.begin(); it != projection_counts.end();) {
+        if (it->second < min_projections) {
+          it = projection_counts.erase(it);
+        } else {
+          ++it;
+        }
+      }
+
+      // Weigh the projection count by the keyframe distance
+      std::vector<std::pair<double, vslam_datastructure::Frame*>> weight_projections;
+      for (const auto& [other_frame, count] : projection_counts) {
+        const double weight = static_cast<double>(count)
+                              / abs(static_cast<double>(frame->id()) - static_cast<double>(other_frame->id()));
+        weight_projections.emplace_back(weight, other_frame);
+      }
+
+      // Sort and take the top k
+      std::sort(weight_projections.begin(), weight_projections.end(),
+                [](const std::pair<double, vslam_datastructure::Frame*>& lhs,
+                   const std::pair<double, vslam_datastructure::Frame*>& rhs) { return lhs.first > rhs.first; });
+      if (weight_projections.size() > top_k_projections) {
+        weight_projections.resize(top_k_projections);
+      }
+
+      std::unordered_set<const vslam_datastructure::Frame*> projected_frames;
+      for (auto [_, frame] : weight_projections) {
+        projected_frames.insert(frame);
+      }
+
+      return projected_frames;
+    }
+
   }  // namespace utils
 }  // namespace vslam_backend_plugins

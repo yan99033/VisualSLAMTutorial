@@ -34,7 +34,7 @@ namespace vslam_backend {
       /**
        * \param[in] frame a new keyframe
        */
-      virtual void addKeyfame(vslam_datastructure::Frame::SharedPtr frame) = 0;
+      virtual void addKeyframe(vslam_datastructure::Frame::SharedPtr frame) = 0;
 
       /// Remove a keyframe
       /**

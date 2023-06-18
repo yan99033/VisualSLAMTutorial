@@ -251,7 +251,7 @@ namespace vslam_components {
       if (state_ == State::init) {
         current_frame->setKeyframe();
 
-        backend_->addKeyfame(current_frame);
+        backend_->addKeyframe(current_frame);
         current_keyframe_ = current_frame;
 
         state_ = State::attempt_init;
@@ -326,11 +326,6 @@ namespace vslam_components {
         size_t num_kf_mps{0};
         if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
             || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
-          // Set constraints between adjacent keyframes
-          current_keyframe_->addTThisOtherKf(current_frame.get(), T_c_p.inv());
-          current_frame->addTThisOtherKf(current_keyframe_.get(), T_c_p);
-          current_frame->setParentKeyframe(current_keyframe_.get());
-
           // Set the current frame as keyframe
           current_frame->setKeyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
@@ -338,7 +333,7 @@ namespace vslam_components {
           current_keyframe_->setMappoints(new_mps, first_indices);
           const auto new_old_mps = current_keyframe_->mappoints(first_indices);
           current_frame->setMappoints(new_old_mps, second_indices, true);
-          backend_->addKeyfame(current_frame);
+          backend_->addKeyframe(current_frame);
           current_keyframe_->active_tracking_state = false;
           current_keyframe_ = current_frame;
           current_keyframe_->active_tracking_state = true;
@@ -347,7 +342,7 @@ namespace vslam_components {
           vslam_msgs::msg::Frame keyframe_msg;
           current_keyframe_->toMsg(&keyframe_msg);
 
-          visualizer_->addKeyfame(keyframe_msg);
+          visualizer_->addKeyframe(keyframe_msg);
 
           // Add the keyframe id to find a potential loop
           long unsigned int kf_id = current_frame->id();
@@ -392,11 +387,6 @@ namespace vslam_components {
             size_t num_kf_mps{0};
             if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
                 || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
-              // Set constraints between adjacent keyframes
-              current_keyframe_->addTThisOtherKf(current_frame.get(), T_c_p.inv());
-              current_frame->addTThisOtherKf(current_keyframe_.get(), T_c_p);
-              current_frame->setParentKeyframe(current_keyframe_.get());
-
               // Set the current frame as keyframe
               current_frame->setKeyframe();
               const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
@@ -404,7 +394,7 @@ namespace vslam_components {
               current_keyframe_->setMappoints(new_mps, first_indices);
               const auto new_old_mps = current_keyframe_->mappoints(first_indices);
               current_frame->setMappoints(new_old_mps, second_indices, true);
-              backend_->addKeyfame(current_frame);
+              backend_->addKeyframe(current_frame);
               current_keyframe_->active_tracking_state = false;
               current_keyframe_ = current_frame;
               current_keyframe_->active_tracking_state = true;

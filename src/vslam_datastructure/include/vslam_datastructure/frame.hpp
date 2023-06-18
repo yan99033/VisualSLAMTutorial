@@ -23,7 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <opencv2/core/mat.hpp>
-#include <unordered_map>
+#include <unordered_set>
 
 #include "vslam_msgs/msg/frame.hpp"
 
@@ -38,7 +38,6 @@ namespace vslam_datastructure {
   class Frame {
   public:
     using SharedPtr = std::shared_ptr<Frame>;
-    using KeyframeConstraintsMap = std::unordered_map<const Frame*, cv::Mat>;
 
     /// Constructor
     Frame() = default;
@@ -160,31 +159,6 @@ namespace vslam_datastructure {
      */
     inline bool isKeyframe() const { return is_keyframe_; }
 
-    /// Set the parent keyframe of this frame
-    /**
-     * \param frame[in] the pointer to the parent keyframe
-     */
-    void setParentKeyframe(Frame* const frame);
-
-    /// Set a pose constraint to a close keyframe
-    /**
-     * \param[in] next_kf the other keyframe
-     * \param[in] T_this_next the relative transformation between this and the other keyframe
-     */
-    void addTThisOtherKf(const Frame* const next_kf, const cv::Mat& T_this_next);
-
-    /// Remove a pose constraint to a close keyframe
-    /**
-     * \param[in] next_kf the other keyframe
-     */
-    void removeTThisOtherKf(const Frame* const next_kf);
-
-    /// Get pose constraints
-    /**
-     * \return the pose constraints between this and other keyframes
-     */
-    inline const KeyframeConstraintsMap& TThisOtherKfs() const { return T_this_other_kfs_; }
-
     /// Transform a map point in the world coordinate frame to this camera's coordinate frame
     /**
      * \param[in] world_pos the position of a map point in the world coordinate frame
@@ -210,6 +184,18 @@ namespace vslam_datastructure {
     /// Mark this frame as bad
     /// This removes the map points that are associated with this (key)frame and remove the relative pose constraints
     void setBad();
+
+    /// Nearby keyframes that have common map point projections
+    /**
+     * \note: this is used exclusively in pose graph optimization, hence unprotected
+     */
+    std::unordered_set<const vslam_datastructure::Frame*> nearby_keyframes;
+
+    /// Loop keyframes
+    /**
+     * \note: this is used exclusively in pose graph optimization, hence unprotected
+     */
+    std::unordered_set<const vslam_datastructure::Frame*> loop_keyframes;
 
   private:
     /// Iterate through the map points and set the projection constraints
@@ -267,12 +253,6 @@ namespace vslam_datastructure {
 
     /// The parent keyframe
     Frame* parent_;
-
-    /// Constraints between current (key)frame and the adjacent keyframes
-    /**
-     * A keyframe can only have a parent but can have a number of children (e.g., from loop-closure detection)
-     */
-    KeyframeConstraintsMap T_this_other_kfs_;
   };
 
 }  // namespace vslam_datastructure

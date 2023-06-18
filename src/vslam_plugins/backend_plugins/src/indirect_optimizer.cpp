@@ -48,7 +48,7 @@ namespace vslam_backend_plugins {
 
   void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::localBALoop, this); }
 
-  void IndirectOptimizer::addKeyfame(vslam_datastructure::Frame::SharedPtr keyframe) {
+  void IndirectOptimizer::addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
     assert(keyframe->isKeyframe());
 
     {
@@ -99,9 +99,9 @@ namespace vslam_backend_plugins {
 
       runBundleAdjustmentImpl(core_keyframes, core_mappoints);
 
-      if (!cleaning_stale_keyframes_mappoints_) {
+      if (!cleaning_stale_keyframes_mappoints_ && !loop_optimization_running_) {
         cleaning_stale_keyframes_mappoints_ = true;
-        cleanUpStaleKeyframesMappoints();
+        cleanUpStaleKeyframesMappoints((*core_keyframes.begin())->id(), (*core_keyframes.rbegin())->id());
         cleaning_stale_keyframes_mappoints_ = false;
       }
 
@@ -121,6 +121,7 @@ namespace vslam_backend_plugins {
       auto kf = kfs_it->second;
 
       if (!kf.get() || kf->isBad()) {
+        kfs_it++;
         continue;
       }
 
@@ -138,16 +139,18 @@ namespace vslam_backend_plugins {
     return {core_keyframes, core_mappoints};
   }
 
-  void IndirectOptimizer::cleanUpStaleKeyframesMappoints() {
+  void IndirectOptimizer::cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id,
+                                                         const long unsigned int max_kf_id) {
     std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
 
     for (auto& [_, kf_ptr] : keyframes_) {
-      if (!kf_ptr.get() || kf_ptr->isBad()) {
+      if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
         continue;
       }
 
-      // If the keyframe is being optimized or used for camera tracking, stop processing the rest
-      if (kf_ptr->active_tracking_state || kf_ptr->active_ba_state) {
+      // If the keyframe is being optimized or used for camera tracking or larger than the max id, stop processing the
+      // rest
+      if (kf_ptr->id() > max_kf_id || kf_ptr->active_tracking_state || kf_ptr->active_ba_state) {
         break;
       }
 
@@ -164,13 +167,19 @@ namespace vslam_backend_plugins {
           for (const auto other_pt : pt->mappoint()->projections()) {
             assert(other_pt->frame());
 
+            if (other_pt->frame()->isBad()) {
+              continue;
+            }
+
             projected_keyframes.insert(other_pt->frame());
           }
         }
       }
 
+      // TODO: refactor: use getFrameMapPointProjectedFrames
+
       /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
-      if (projected_keyframes.size() < 3 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
+      if (projected_keyframes.size() < 2 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
         kf_ptr->setBad();
       }
     }
@@ -206,6 +215,10 @@ namespace vslam_backend_plugins {
   std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::getAllKeyframeMsgs() const {
     std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
     for (const auto& [_, kf] : keyframes_) {
+      if (kf->isBad()) {
+        continue;
+      }
+
       vslam_msgs::msg::Frame keyframe_msg;
       kf->toMsg(&keyframe_msg, true);
       keyframe_msgs.push_back(keyframe_msg);

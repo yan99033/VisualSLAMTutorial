@@ -59,7 +59,7 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
-  Frame::~Frame() {
+  Frame::~Frame() noexcept {
     // Release resources
     points_.clear();
   }
@@ -235,7 +235,7 @@ namespace vslam_datastructure {
       assert(mappoint != nullptr);
 
       if (!points_.at(idx)->hasMappoint()) {
-        // Associate the old map point with the new point
+        // Associate the new map point with the old point
         mappoint->addProjection(points_.at(idx).get());
         points_.at(idx)->setMappoint(mappoint);
       } else {
@@ -255,33 +255,6 @@ namespace vslam_datastructure {
   void Frame::setKeyframe() {
     std::lock_guard<std::mutex> lck(data_mutex_);
     is_keyframe_ = true;
-  }
-
-  void Frame::setParentKeyframe(Frame* const frame) {
-    std::lock_guard<std::mutex> lck(data_mutex_);
-    parent_ = frame;
-  }
-
-  void Frame::addTThisOtherKf(const Frame* const next_kf, const cv::Mat& T_this_next) {
-    if (!next_kf) {
-      return;
-    }
-
-    std::lock_guard<std::mutex> lck(data_mutex_);
-    T_this_other_kfs_[next_kf] = T_this_next;
-  }
-
-  void Frame::removeTThisOtherKf(const Frame* const next_kf) {
-    if (!next_kf) {
-      return;
-    }
-
-    std::lock_guard<std::mutex> lck(data_mutex_);
-    if (T_this_other_kfs_.find(next_kf) == T_this_other_kfs_.end()) {
-      return;
-    }
-
-    T_this_other_kfs_.erase(next_kf);
   }
 
   cv::Point3d Frame::mappointWorldToCam(const cv::Point3d& world_pos) const {
@@ -307,9 +280,6 @@ namespace vslam_datastructure {
         pt->deleteMappoint();
       }
     }
-
-    // Delete pose constraints
-    T_this_other_kfs_.clear();
   }
 
   void Frame::setMappointProjections() {

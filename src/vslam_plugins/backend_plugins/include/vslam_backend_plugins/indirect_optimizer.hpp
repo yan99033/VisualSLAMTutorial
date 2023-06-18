@@ -39,7 +39,7 @@ namespace vslam_backend_plugins {
     /**
      * \param[in] frame a new keyframe
      */
-    void addKeyfame(vslam_datastructure::Frame::SharedPtr keyframe) override;
+    void addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
 
     /// Remove a keyframe
     /**
@@ -92,7 +92,12 @@ namespace vslam_backend_plugins {
     std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
 
     /// Cleanup the outlier map points and keyframes
-    void cleanUpStaleKeyframesMappoints();
+    /**
+     * \param min_kf_id keyframe ids less than this won't be processed
+     * \param max_kf_id keyframe ids greater than this won't be processed
+     */
+    void cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id = 0,
+                                        const long unsigned int max_kf_id = ULONG_MAX);
 
     /// Flag indicating stale keyframes and map points are being cleaned up
     std::atomic_bool cleaning_stale_keyframes_mappoints_{false};

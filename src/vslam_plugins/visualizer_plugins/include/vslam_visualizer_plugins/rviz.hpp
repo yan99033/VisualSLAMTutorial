@@ -48,7 +48,7 @@ namespace vslam_visualizer_plugins {
     /**
      * \param[in] frame_msg Frame message
      */
-    void addKeyfame(const vslam_msgs::msg::Frame& frame_msg) override;
+    void addKeyframe(const vslam_msgs::msg::Frame& frame_msg) override;
 
     /// Remove a keyframe camera pose and its map points to the visualizer
     /**

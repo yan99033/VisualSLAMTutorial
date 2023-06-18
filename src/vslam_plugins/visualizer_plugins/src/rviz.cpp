@@ -213,7 +213,7 @@ namespace vslam_visualizer_plugins {
     tf_broadcaster_->sendTransform(transform_stamped);
   }
 
-  void RViz::addKeyfame(const vslam_msgs::msg::Frame& frame_msg) {
+  void RViz::addKeyframe(const vslam_msgs::msg::Frame& frame_msg) {
     Eigen::Isometry3d T_w_c = toEigenIsometry3d(frame_msg.pose);
     Mat3x16 cam_vertices = getCameraVertices(marker_scale_, T_w_c);
     const auto pose_marker

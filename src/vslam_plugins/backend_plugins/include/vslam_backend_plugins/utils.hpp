@@ -23,12 +23,28 @@
 #include <g2o/types/sim3/types_seven_dof_expmap.h>
 
 #include <opencv2/opencv.hpp>
+#include <unordered_set>
+
+#include "vslam_datastructure/frame.hpp"
 
 namespace vslam_backend_plugins {
   namespace utils {
+    /// Convert a 4x4 SE3 transformation matrix to g2o SE3Quat
     g2o::SE3Quat cvMatToSE3Quat(const cv::Mat& pose);
 
+    /// Convert a 4x4 SE3 transformation matrix plus a scale to g2o Sim3
     g2o::Sim3 cvMatToSim3(const cv::Mat& pose, const double scale);
+
+    /// Get the nearby (key)frames based on the map point projections
+    /**
+     * \param frame the keyframe
+     * \param min_projections minumum number of projections required to be considered as a nearby keyframe
+     * \param top_k_projections top k keyframes ranked by the projection score, where the score is the number
+     * of projections divided by the keyframe id distance
+     * \return the top k keyframes
+     */
+    std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(
+        vslam_datastructure::Frame* const frame, const size_t min_projections = 10, const size_t top_k_projections = 5);
 
   }  // namespace utils
 }  // namespace vslam_backend_plugins

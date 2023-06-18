@@ -79,7 +79,7 @@ namespace vslam_backend_plugins {
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->hasFrame()) {
+        if (pt == nullptr || !pt->hasFrame() || pt->frame()->isBad()) {
           continue;
         }
         num_valid_projections++;
@@ -97,7 +97,7 @@ namespace vslam_backend_plugins {
 
       // Projections
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->hasFrame()) {
+        if (pt == nullptr || !pt->hasFrame() || pt->frame()->isBad()) {
           continue;
         }
 
@@ -197,19 +197,6 @@ namespace vslam_backend_plugins {
       }
     }
 
-    // Add relative pose constraints among the core keyframes
-    for (auto kf1 : core_keyframes) {
-      for (auto kf2 : core_keyframes) {
-        if (kf1 == kf2) {
-          continue;
-        }
-
-        // Relative pose constraint
-        const cv::Mat T_1_2 = kf1->T_f_w() * kf2->T_w_f();
-        kf1->addTThisOtherKf(kf2, T_1_2);
-      }
-    }
-
     for (auto core_kf : core_keyframes) {
       core_kf->active_ba_state = false;
     }
@@ -258,16 +245,27 @@ namespace vslam_backend_plugins {
 
     // Create edges
     for (const auto& [kf_id, kf] : keyframes) {
-      if (kf->isBad()) {
+      if (kf->isBad() || kf_vertices.find(kf_id) == kf_vertices.end()) {
         continue;
       }
 
       auto v_sim3_this = kf_vertices.at(kf_id);
 
-      for (const auto& [other_kf, T_this_other] : kf->TThisOtherKfs()) {
-        if (kf_vertices.find(other_kf->id()) == kf_vertices.end() || other_kf->isBad()) {
+      if (kf->nearby_keyframes.empty()) {
+        kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf.get());
+      }
+
+      bool need_recalculating_nearby_keyframes{false};
+      for (const auto other_kf : kf->nearby_keyframes) {
+        if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
           continue;
         }
+
+        if (other_kf->isBad()) {
+          need_recalculating_nearby_keyframes = true;
+        }
+
+        cv::Mat T_this_other = kf->T_f_w() * other_kf->T_w_f();
 
         auto v_sim3_other = kf_vertices.at(other_kf->id());
 
@@ -279,6 +277,39 @@ namespace vslam_backend_plugins {
         e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
         optimizer.addEdge(e_sim3);
+      }
+
+      // Recalculate the nearby keyframes if there are bad keyframes
+      if (need_recalculating_nearby_keyframes) {
+        kf->nearby_keyframes.clear();
+      }
+
+      for (auto it = kf->loop_keyframes.begin(); it != kf->loop_keyframes.end();) {
+        if (kf_vertices.find((*it)->id()) == kf_vertices.end()) {
+          ++it;
+          continue;
+        }
+
+        if ((*it)->isBad()) {
+          it = kf->loop_keyframes.erase(it);
+          ++it;
+          continue;
+        }
+
+        cv::Mat T_this_other = kf->T_f_w() * (*it)->T_w_f();
+
+        auto v_sim3_other = kf_vertices.at((*it)->id());
+
+        g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+        e_sim3->setId(vertex_edge_id++);
+        e_sim3->setVertex(0, v_sim3_this);
+        e_sim3->setVertex(1, v_sim3_other);
+        e_sim3->setMeasurement(utils::cvMatToSim3(T_this_other, 1.0).inverse());
+        e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+        optimizer.addEdge(e_sim3);
+
+        ++it;
       }
 
       if (kf->active_tracking_state) {
@@ -334,33 +365,11 @@ namespace vslam_backend_plugins {
       kf->updateSim3PoseAndMps(S_f_w, T_f_w);
     }
 
-    auto kfs_it = keyframes.find(curr_kf_id);
-    while (kfs_it != keyframes.begin()) {
-      auto this_kf = kfs_it->second;
-
-      if (this_kf->isBad()) {
-        continue;
-      }
-
-      // Update the relative constraints (T_this_others) in the keyframes using the edge constraints
-      for (auto [other_kf, old_T_this_other] : this_kf->TThisOtherKfs()) {
-        if (other_kf->isBad()) {
-          continue;
-        }
-
-        const cv::Mat T_this_other = this_kf->T_f_w() * other_kf->T_w_f();
-        this_kf->addTThisOtherKf(other_kf, T_this_other);
-      }
-
-      kfs_it--;
-    }
-
-    // Add the loop constraint
+    // Add the loop keyframe
     auto kf_1 = keyframes.at(kf_id_1);
     auto kf_2 = keyframes.at(kf_id_2);
-    const cv::Mat T_1_2_updated = kf_1->T_f_w() * kf_2->T_w_f();
-    kf_1->addTThisOtherKf(kf_2.get(), T_1_2_updated);
-    kf_2->addTThisOtherKf(kf_1.get(), T_1_2_updated.inv());
+    kf_1->loop_keyframes.insert(kf_2.get());
+    kf_2->loop_keyframes.insert(kf_1.get());
   }
 
 }  // namespace vslam_backend_plugins
