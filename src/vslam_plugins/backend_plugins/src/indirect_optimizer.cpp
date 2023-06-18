@@ -143,6 +143,8 @@ namespace vslam_backend_plugins {
                                                          const long unsigned int max_kf_id) {
     std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
 
+    vslam_datastructure::Frame::SharedPtr prev_kf_ptr{nullptr};
+    std::optional<double> prev_rel_translation;
     for (auto& [_, kf_ptr] : keyframes_) {
       if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
         continue;
@@ -176,10 +178,39 @@ namespace vslam_backend_plugins {
         }
       }
 
-      /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
+      // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 2 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
         kf_ptr->setBad();
+        continue;
       }
+
+      if (!prev_kf_ptr) {
+        prev_kf_ptr = kf_ptr;
+        continue;
+      }
+
+      if (!prev_rel_translation.has_value()) {
+        cv::Mat T_prev_curr = prev_kf_ptr->T_f_w() * kf_ptr->T_w_f();
+        prev_rel_translation = cv::norm(T_prev_curr.rowRange(0, 3).colRange(3, 4));
+        prev_kf_ptr = kf_ptr;
+        continue;
+      }
+
+      // Distance test
+      // Normally if the PnP method fails, it will return a big pose jump or has a large rotation
+      cv::Mat T_prev_curr = prev_kf_ptr->T_f_w() * kf_ptr->T_w_f();
+      const double rel_translation = cv::norm(T_prev_curr.rowRange(0, 3).colRange(3, 4));
+      const cv::Mat R_prev_curr = T_prev_curr.rowRange(0, 3).colRange(0, 3);
+      const double rel_rotation = vslam_utils::conversions::rotationMatrixToRotationAngle(R_prev_curr);
+
+      if (rel_translation > outlier_rel_translation_scale_ * prev_rel_translation.value()
+          || rel_rotation > max_outlier_rel_rotation_rad_) {
+        kf_ptr->setBad();
+        continue;
+      }
+
+      prev_kf_ptr = kf_ptr;
+      prev_rel_translation = rel_translation;
     }
   }
 
