@@ -128,23 +128,6 @@ namespace {
     return mappoint_index_pairs;
   }
 
-  /// Check if the magnitude of the rotation exceeds the threshold
-  /**
-   * Calculate the magnitude of the rotation matrix by the angle of the axis-angle representation
-   * \param[in] R rotation matrix
-   * \param[in] angle_threshold_rad angle threshold
-   * \return true if the rotation exceeds the threshold
-   */
-  bool rotationMatrixExceedThreshold(const cv::Mat& R, const double angle_threshold_rad) {
-    assert(R.rows == 3 && R.cols == 3);
-
-    // Calculate the angle component of the axis-angle representation
-    const double tr = R.at<double>(0, 0) + R.at<double>(1, 1) + R.at<double>(2, 2);
-    const double angle = acos((tr - 1) / 2);
-
-    return angle > angle_threshold_rad;
-  }
-
   /// Extract and concatenate descriptors from a vector of points
   /**
    * \param[in] points a vector of points
@@ -323,9 +306,9 @@ namespace vslam_components {
 
         // Check if we need a new keyframe
         const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+        const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
         size_t num_kf_mps{0};
-        if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
-            || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
+        if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
           // Set the current frame as keyframe
           current_frame->setKeyframe();
           const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
@@ -384,9 +367,9 @@ namespace vslam_components {
           // Check if we need a new keyframe
           if (tracked) {
             const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+            const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
             size_t num_kf_mps{0};
-            if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps)
-                || rotationMatrixExceedThreshold(R_c_p, max_rotation_rad_)) {
+            if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
               // Set the current frame as keyframe
               current_frame->setKeyframe();
               const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());

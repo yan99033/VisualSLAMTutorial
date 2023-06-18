@@ -30,5 +30,13 @@ namespace vslam_utils {
 
       return T;
     }
+
+    double rotationMatrixToRotationAngle(const cv::Mat& R) {
+      assert(R.rows == 3 && R.cols == 3);
+
+      // Calculate the angle component of the axis-angle representation
+      const double tr = R.at<double>(0, 0) + R.at<double>(1, 1) + R.at<double>(2, 2);
+      return acos((tr - 1) / 2);
+    }
   }  // namespace conversions
 }  // namespace vslam_utils

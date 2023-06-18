@@ -106,6 +106,13 @@ namespace vslam_utils {
      */
     cv::Mat toTransformationMatrix(const cv::Mat& R, const cv::Mat& t);
 
+    /// Convert rotation matrix to rotation angle in the axis-angle representation
+    /**
+     * \param[in] R rotation matrix
+     * \return magnitude of the rotation matrix by the angle of the axis-angle representation
+     */
+    double rotationMatrixToRotationAngle(const cv::Mat& R);
+
   }  // namespace conversions
 
 }  // namespace vslam_utils
