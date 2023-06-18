@@ -215,8 +215,6 @@ namespace vslam_backend_plugins {
     typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
 #endif
 
-    long unsigned int curr_kf_id;
-
     auto solver = new g2o::OptimizationAlgorithmGaussNewton(
         g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
     optimizer.setAlgorithm(solver);
@@ -313,7 +311,6 @@ namespace vslam_backend_plugins {
       }
 
       if (kf->active_tracking_state) {
-        curr_kf_id = kf_id;
         break;
       }
     }
