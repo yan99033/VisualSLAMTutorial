@@ -41,10 +41,12 @@ namespace vslam_backend_plugins {
      * \param min_projections minumum number of projections required to be considered as a nearby keyframe
      * \param top_k_projections top k keyframes ranked by the projection score, where the score is the number
      * of projections divided by the keyframe id distance
+     * \param use_host_mps use the map points that the frame hosts when calculating projections
      * \return the top k keyframes
      */
     std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(
-        vslam_datastructure::Frame* const frame, const size_t min_projections = 10, const size_t top_k_projections = 5);
+        vslam_datastructure::Frame* const frame, const bool use_host_mps = false, const size_t min_projections = 10,
+        const size_t top_k_projections = 5);
 
   }  // namespace utils
 }  // namespace vslam_backend_plugins

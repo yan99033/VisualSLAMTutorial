@@ -43,7 +43,8 @@ namespace vslam_backend_plugins {
     }
 
     std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(
-        vslam_datastructure::Frame* const frame, const size_t min_projections, const size_t top_k_projections) {
+        vslam_datastructure::Frame* const frame, const bool use_host_mps, const size_t min_projections,
+        const size_t top_k_projections) {
       if (!frame || frame->isBad()) {
         return std::unordered_set<const vslam_datastructure::Frame*>();
       }
@@ -51,7 +52,7 @@ namespace vslam_backend_plugins {
       std::map<vslam_datastructure::Frame*, size_t> projection_counts;
 
       for (const auto& pt : frame->points()) {
-        if (!pt->hasMappoint()) {
+        if (!pt->hasMappoint() || (!pt->isMappointHost() && use_host_mps)) {
           continue;
         }
 
