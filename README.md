@@ -10,6 +10,7 @@ The framework connects the components such that we get the camera motion and the
 - [Setup](#setup)
 - [Build](#build)
 - [Run](#run)
+- [Contributing](#contributing)
 
 ## Objective
 
@@ -61,3 +62,16 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
   ros2 launch vslam_demos vslam_from_folder.launch.py params:=<path_to_test_kitti_yaml_file>
   ```
   > Replace the first command with `source install/setup.zsh` if you are using macOS. 
+
+## Contributing
+
+Thanks for considering contributing to the project. The guidelines are as follows:
+
+- If you encounter a bug
+  - If it has not been reported
+    - Create a new issue, describe the issue and steps to reproduce the bug (this may include the dataset and parameter settings).
+  - Else
+    - Check the existing issues and see if they help.
+    - Create a PR to resolve an existing issue
+- Else if you request a new feature
+  - Use the issue tracker to discuss the new feature. 
