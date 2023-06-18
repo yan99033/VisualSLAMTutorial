@@ -176,8 +176,6 @@ namespace vslam_backend_plugins {
         }
       }
 
-      // TODO: refactor: use getFrameMapPointProjectedFrames
-
       /// If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 2 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
         kf_ptr->setBad();

@@ -279,7 +279,7 @@ namespace vslam_backend_plugins {
         optimizer.addEdge(e_sim3);
       }
 
-      // Recalculate the nearby keyframes if there are bad keyframes
+      // Recalculate the nearby keyframes if there are new bad keyframes
       if (need_recalculating_nearby_keyframes) {
         kf->nearby_keyframes.clear();
       }
