@@ -179,8 +179,10 @@ namespace vslam_backend_plugins {
       }
 
       // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
-      if (projected_keyframes.size() < 2 && !kf_ptr->active_tracking_state && !kf_ptr->active_ba_state) {
+      if (projected_keyframes.size() < 2 && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
+        std::cerr << "setting kf bad: " << kf_ptr->id() << std::endl;
         kf_ptr->setBad();
+
         continue;
       }
 
@@ -203,8 +205,9 @@ namespace vslam_backend_plugins {
       const cv::Mat R_prev_curr = T_prev_curr.rowRange(0, 3).colRange(0, 3);
       const double rel_rotation = vslam_utils::conversions::rotationMatrixToRotationAngle(R_prev_curr);
 
-      if (rel_translation > outlier_rel_translation_scale_ * prev_rel_translation.value()
-          || rel_rotation > max_outlier_rel_rotation_rad_) {
+      if ((rel_translation > outlier_rel_translation_scale_ * prev_rel_translation.value()
+           || rel_rotation > max_outlier_rel_rotation_rad_)
+          && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
         kf_ptr->setBad();
         continue;
       }
@@ -224,6 +227,11 @@ namespace vslam_backend_plugins {
     {
       std::lock_guard<std::mutex> lck(keyframe_mutex_);
       if ((keyframes_.find(kf_id_1) == keyframes_.end()) || (keyframes_.find(kf_id_2) == keyframes_.end())) {
+        return;
+      }
+
+      // The loop constraint cannot be established if one of the keyframes is bad
+      if (keyframes_.at(kf_id_1)->isBad() || keyframes_.at(kf_id_2)->isBad()) {
         return;
       }
     }

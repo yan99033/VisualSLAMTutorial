@@ -241,6 +241,11 @@ namespace vslam_backend_plugins {
       }
     }
 
+    // If the loop edge cannot be established
+    if (kf_vertices.find(kf_id_1) == kf_vertices.end() || kf_vertices.find(kf_id_2) == kf_vertices.end()) {
+      return;
+    }
+
     // Create edges
     for (const auto& [kf_id, kf] : keyframes) {
       if (kf->isBad() || kf_vertices.find(kf_id) == kf_vertices.end()) {
@@ -315,7 +320,6 @@ namespace vslam_backend_plugins {
       }
     }
 
-    // The loop edge
     auto v_sim3_1 = kf_vertices.at(kf_id_1);
     auto v_sim3_2 = kf_vertices.at(kf_id_2);
     g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
