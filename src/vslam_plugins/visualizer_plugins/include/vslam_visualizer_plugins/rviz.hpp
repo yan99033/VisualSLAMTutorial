@@ -101,7 +101,7 @@ namespace vslam_visualizer_plugins {
     std::array<double, 3> live_cam_marker_rgb_{1.0, 0.0, 0.0};
 
     /// Scale of keyframe and map point markers
-    double marker_scale_{0.25};
+    double marker_scale_{0.2};
 
     /// Keyframe camera marker namespace
     std::string keyframe_cam_marker_ns_{"keyframe_poses"};
@@ -116,7 +116,7 @@ namespace vslam_visualizer_plugins {
     std::array<double, 3> mappoint_marker_rgb_{0.0, 0.0, 0.0};
 
     /// Line thickness of the markers
-    double line_thickness_{1.0};
+    double line_thickness_{0.25};
   };
 }  // namespace vslam_visualizer_plugins
 
