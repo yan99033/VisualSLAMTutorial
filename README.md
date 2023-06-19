@@ -10,6 +10,7 @@ The framework connects the components such that we get the camera motion and the
 - [Setup](#setup)
 - [Build](#build)
 - [Run](#run)
+- [Demo](#demo)
 - [Contributing](#contributing)
 
 ## Objective
@@ -63,6 +64,12 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
   ```
   > Replace the first command with `source install/setup.zsh` if you are using macOS. 
 
+## Demo
+
+KITTI 00
+
+https://github.com/yan99033/VisualSLAMTutorial/assets/26388965/fa7b8d64-a96f-406b-8536-85c737c6fb99
+
 ## Contributing
 
 Thanks for considering contributing to the project. The guidelines are as follows:
@@ -74,4 +81,4 @@ Thanks for considering contributing to the project. The guidelines are as follow
     - Check the existing issues and see if they help.
     - Create a PR to resolve an existing issue
 - Else if you request a new feature
-  - Use the issue tracker to discuss the new feature. 
+  - Use the issue tracker to discuss the new feature.
