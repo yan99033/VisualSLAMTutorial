@@ -106,8 +106,8 @@ namespace vslam_backend_plugins {
     size_t num_core_kfs_{5};
 
     /// Maximum relative rotation between two consecutive keyframes to detect bad keyframes
-    /// Normally the relative rotation is large if tracking fails. Defaults to 45 degrees
-    static constexpr const double max_outlier_rel_rotation_rad_{0.785398};
+    /// Normally the relative rotation is large if tracking fails. Defaults to 60 degrees
+    static constexpr const double max_outlier_rel_rotation_rad_{1.0472};
 
     /// Scale of the maximum relative translation to detect bad keyframes
     /// The current relative translation must not be larger than the scale times the previous relative translation.

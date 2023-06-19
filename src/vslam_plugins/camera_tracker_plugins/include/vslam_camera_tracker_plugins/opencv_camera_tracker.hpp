@@ -87,7 +87,7 @@ namespace vslam_camera_tracker_plugins {
     /**
      * \sa https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html#ga50620f0e26e02caa2e9adc07b5fbf24e
      */
-    static constexpr const float pnp_reproj_err_thresh_{8.0};
+    static constexpr const float pnp_reproj_err_thresh_{5.0};
 
     /// Probability that the algorithm produces a useful result
     /**

@@ -49,7 +49,7 @@ namespace vslam_mapper_plugins {
 
   private:
     /// Threshold to remove map points that have a large reprojection error
-    static constexpr const double proj_err_thresh_{8.0};
+    static constexpr const double proj_err_thresh_{5.0};
   };
 }  // namespace vslam_mapper_plugins
 
