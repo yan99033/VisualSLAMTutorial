@@ -180,8 +180,10 @@ namespace vslam_backend_plugins {
 
       // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 2 && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
-        std::cerr << "setting kf bad: " << kf_ptr->id() << std::endl;
         kf_ptr->setBad();
+
+        prev_kf_ptr.reset();
+        prev_rel_translation.reset();
 
         continue;
       }
@@ -209,6 +211,10 @@ namespace vslam_backend_plugins {
            || rel_rotation > max_outlier_rel_rotation_rad_)
           && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
         kf_ptr->setBad();
+
+        prev_kf_ptr.reset();
+        prev_rel_translation.reset();
+
         continue;
       }
 
