@@ -230,7 +230,7 @@ namespace vslam_visualizer_plugins {
   void RViz::removeKeyframe(const vslam_msgs::msg::Frame& frame_msg) {
     (void)frame_msg;
 
-    std::cerr << "RViz::removeKeyframe: not supported! Use `RViz::replaceAllKeyframes` instead" << std::endl;
+    RCLCPP_WARN(node_->get_logger(), "RViz::removeKeyframe: not supported! Use `RViz::replaceAllKeyframes` instead");
   }
 
   void RViz::replaceAllKeyframes(const FrameVec& frame_msgs) {
