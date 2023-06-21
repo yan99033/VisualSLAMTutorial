@@ -68,7 +68,7 @@ The plugins are loaded into ROS2 [composable nodes](https://docs.ros.org/en/humb
 
 KITTI 00
 
-https://github.com/yan99033/VisualSLAMTutorial/assets/26388965/fa7b8d64-a96f-406b-8536-85c737c6fb99
+[![Watch the video](https://img.youtube.com/vi/hlUrOYW0YeA/default.jpg)](https://youtu.be/hlUrOYW0YeA)
 
 ## Contributing
 
