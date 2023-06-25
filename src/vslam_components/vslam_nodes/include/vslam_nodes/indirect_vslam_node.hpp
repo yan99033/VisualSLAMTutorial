@@ -66,12 +66,41 @@ namespace vslam_components {
        */
       void frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg) override;
 
+      /// Process the frame in the 'init' state
+      /**
+       * Set the current frame as the tentative current keyframe
+       *
+       * \param current_frame[in,out] current frame received from the camera
+       * \return a boolean indicating if initialization is successful
+       */
       bool processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
+      /// Process the frame in the 'attempt_init' state
+      /**
+       * Attempt to match feature and establish camera tracking between the current frame and the current keyframe
+       * If tracking is successful, we create an initial set of map points for the current keyframe;
+       *
+       * \param current_frame[in,out] current frame received from the camera
+       * \return a boolean indicating if the attempt to initialize is successful
+       */
       bool processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
+      /// Process the frame in the 'tracking' state
+      /**
+       * Match features and track the camera pose between the current frame and the current keyframe
+       *
+       * \param current_frame[in,out] current frame received from the camera
+       * \return a boolean indicating if tracking is successful
+       */
       bool processFrameTracking(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
+      /// Process the frame in the 'relocalization' state
+      /**
+       * Relocalize frame
+       *
+       * \param current_frame[in,out] current frame received from the camera
+       * \return a boolean indicating if relocalization is successful
+       */
       bool processFrameRelocalization(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
       /// Check the goodness of the mapped points so far to determine the matching and tracking qualities

@@ -35,18 +35,37 @@ namespace vslam_components {
 
         /// Process the frame depending on the camera tracking states
         /**
-         * \param current_frame[in,out]
+         * \param current_frame[in,out] current frame received from the camera
          */
-        /// @param frame_msg
         virtual void processFrame(vslam_datastructure::Frame::SharedPtr current_frame) = 0;
 
       protected:
+        /// Process the frame in the 'init' state
+        /**
+         * \param current_frame[in,out] current frame received from the camera
+         * \return a boolean indicating if initialization is successful
+         */
         virtual bool processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) = 0;
 
+        /// Process the frame in the 'attempt_init' state
+        /**
+         * \param current_frame[in,out] current frame received from the camera
+         * \return a boolean indicating if the attempt to initialize is successful
+         */
         virtual bool processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) = 0;
 
+        /// Process the frame in the 'tracking' state
+        /**
+         * \param current_frame[in,out] current frame received from the camera
+         * \return a boolean indicating if tracking is successful
+         */
         virtual bool processFrameTracking(vslam_datastructure::Frame::SharedPtr current_frame) = 0;
 
+        /// Process the frame in the 'relocalization' state
+        /**
+         * \param current_frame[in,out] current frame received from the camera
+         * \return a boolean indicating if relocalization is successful
+         */
         virtual bool processFrameRelocalization(vslam_datastructure::Frame::SharedPtr current_frame) = 0;
 
         VSlamNode() {}
@@ -57,7 +76,7 @@ namespace vslam_components {
     public:
       void processFrame(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
-    protected:
+    private:
       /// Camera tracking states
       /**
        * init: No keyframe is available for tracking. Tentatively set the current frame as a keyframe
