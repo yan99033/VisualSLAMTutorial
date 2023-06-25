@@ -31,6 +31,7 @@
 #include "vslam_datastructure/point.hpp"
 #include "vslam_datastructure/signal_queue.hpp"
 #include "vslam_msgs/msg/frame.hpp"
+#include "vslam_nodes/vslam_node_base.hpp"
 #include "vslam_plugins_base/backend.hpp"
 #include "vslam_plugins_base/camera_tracker.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
@@ -41,31 +42,37 @@
 
 namespace vslam_components {
   namespace vslam_nodes {
-    class IndirectVSlamNode : public rclcpp::Node {
+    namespace abstract {
+      class IndirectVSlamNode : public virtual abstract::VSlamNode {
+      private:
+        /// Callback function used by the frame subscriber to get a new frame
+        /**
+         * \param frame_msg[in] frame message (defined in vslam_interfaces)
+         */
+        virtual void frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg) = 0;
+      };
+    }  // namespace abstract
+
+    class IndirectVSlamNode : public rclcpp::Node, public virtual abstract::IndirectVSlamNode, public VSlamNode {
     public:
       explicit IndirectVSlamNode(const rclcpp::NodeOptions& options);
 
       ~IndirectVSlamNode();
 
     private:
-      /// Camera tracking states
-      /**
-       * init: No keyframe is available for tracking. Tentatively set the current frame as a keyframe
-       * attempt_init: Attempt to initialize the keyframe by calculating the relative transformation and map points
-       *               between the keyframe and the current frame. Remove the keyframe and reset the state to init if
-       *               initialization is not successful.
-       * tracking: A keyframe is available for tracking. Track the current frame and determine if a new keyframe is
-       *           needed. Triangulate new map points if a new keyframe is created
-       * relocalization: Tracking is bad. Attempt to gain tracking using the current keyframe or the keyframe similar
-       *                 to one of the keyframes found by place recognition
-       */
-      enum class State : uint8_t { init = 0, attempt_init = 1, tracking = 2, relocalization = 3 };
-
       /// Callback function used by the frame subscriber to get a new frame
       /**
        * \param frame_msg[in] frame message (defined in vslam_interfaces)
        */
-      void frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg);
+      void frameCallback(vslam_msgs::msg::Frame::SharedPtr frame_msg) override;
+
+      bool processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) override;
+
+      bool processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) override;
+
+      bool processFrameTracking(vslam_datastructure::Frame::SharedPtr current_frame) override;
+
+      bool processFrameRelocalization(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
       /// Check the goodness of the mapped points so far to determine the matching and tracking qualities
       /**
@@ -90,9 +97,6 @@ namespace vslam_components {
 
       /// Frame subscriber to get new frames from dataloader
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
-
-      /// State of the node
-      State state_{State::init};
 
       /// Current keyframe (used for camera tracking)
       vslam_datastructure::Frame::SharedPtr current_keyframe_{nullptr};
@@ -134,8 +138,8 @@ namespace vslam_components {
        * Steps involved in the verification:
        * - Track the relative transformation
        * - Get the map point correspondences (if tracking is good)
-       * - Calculate the Sim(3) scale between the corresponding map points (if the number of correspondences is above a
-       *  threshold)
+       * - Calculate the Sim(3) scale between the corresponding map points (if the number of correspondences is above
+       * a threshold)
        * - return true if the Sim(3) scale is good
        * \param[in] current_keyframe current keyframe
        * \param[in] previous_keyframe previous keyframe (found by place recognition)

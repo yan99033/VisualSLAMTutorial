@@ -24,7 +24,7 @@ find_package(vslam_msgs REQUIRED)
 find_package(vslam_utils REQUIRED)
 find_package(OpenCV REQUIRED)
 
-set(sources src/indirect_vslam_node.cpp src/utils.cpp)
+set(sources src/vslam_node_base.cpp src/indirect_vslam_node.cpp src/utils.cpp)
 
 set(dependencies
     rclcpp

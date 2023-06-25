@@ -232,163 +232,168 @@ namespace vslam_components {
       current_frame->fromMsg(frame_msg.get());
       current_frame->setPoints(points);
 
-      if (state_ == State::init) {
+      processFrame(current_frame);
+
+      // write pose to the frame message
+      constexpr bool skip_loaded = true;
+      constexpr bool no_mappoints = true;
+      current_frame->toMsg(frame_msg.get(), skip_loaded, no_mappoints);
+
+      // Publish frame markers
+      visualizer_->addLiveFrame(*frame_msg);
+    }
+
+    bool IndirectVSlamNode::processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) {
+      current_frame->setKeyframe();
+
+      backend_->addKeyframe(current_frame);
+      current_keyframe_ = current_frame;
+
+      return true;
+    }
+
+    bool IndirectVSlamNode::processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) {
+      if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
+        backend_->removeKeyframe(current_keyframe_);
+        current_keyframe_ = nullptr;
+        return false;
+      }
+
+      auto [matched_points, matched_index_pairs]
+          = feature_matcher_->matchFeatures(current_keyframe_->points(), current_frame->points());
+
+      // Get the tracked camera pose and check the tracking quality
+      cv::Mat T_c_p;
+      if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
+        backend_->removeKeyframe(current_keyframe_);
+        current_keyframe_ = nullptr;
+        return false;
+      }
+
+      // Camera pose
+      cv::Mat T_p_w = current_keyframe_->T_f_w();
+      cv::Mat T_c_w = T_c_p * T_p_w;
+      current_frame->setPose(T_c_w);
+
+      auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
+
+      // Check if we have enough initial map points
+      if (new_mps.size() < min_num_kf_mps_) {
+        backend_->removeKeyframe(current_keyframe_);
+        current_keyframe_ = nullptr;
+        return false;
+      }
+
+      current_keyframe_->setMappoints(new_mps, getFirstIndices(matched_index_pairs), true);
+
+      // // write pose to the frame message
+      // constexpr bool skip_loaded = true;
+      // current_frame->toMsg(frame_msg.get(), skip_loaded);
+
+      current_keyframe_->active_tracking_state = true;
+
+      return true;
+    }
+
+    bool IndirectVSlamNode::processFrameTracking(vslam_datastructure::Frame::SharedPtr current_frame) {
+      if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
+        RCLCPP_INFO(get_logger(), "Current frame has no point to track");
+        current_keyframe_->active_tracking_state = false;
+        return false;
+      }
+
+      cv::Mat T_c_p;
+      vslam_datastructure::MatchedPoints matched_points;
+      vslam_datastructure::MatchedIndexPairs matched_index_pairs;
+      if (!trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        current_keyframe_->active_tracking_state = false;
+        return false;
+      }
+
+      // Camera pose
+      cv::Mat T_p_w = current_keyframe_->T_f_w();
+      cv::Mat T_c_w = T_c_p * T_p_w;
+      current_frame->setPose(T_c_w);
+
+      // Check if we need a new keyframe
+      const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+      const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
+      size_t num_kf_mps{0};
+      if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
+        // Set the current frame as keyframe
         current_frame->setKeyframe();
-
+        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
+        const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
+        current_keyframe_->setMappoints(new_mps, first_indices);
+        const auto new_old_mps = current_keyframe_->mappoints(first_indices);
+        current_frame->setMappoints(new_old_mps, second_indices, true);
         backend_->addKeyframe(current_frame);
+        current_keyframe_->active_tracking_state = false;
         current_keyframe_ = current_frame;
-
-        state_ = State::attempt_init;
-      } else if (state_ == State::attempt_init) {
-        if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
-          backend_->removeKeyframe(current_keyframe_);
-          current_keyframe_ = nullptr;
-          state_ = State::init;
-          return;
-        }
-
-        auto [matched_points, matched_index_pairs]
-            = feature_matcher_->matchFeatures(current_keyframe_->points(), current_frame->points());
-
-        // Get the tracked camera pose and check the tracking quality
-        cv::Mat T_c_p;
-        if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
-          backend_->removeKeyframe(current_keyframe_);
-          current_keyframe_ = nullptr;
-          state_ = State::init;
-          return;
-        }
-
-        // Camera pose
-        cv::Mat T_p_w = current_keyframe_->T_f_w();
-        cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->setPose(T_c_w);
-
-        auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
-
-        // Check if we have enough initial map points
-        if (new_mps.size() < min_num_kf_mps_) {
-          backend_->removeKeyframe(current_keyframe_);
-          current_keyframe_ = nullptr;
-          state_ = State::init;
-          return;
-        }
-
-        current_keyframe_->setMappoints(new_mps, getFirstIndices(matched_index_pairs), true);
-
-        // write pose to the frame message
-        constexpr bool skip_loaded = true;
-        current_frame->toMsg(frame_msg.get(), skip_loaded);
-
         current_keyframe_->active_tracking_state = true;
 
-        state_ = State::tracking;
-      } else if (state_ == State::tracking) {
-        if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
-          RCLCPP_INFO(get_logger(), "Current frame has no point to track");
-          current_keyframe_->active_tracking_state = false;
-          state_ = State::relocalization;
-          return;
-        }
+        // Add the frame to visual update queue
+        vslam_msgs::msg::Frame keyframe_msg;
+        current_keyframe_->toMsg(&keyframe_msg);
 
-        cv::Mat T_c_p;
-        vslam_datastructure::MatchedPoints matched_points;
-        vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-        if (!trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
-          current_keyframe_->active_tracking_state = false;
-          state_ = State::relocalization;
-          return;
-        }
+        visualizer_->addKeyframe(keyframe_msg);
 
-        // Camera pose
-        cv::Mat T_p_w = current_keyframe_->T_f_w();
-        cv::Mat T_c_w = T_c_p * T_p_w;
-        current_frame->setPose(T_c_w);
+        // Add the keyframe id to find a potential loop
+        long unsigned int kf_id = current_frame->id();
+        keyframe_id_queue_->send(std::move(kf_id));
+
+        RCLCPP_INFO(this->get_logger(), "Created a new keyframe");
+      }
+
+      return true;
+    }
+
+    bool IndirectVSlamNode::processFrameRelocalization(vslam_datastructure::Frame::SharedPtr current_frame) {
+      RCLCPP_INFO(this->get_logger(), "Relocalizating");
+      cv::Mat T_c_p;
+      vslam_datastructure::MatchedPoints matched_points;
+      vslam_datastructure::MatchedIndexPairs matched_index_pairs;
+      bool tracked{false};
+      // Track current frame relative to the current keyframe
+      if (trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+        tracked = true;
+        current_keyframe_->active_tracking_state = true;
+      } else {
+        if (loop_keyframe_ != nullptr) {
+          // Track current frame relative to the keyframe found using place recognition
+          std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
+          if (trackCamera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
+            tracked = true;
+
+            // Make the current keyframe the keyframe found using place recognition
+            current_keyframe_ = loop_keyframe_;
+            current_keyframe_->active_tracking_state = true;
+            loop_keyframe_ = nullptr;
+          }
+        }
 
         // Check if we need a new keyframe
-        const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
-        const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
-        size_t num_kf_mps{0};
-        if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
-          // Set the current frame as keyframe
-          current_frame->setKeyframe();
-          const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
-          const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
-          current_keyframe_->setMappoints(new_mps, first_indices);
-          const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-          current_frame->setMappoints(new_old_mps, second_indices, true);
-          backend_->addKeyframe(current_frame);
-          current_keyframe_->active_tracking_state = false;
-          current_keyframe_ = current_frame;
-          current_keyframe_->active_tracking_state = true;
-
-          // Add the frame to visual update queue
-          vslam_msgs::msg::Frame keyframe_msg;
-          current_keyframe_->toMsg(&keyframe_msg);
-
-          visualizer_->addKeyframe(keyframe_msg);
-
-          // Add the keyframe id to find a potential loop
-          long unsigned int kf_id = current_frame->id();
-          keyframe_id_queue_->send(std::move(kf_id));
-
-          RCLCPP_INFO(this->get_logger(), "Created a new keyframe");
-        }
-
-        // write pose to the frame message
-        constexpr bool skip_loaded = true;
-        constexpr bool no_points = true;
-        current_frame->toMsg(frame_msg.get(), skip_loaded, no_points);
-      } else {
-        RCLCPP_INFO(this->get_logger(), "Relocalizating");
-        cv::Mat T_c_p;
-        vslam_datastructure::MatchedPoints matched_points;
-        vslam_datastructure::MatchedIndexPairs matched_index_pairs;
-        bool tracked{false};
-        // Track current frame relative to the current keyframe
-        if (trackCamera(current_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
-          tracked = true;
-          current_keyframe_->active_tracking_state = true;
-          state_ = State::tracking;
-        } else {
-          if (loop_keyframe_ != nullptr) {
-            // Track current frame relative to the keyframe found using place recognition
-            std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
-            if (trackCamera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points, matched_index_pairs)) {
-              tracked = true;
-              state_ = State::tracking;
-
-              // Make the current keyframe the keyframe found using place recognition
-              current_keyframe_ = loop_keyframe_;
-              current_keyframe_->active_tracking_state = true;
-              loop_keyframe_ = nullptr;
-            }
-          }
-
-          // Check if we need a new keyframe
-          if (tracked) {
-            const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
-            const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
-            size_t num_kf_mps{0};
-            if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
-              // Set the current frame as keyframe
-              current_frame->setKeyframe();
-              const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
-              const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
-              current_keyframe_->setMappoints(new_mps, first_indices);
-              const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-              current_frame->setMappoints(new_old_mps, second_indices, true);
-              backend_->addKeyframe(current_frame);
-              current_keyframe_->active_tracking_state = false;
-              current_keyframe_ = current_frame;
-              current_keyframe_->active_tracking_state = true;
-            }
+        if (tracked) {
+          const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
+          const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
+          size_t num_kf_mps{0};
+          if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
+            // Set the current frame as keyframe
+            current_frame->setKeyframe();
+            const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
+            const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
+            current_keyframe_->setMappoints(new_mps, first_indices);
+            const auto new_old_mps = current_keyframe_->mappoints(first_indices);
+            current_frame->setMappoints(new_old_mps, second_indices, true);
+            backend_->addKeyframe(current_frame);
+            current_keyframe_->active_tracking_state = false;
+            current_keyframe_ = current_frame;
+            current_keyframe_->active_tracking_state = true;
           }
         }
       }
 
-      // Publish frame markers
-      visualizer_->addLiveFrame(*frame_msg);
+      return tracked;
     }
 
     bool IndirectVSlamNode::trackCamera(const vslam_datastructure::Frame* const frame1,
