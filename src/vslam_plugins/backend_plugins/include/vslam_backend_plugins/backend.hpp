@@ -25,21 +25,14 @@
 #include "vslam_plugins_base/backend.hpp"
 
 namespace vslam_backend_plugins {
-  // template <typename T> struct Cmp {
-  //   bool operator()(const T* lhs, const T* rhs) const { return lhs->id() < rhs->id(); }
-  // };
-
   namespace abstract {
     class Optimizer : public virtual vslam_backend::base::Backend {
     protected:
-      // using CoreKfsSet = std::set<vslam_datastructure::Frame*, Cmp<vslam_datastructure::Frame>>;
-      // using CoreMpsSet = std::set<vslam_datastructure::MapPoint*, Cmp<vslam_datastructure::MapPoint>>;
-
       /// Implementation of bundle adjustment
       /**
-       * \param core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
+       * \param[in,out] core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
        *    fixed during optimization
-       * \param core_mappoints core map points to optimize.
+       * \param[in,out] core_mappoints core map points to optimize.
        */
       virtual void runBundleAdjustmentImpl(vslam_datastructure::CoreKfsSet& core_keyframes,
                                            vslam_datastructure::CoreMpsSet& core_mappoints)
@@ -47,11 +40,11 @@ namespace vslam_backend_plugins {
 
       /// Implementation of pose graph optimization
       /**
-       * \param kf_id_1 the first keyframe id of the loop constraint
-       * \param kf_id_2 the second keyframe id of the loop constraint
-       * \param T_1_2 the relative pose constraint
-       * \param sim3_scale the Sim(3) scale of the loop constraint
-       * \param keyframes the keyframes in the back-end
+       * \param[in] kf_id_1 the first keyframe id of the loop constraint
+       * \param[in] kf_id_2 the second keyframe id of the loop constraint
+       * \param[in] T_1_2 the relative pose constraint
+       * \param[in] sim3_scale the Sim(3) scale of the loop constraint
+       * \param[in,out] keyframes the keyframes in the map
        */
       virtual void runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                                 const cv::Mat& T_1_2, const double sim3_scale,
@@ -66,27 +59,24 @@ namespace vslam_backend_plugins {
 
     /// Implementation of bundle adjustment
     /**
-     * \param core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
+     * \param[in,out] core_keyframes core keyframes to optimize. The current keyframe and the other keyframes will be
      *    fixed during optimization
-     * \param core_mappoints core map points to optimize.
+     * \param[in,out] core_mappoints core map points to optimize.
      */
     void runBundleAdjustmentImpl(vslam_datastructure::CoreKfsSet& core_keyframes,
                                  vslam_datastructure::CoreMpsSet& core_mappoints) override;
 
     /// Implementation of pose graph optimization
     /**
-     * \param kf_id_1 the first keyframe id of the loop constraint
-     * \param kf_id_2 the second keyframe id of the loop constraint
-     * \param T_1_2 the relative pose constraint
-     * \param sim3_scale the Sim(3) scale of the loop constraint
-     * \param keyframes the keyframes in the back-end
+     * \param[in] kf_id_1 the first keyframe id of the loop constraint
+     * \param[in] kf_id_2 the second keyframe id of the loop constraint
+     * \param[in] T_1_2 the relative pose constraint
+     * \param[in] sim3_scale the Sim(3) scale of the loop constraint
+     * \param[in,out] keyframes the keyframes in the map
      */
     void runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                       const cv::Mat& T_1_2, const double sim3_scale,
                                       std::list<vslam_datastructure::Frame::SharedPtr>& keyframes) override;
-
-    // /// All keyframes (can be looked up using their id)
-    // std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr> keyframes_;
 
     /// (Non-owning) map comprising the keyframes
     vslam_datastructure::Map* map_;

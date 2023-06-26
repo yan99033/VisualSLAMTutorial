@@ -155,8 +155,8 @@ namespace vslam_components {
           declare_parameter("feature_extractor_plugin_name", "UNDEFINED"));
       feature_extractor_->initialize(declare_parameter("feature_extractor.num_features", 2000),
                                      vslam_datastructure::Point::Type::orb);
-      // Feature matcher
 
+      // Feature matcher
       feature_matcher_
           = feature_matcher_loader_.createSharedInstance(declare_parameter("feature_matcher_plugin_name", "UNDEFINED"));
       feature_matcher_->initialize(vslam_datastructure::Point::Type::orb);
@@ -248,7 +248,6 @@ namespace vslam_components {
     bool IndirectVSlamNode::processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       current_frame->setKeyframe();
 
-      // backend_->addKeyframe(current_frame);
       map_.addKeyframe(current_frame);
       current_keyframe_ = current_frame;
 
@@ -257,7 +256,6 @@ namespace vslam_components {
 
     bool IndirectVSlamNode::processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
-        // backend_->removeKeyframe(current_keyframe_);
         map_.removeKeyframe(current_keyframe_);
 
         current_keyframe_ = nullptr;
@@ -270,7 +268,6 @@ namespace vslam_components {
       // Get the tracked camera pose and check the tracking quality
       cv::Mat T_c_p;
       if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
-        // backend_->removeKeyframe(current_keyframe_);
         map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
@@ -285,17 +282,12 @@ namespace vslam_components {
 
       // Check if we have enough initial map points
       if (new_mps.size() < min_num_kf_mps_) {
-        // backend_->removeKeyframe(current_keyframe_);
         map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
       }
 
       current_keyframe_->setMappoints(new_mps, getFirstIndices(matched_index_pairs), true);
-
-      // // write pose to the frame message
-      // constexpr bool skip_loaded = true;
-      // current_frame->toMsg(frame_msg.get(), skip_loaded);
 
       current_keyframe_->active_tracking_state = true;
 
@@ -334,7 +326,6 @@ namespace vslam_components {
         current_keyframe_->setMappoints(new_mps, first_indices);
         const auto new_old_mps = current_keyframe_->mappoints(first_indices);
         current_frame->setMappoints(new_old_mps, second_indices, true);
-        // backend_->addKeyframe(current_frame);
         map_.addKeyframe(current_frame);
         current_keyframe_->active_tracking_state = false;
         current_keyframe_ = current_frame;
@@ -396,7 +387,6 @@ namespace vslam_components {
             current_keyframe_->setMappoints(new_mps, first_indices);
             const auto new_old_mps = current_keyframe_->mappoints(first_indices);
             current_frame->setMappoints(new_old_mps, second_indices, true);
-            // backend_->addKeyframe(current_frame);
             map_.addKeyframe(current_frame);
             current_keyframe_->active_tracking_state = false;
             current_keyframe_ = current_frame;
@@ -464,7 +454,6 @@ namespace vslam_components {
 
         // Get the keyframe from the backend
         const auto current_keyframe = map_.getKeyframe(curr_kf_id);
-        // const auto current_keyframe = backend_->getKeyframe(curr_kf_id);
 
         if (current_keyframe == nullptr) {
           RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
@@ -480,7 +469,6 @@ namespace vslam_components {
         if (results.size() > 0) {
           for (const auto& [prev_kf_id, score] : results) {
             const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
-            // const auto previous_keyframe = backend_->getKeyframe(prev_kf_id);
 
             if (previous_keyframe == nullptr) {
               RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");

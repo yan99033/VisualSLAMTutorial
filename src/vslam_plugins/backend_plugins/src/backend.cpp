@@ -40,10 +40,7 @@
 #include "vslam_utils/converter.hpp"
 
 namespace vslam_backend_plugins {
-  Optimizer::~Optimizer() {
-    // keyframes_.clear();
-    std::cerr << "Terminated Optimizer" << std::endl;
-  }
+  Optimizer::~Optimizer() { std::cerr << "Terminated Optimizer" << std::endl; }
 
   void Optimizer::runBundleAdjustmentImpl(vslam_datastructure::CoreKfsSet& core_keyframes,
                                           vslam_datastructure::CoreMpsSet& core_mappoints) {
@@ -206,6 +203,11 @@ namespace vslam_backend_plugins {
   void Optimizer::runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
                                                const cv::Mat& T_1_2, const double sim3_scale,
                                                std::list<vslam_datastructure::Frame::SharedPtr>& keyframes) {
+    if (!map_) {
+      std::cerr << "Map is not set. Not running pose graph optimizartion." << std::endl;
+      return;
+    }
+
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -346,10 +348,10 @@ namespace vslam_backend_plugins {
 
     // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
-      auto kf = map_->getKeyframe(kf_id);  // keyframes.at(kf_id);
+      auto kf = map_->getKeyframe(kf_id);
 
       // If the keyframe is being used or optimized
-      if (kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
+      if (!kf || kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
         continue;
       }
 
@@ -368,10 +370,12 @@ namespace vslam_backend_plugins {
     }
 
     // Add the loop keyframe
-    auto kf_1 = map_->getKeyframe(kf_id_1);  // keyframes.at(kf_id_1);
-    auto kf_2 = map_->getKeyframe(kf_id_2);  // keyframes.at(kf_id_2);
-    kf_1->loop_keyframes.insert(kf_2.get());
-    kf_2->loop_keyframes.insert(kf_1.get());
+    auto kf_1 = map_->getKeyframe(kf_id_1);
+    auto kf_2 = map_->getKeyframe(kf_id_2);
+    if (kf_1 && kf_2) {
+      kf_1->loop_keyframes.insert(kf_2.get());
+      kf_2->loop_keyframes.insert(kf_1.get());
+    }
   }
 
 }  // namespace vslam_backend_plugins

@@ -35,22 +35,10 @@ namespace vslam_backend_plugins {
     ~IndirectOptimizer();
 
     /// Indirect optimizer initializer
+    /**
+     * \param[in] map the map object comprising the keyframes
+     */
     void initialize(vslam_datastructure::Map* map) override;
-
-    // /// Add a new keyframe
-    // /**
-    //  * \param[in] frame a new keyframe
-    //  */
-    // void addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
-
-    // /// Remove a keyframe
-    // /**
-    //  * \param[in] frame the keyframe to be removed
-    //  */
-    // void removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
-
-    // /// Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
-    // vslam_datastructure::Frame::SharedPtr getKeyframe(const long unsigned int id) const override;
 
     /// Run local BA
     /**
@@ -69,16 +57,10 @@ namespace vslam_backend_plugins {
     void addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
                            const double sim3_scale) override;
 
-    /// Convert all the keyframes to frame msgs to refresh the visualizer
-    // std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const override;
-
     /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_backend_plugins::IndirectOptimizer"; }
 
   private:
-    // Use it for reading and writing keyframes
-    mutable std::mutex keyframe_mutex_;
-
     /// For notifying the local BA thread to run Local BA
     std::condition_variable local_ba_condition_;
 
@@ -94,16 +76,10 @@ namespace vslam_backend_plugins {
     /// A loop that is running in the local BA thread
     void localBALoop();
 
-    // /// Get the latest `num_core_kfs_` core keyframes and their map points
-    // /**
-    //  * \return core keyframes and map points
-    //  */
-    // std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
-
     /// Cleanup the outlier map points and keyframes
     /**
-     * \param min_kf_id keyframe ids less than this won't be processed
-     * \param max_kf_id keyframe ids greater than this won't be processed
+     * \param[in] min_kf_id keyframe ids less than this won't be processed
+     * \param[in] max_kf_id keyframe ids greater than this won't be processed
      */
     void cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id = 0,
                                         const long unsigned int max_kf_id = ULONG_MAX);

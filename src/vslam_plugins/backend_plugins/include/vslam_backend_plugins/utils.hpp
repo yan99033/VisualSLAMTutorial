@@ -31,18 +31,27 @@
 namespace vslam_backend_plugins {
   namespace utils {
     /// Convert a 4x4 SE3 transformation matrix to g2o SE3Quat
+    /**
+     * \param[in] pose 4x4 matrix in cv::Mat
+     * \return transformation in g2o::SE3Quat
+     */
     g2o::SE3Quat cvMatToSE3Quat(const cv::Mat& pose);
 
     /// Convert a 4x4 SE3 transformation matrix plus a scale to g2o Sim3
+    /**
+     * \param[in] pose 4x4 matrix in cv::Mat
+     * \param[in] scale Sim3 scale
+     * \return transformation in g2o::Sim3
+     */
     g2o::Sim3 cvMatToSim3(const cv::Mat& pose, const double scale);
 
     /// Get the nearby (key)frames based on the map point projections
     /**
-     * \param frame the keyframe
-     * \param min_projections minumum number of projections required to be considered as a nearby keyframe
-     * \param top_k_projections top k keyframes ranked by the projection score, where the score is the number
+     * \param[in] frame the keyframe
+     * \param[in] use_host_mps use the map points that the frame hosts when calculating projections
+     * \param[in] min_projections minumum number of projections required to be considered as a nearby keyframe
+     * \param[in] top_k_projections top k keyframes ranked by the projection score, where the score is the number
      * of projections divided by the keyframe id distance
-     * \param use_host_mps use the map points that the frame hosts when calculating projections
      * \return the top k keyframes
      */
     std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(

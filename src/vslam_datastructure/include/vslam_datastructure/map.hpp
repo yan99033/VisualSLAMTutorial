@@ -23,6 +23,7 @@
 #include <list>
 #include <mutex>
 #include <set>
+#include <unordered_map>
 
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_msgs/msg/frame.hpp"
