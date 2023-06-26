@@ -47,17 +47,12 @@ namespace vslam_backend_plugins {
     std::cerr << "Terminated IndirectOptimizer" << std::endl;
   }
 
-  void IndirectOptimizer::initialize() { local_ba_thread_ = std::thread(&IndirectOptimizer::localBALoop, this); }
+  void IndirectOptimizer::initialize(vslam_datastructure::Map* map) {
+    map_ = map;
+    local_ba_thread_ = std::thread(&IndirectOptimizer::localBALoop, this);
+  }
 
-  void IndirectOptimizer::addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
-    assert(keyframe->isKeyframe());
-
-    {
-      std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
-      keyframes_[keyframe->id()] = keyframe;
-      current_keyframe_ = keyframe;
-    }
-
+  void IndirectOptimizer::runLocalBA() {
     if (!run_local_ba_ && !loop_optimization_running_) {
       run_local_ba_ = true;
       std::unique_lock<std::mutex> lck(local_ba_mutex_);
@@ -65,21 +60,36 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void IndirectOptimizer::removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
-    std::lock_guard<std::mutex> lck(keyframe_mutex_);
-    if (keyframes_.find(keyframe->id()) != keyframes_.end()) {
-      keyframes_.erase(keyframe->id());
-    }
-  }
+  // void IndirectOptimizer::addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
+  //   assert(keyframe->isKeyframe());
 
-  vslam_datastructure::Frame::SharedPtr IndirectOptimizer::getKeyframe(const long unsigned int id) const {
-    std::lock_guard<std::mutex> lck(keyframe_mutex_);
-    if (keyframes_.find(id) != keyframes_.end()) {
-      return keyframes_.at(id);
-    } else {
-      return nullptr;
-    }
-  }
+  //   {
+  //     std::lock_guard<std::mutex> kf_lck(keyframe_mutex_);
+  //     keyframes_[keyframe->id()] = keyframe;
+  //   }
+
+  //   if (!run_local_ba_ && !loop_optimization_running_) {
+  //     run_local_ba_ = true;
+  //     std::unique_lock<std::mutex> lck(local_ba_mutex_);
+  //     local_ba_condition_.notify_one();
+  //   }
+  // }
+
+  // void IndirectOptimizer::removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) {
+  //   std::lock_guard<std::mutex> lck(keyframe_mutex_);
+  //   if (keyframes_.find(keyframe->id()) != keyframes_.end()) {
+  //     keyframes_.erase(keyframe->id());
+  //   }
+  // }
+
+  // vslam_datastructure::Frame::SharedPtr IndirectOptimizer::getKeyframe(const long unsigned int id) const {
+  //   std::lock_guard<std::mutex> lck(keyframe_mutex_);
+  //   if (keyframes_.find(id) != keyframes_.end()) {
+  //     return keyframes_.at(id);
+  //   } else {
+  //     return nullptr;
+  //   }
+  // }
 
   void IndirectOptimizer::localBALoop() {
     while (!exit_thread_) {
@@ -92,7 +102,7 @@ namespace vslam_backend_plugins {
         break;
       }
 
-      auto [core_keyframes, core_mappoints] = getCoreKeyframesMappoints();
+      auto [core_keyframes, core_mappoints] = map_->getCoreKeyframesMappoints(num_core_kfs_);
       if (core_keyframes.size() < num_core_kfs_) {
         std::this_thread::yield();
         continue;
@@ -110,35 +120,35 @@ namespace vslam_backend_plugins {
     }
   }
 
-  std::pair<IndirectOptimizer::CoreKfsSet, IndirectOptimizer::CoreMpsSet>
-  IndirectOptimizer::getCoreKeyframesMappoints() {
-    assert(num_core_kfs_ > 0);
+  // std::pair<IndirectOptimizer::CoreKfsSet, IndirectOptimizer::CoreMpsSet>
+  // IndirectOptimizer::getCoreKeyframesMappoints() {
+  //   assert(num_core_kfs_ > 0);
 
-    std::lock_guard<std::mutex> lck(keyframe_mutex_);
-    CoreKfsSet core_keyframes;
-    CoreMpsSet core_mappoints;
-    auto kfs_it = keyframes_.rbegin();
-    while (kfs_it != keyframes_.rend() && core_keyframes.size() < num_core_kfs_) {
-      auto kf = kfs_it->second;
+  //   std::lock_guard<std::mutex> lck(keyframe_mutex_);
+  //   CoreKfsSet core_keyframes;
+  //   CoreMpsSet core_mappoints;
+  //   auto kfs_it = keyframes_.rbegin();
+  //   while (kfs_it != keyframes_.rend() && core_keyframes.size() < num_core_kfs_) {
+  //     auto kf = kfs_it->second;
 
-      if (!kf.get() || kf->isBad()) {
-        kfs_it++;
-        continue;
-      }
+  //     if (!kf.get() || kf->isBad()) {
+  //       kfs_it++;
+  //       continue;
+  //     }
 
-      core_keyframes.insert(kf.get());
+  //     core_keyframes.insert(kf.get());
 
-      for (auto pt : kf->points()) {
-        if (pt->hasMappoint() && pt->mappoint()->projections().size() > 1) {
-          core_mappoints.insert(pt->mappoint().get());
-        }
-      }
+  //     for (auto pt : kf->points()) {
+  //       if (pt->hasMappoint() && pt->mappoint()->projections().size() > 1) {
+  //         core_mappoints.insert(pt->mappoint().get());
+  //       }
+  //     }
 
-      kfs_it++;
-    }
+  //     kfs_it++;
+  //   }
 
-    return {core_keyframes, core_mappoints};
-  }
+  //   return {core_keyframes, core_mappoints};
+  // }
 
   void IndirectOptimizer::cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id,
                                                          const long unsigned int max_kf_id) {
@@ -146,7 +156,8 @@ namespace vslam_backend_plugins {
 
     vslam_datastructure::Frame::SharedPtr prev_kf_ptr{nullptr};
     std::optional<double> prev_rel_translation;
-    for (auto& [_, kf_ptr] : keyframes_) {
+    auto keyframes = map_->keyframes();
+    for (auto& kf_ptr : keyframes) {
       if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
         continue;
       }
@@ -231,21 +242,29 @@ namespace vslam_backend_plugins {
     }
 
     // Check if the keyframes exist
-    {
-      std::lock_guard<std::mutex> lck(keyframe_mutex_);
-      if ((keyframes_.find(kf_id_1) == keyframes_.end()) || (keyframes_.find(kf_id_2) == keyframes_.end())) {
-        return;
-      }
+    auto kf1 = map_->getKeyframe(kf_id_1);
+    auto kf2 = map_->getKeyframe(kf_id_2);
 
-      // The loop constraint cannot be established if one of the keyframes is bad
-      if (keyframes_.at(kf_id_1)->isBad() || keyframes_.at(kf_id_2)->isBad()) {
-        return;
-      }
+    if (!kf1 || !kf2 || kf1->isBad() || kf2->isBad()) {
+      return;
     }
+
+    // {
+    //   std::lock_guard<std::mutex> lck(keyframe_mutex_);
+    //   if ((keyframes_.find(kf_id_1) == keyframes_.end()) || (keyframes_.find(kf_id_2) == keyframes_.end())) {
+    //     return;
+    //   }
+
+    //   // The loop constraint cannot be established if one of the keyframes is bad
+    //   if (keyframes_.at(kf_id_1)->isBad() || keyframes_.at(kf_id_2)->isBad()) {
+    //     return;
+    //   }
+    // }
 
     loop_optimization_running_ = true;
 
-    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes_);
+    auto keyframes = map_->keyframes();
+    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes);
 
     if (!cleaning_stale_keyframes_mappoints_ && !run_local_ba_) {
       cleaning_stale_keyframes_mappoints_ = true;
@@ -256,20 +275,20 @@ namespace vslam_backend_plugins {
     loop_optimization_running_ = false;
   }
 
-  std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::getAllKeyframeMsgs() const {
-    std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
-    for (const auto& [_, kf] : keyframes_) {
-      if (kf->isBad()) {
-        continue;
-      }
+  // std::vector<vslam_msgs::msg::Frame> IndirectOptimizer::getAllKeyframeMsgs() const {
+  //   std::vector<vslam_msgs::msg::Frame> keyframe_msgs;
+  //   for (const auto& [_, kf] : keyframes_) {
+  //     if (kf->isBad()) {
+  //       continue;
+  //     }
 
-      vslam_msgs::msg::Frame keyframe_msg;
-      kf->toMsg(&keyframe_msg, true);
-      keyframe_msgs.push_back(keyframe_msg);
-    }
+  //     vslam_msgs::msg::Frame keyframe_msg;
+  //     kf->toMsg(&keyframe_msg, true);
+  //     keyframe_msgs.push_back(keyframe_msg);
+  //   }
 
-    return keyframe_msgs;
-  }
+  //   return keyframe_msgs;
+  // }
 
 }  // namespace vslam_backend_plugins
 

@@ -23,6 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/map.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
 namespace vslam_components {
@@ -75,6 +76,9 @@ namespace vslam_components {
     class VSlamNode : public virtual abstract::VSlamNode {
     public:
       void processFrame(vslam_datastructure::Frame::SharedPtr current_frame) override;
+
+    protected:
+      vslam_datastructure::Map map_;
 
     private:
       /// Camera tracking states

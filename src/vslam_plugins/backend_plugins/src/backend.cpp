@@ -41,12 +41,12 @@
 
 namespace vslam_backend_plugins {
   Optimizer::~Optimizer() {
-    keyframes_.clear();
-    current_keyframe_.reset();
+    // keyframes_.clear();
     std::cerr << "Terminated Optimizer" << std::endl;
   }
 
-  void Optimizer::runBundleAdjustmentImpl(CoreKfsSet& core_keyframes, CoreMpsSet& core_mappoints) {
+  void Optimizer::runBundleAdjustmentImpl(vslam_datastructure::CoreKfsSet& core_keyframes,
+                                          vslam_datastructure::CoreMpsSet& core_mappoints) {
     // Setup g2o optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -203,9 +203,9 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Optimizer::runPoseGraphOptimizationImpl(
-      const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2, const double sim3_scale,
-      std::map<long unsigned int, vslam_datastructure::Frame::SharedPtr>& keyframes) {
+  void Optimizer::runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
+                                               const cv::Mat& T_1_2, const double sim3_scale,
+                                               std::list<vslam_datastructure::Frame::SharedPtr>& keyframes) {
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
     optimizer.setVerbose(false);
@@ -223,7 +223,7 @@ namespace vslam_backend_plugins {
     // Create vertices
     unsigned long int vertex_edge_id{0};
     std::map<long unsigned int, g2o::VertexSim3Expmap*> kf_vertices;
-    for (const auto& [kf_id, kf] : keyframes) {
+    for (const auto& kf : keyframes) {
       if (kf->isBad()) {
         continue;
       }
@@ -235,7 +235,7 @@ namespace vslam_backend_plugins {
       v_sim3->setMarginalized(false);
       optimizer.addVertex(v_sim3);
 
-      kf_vertices[kf_id] = v_sim3;
+      kf_vertices[kf->id()] = v_sim3;
 
       if (kf->active_tracking_state) {
         break;
@@ -248,12 +248,12 @@ namespace vslam_backend_plugins {
     }
 
     // Create edges
-    for (const auto& [kf_id, kf] : keyframes) {
-      if (kf->isBad() || kf_vertices.find(kf_id) == kf_vertices.end()) {
+    for (const auto& kf : keyframes) {
+      if (kf->isBad() || kf_vertices.find(kf->id()) == kf_vertices.end()) {
         continue;
       }
 
-      auto v_sim3_this = kf_vertices.at(kf_id);
+      auto v_sim3_this = kf_vertices.at(kf->id());
 
       if (kf->nearby_keyframes.empty()) {
         kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf.get());
@@ -346,7 +346,7 @@ namespace vslam_backend_plugins {
 
     // Recalculate SE(3) poses and map points in their host keyframe
     for (const auto [kf_id, kf_vertex] : kf_vertices) {
-      auto kf = keyframes.at(kf_id);
+      auto kf = map_->getKeyframe(kf_id);  // keyframes.at(kf_id);
 
       // If the keyframe is being used or optimized
       if (kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
@@ -368,8 +368,8 @@ namespace vslam_backend_plugins {
     }
 
     // Add the loop keyframe
-    auto kf_1 = keyframes.at(kf_id_1);
-    auto kf_2 = keyframes.at(kf_id_2);
+    auto kf_1 = map_->getKeyframe(kf_id_1);  // keyframes.at(kf_id_1);
+    auto kf_2 = map_->getKeyframe(kf_id_2);  // keyframes.at(kf_id_2);
     kf_1->loop_keyframes.insert(kf_2.get());
     kf_2->loop_keyframes.insert(kf_1.get());
   }

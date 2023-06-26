@@ -26,6 +26,7 @@
 
 #include "vslam_backend_plugins/backend.hpp"
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/map.hpp"
 #include "vslam_plugins_base/backend.hpp"
 
 namespace vslam_backend_plugins {
@@ -34,22 +35,29 @@ namespace vslam_backend_plugins {
     ~IndirectOptimizer();
 
     /// Indirect optimizer initializer
-    void initialize() override;
+    void initialize(vslam_datastructure::Map* map) override;
 
-    /// Add a new keyframe
+    // /// Add a new keyframe
+    // /**
+    //  * \param[in] frame a new keyframe
+    //  */
+    // void addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
+
+    // /// Remove a keyframe
+    // /**
+    //  * \param[in] frame the keyframe to be removed
+    //  */
+    // void removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
+
+    // /// Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
+    // vslam_datastructure::Frame::SharedPtr getKeyframe(const long unsigned int id) const override;
+
+    /// Run local BA
     /**
-     * \param[in] frame a new keyframe
+     * Non-blocking call that runs local bundle adjustment on the core keyframes and map points, which can be obtained
+     * from the map
      */
-    void addKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
-
-    /// Remove a keyframe
-    /**
-     * \param[in] frame the keyframe to be removed
-     */
-    void removeKeyframe(vslam_datastructure::Frame::SharedPtr keyframe) override;
-
-    /// Get a keyframe using the id. Return a nullptr if the keyframe cannot be found
-    vslam_datastructure::Frame::SharedPtr getKeyframe(const long unsigned int id) const override;
+    void runLocalBA() override;
 
     /// Add a loop constraint and run pose-graph optimization
     /**
@@ -62,7 +70,7 @@ namespace vslam_backend_plugins {
                            const double sim3_scale) override;
 
     /// Convert all the keyframes to frame msgs to refresh the visualizer
-    std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const override;
+    // std::vector<vslam_msgs::msg::Frame> getAllKeyframeMsgs() const override;
 
     /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_backend_plugins::IndirectOptimizer"; }
@@ -86,11 +94,11 @@ namespace vslam_backend_plugins {
     /// A loop that is running in the local BA thread
     void localBALoop();
 
-    /// Get the latest `num_core_kfs_` core keyframes and their map points
-    /**
-     * \return core keyframes and map points
-     */
-    std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
+    // /// Get the latest `num_core_kfs_` core keyframes and their map points
+    // /**
+    //  * \return core keyframes and map points
+    //  */
+    // std::pair<CoreKfsSet, CoreMpsSet> getCoreKeyframesMappoints();
 
     /// Cleanup the outlier map points and keyframes
     /**

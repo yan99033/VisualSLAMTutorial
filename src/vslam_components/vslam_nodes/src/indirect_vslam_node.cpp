@@ -172,7 +172,7 @@ namespace vslam_components {
 
       // Back-end
       backend_ = backend_loader_.createSharedInstance(declare_parameter("backend_plugin_name", "UNDEFINED"));
-      backend_->initialize();
+      backend_->initialize(&map_);
 
       // Place recognition
       place_recognition_ = place_recognition_loader_.createSharedInstance(
@@ -213,6 +213,8 @@ namespace vslam_components {
       current_keyframe_.reset();
       loop_keyframe_.reset();
 
+      map_.clear();
+
       std::cerr << "Terminated vslam node" << std::endl;
     }
 
@@ -246,7 +248,8 @@ namespace vslam_components {
     bool IndirectVSlamNode::processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       current_frame->setKeyframe();
 
-      backend_->addKeyframe(current_frame);
+      // backend_->addKeyframe(current_frame);
+      map_.addKeyframe(current_frame);
       current_keyframe_ = current_frame;
 
       return true;
@@ -254,7 +257,9 @@ namespace vslam_components {
 
     bool IndirectVSlamNode::processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
-        backend_->removeKeyframe(current_keyframe_);
+        // backend_->removeKeyframe(current_keyframe_);
+        map_.removeKeyframe(current_keyframe_);
+
         current_keyframe_ = nullptr;
         return false;
       }
@@ -265,7 +270,8 @@ namespace vslam_components {
       // Get the tracked camera pose and check the tracking quality
       cv::Mat T_c_p;
       if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
-        backend_->removeKeyframe(current_keyframe_);
+        // backend_->removeKeyframe(current_keyframe_);
+        map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
       }
@@ -279,7 +285,8 @@ namespace vslam_components {
 
       // Check if we have enough initial map points
       if (new_mps.size() < min_num_kf_mps_) {
-        backend_->removeKeyframe(current_keyframe_);
+        // backend_->removeKeyframe(current_keyframe_);
+        map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
       }
@@ -327,10 +334,14 @@ namespace vslam_components {
         current_keyframe_->setMappoints(new_mps, first_indices);
         const auto new_old_mps = current_keyframe_->mappoints(first_indices);
         current_frame->setMappoints(new_old_mps, second_indices, true);
-        backend_->addKeyframe(current_frame);
+        // backend_->addKeyframe(current_frame);
+        map_.addKeyframe(current_frame);
         current_keyframe_->active_tracking_state = false;
         current_keyframe_ = current_frame;
         current_keyframe_->active_tracking_state = true;
+
+        // Run local BA
+        backend_->runLocalBA();
 
         // Add the frame to visual update queue
         vslam_msgs::msg::Frame keyframe_msg;
@@ -385,7 +396,8 @@ namespace vslam_components {
             current_keyframe_->setMappoints(new_mps, first_indices);
             const auto new_old_mps = current_keyframe_->mappoints(first_indices);
             current_frame->setMappoints(new_old_mps, second_indices, true);
-            backend_->addKeyframe(current_frame);
+            // backend_->addKeyframe(current_frame);
+            map_.addKeyframe(current_frame);
             current_keyframe_->active_tracking_state = false;
             current_keyframe_ = current_frame;
             current_keyframe_->active_tracking_state = true;
@@ -451,7 +463,8 @@ namespace vslam_components {
         auto curr_kf_id = keyframe_id_queue_->receive();
 
         // Get the keyframe from the backend
-        const auto current_keyframe = backend_->getKeyframe(curr_kf_id);
+        const auto current_keyframe = map_.getKeyframe(curr_kf_id);
+        // const auto current_keyframe = backend_->getKeyframe(curr_kf_id);
 
         if (current_keyframe == nullptr) {
           RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
@@ -466,7 +479,8 @@ namespace vslam_components {
         // Verify any potential loops
         if (results.size() > 0) {
           for (const auto& [prev_kf_id, score] : results) {
-            const auto previous_keyframe = backend_->getKeyframe(prev_kf_id);
+            const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
+            // const auto previous_keyframe = backend_->getKeyframe(prev_kf_id);
 
             if (previous_keyframe == nullptr) {
               RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
@@ -514,7 +528,7 @@ namespace vslam_components {
 
               if (refresh_visual) {
                 // Refresh the display
-                const auto keyframe_msgs = backend_->getAllKeyframeMsgs();
+                const auto keyframe_msgs = map_.getAllKeyframeMsgs();
 
                 visualizer_->replaceAllKeyframes(keyframe_msgs);
               }
