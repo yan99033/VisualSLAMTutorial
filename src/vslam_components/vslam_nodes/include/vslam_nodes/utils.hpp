@@ -25,6 +25,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
 
@@ -42,6 +43,17 @@ namespace vslam_components {
        */
       double calculateSim3Scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters = 100,
                                 size_t ransac_n = 10);
+
+      /// Check if the number of number of map points in the matched points is above the threshold to determine the
+      /// matching and tracking quality
+      /**
+       * \param[in] matched_points point correspondences
+       * \param[in] goodness_threshold return true if the number of inlier map points is greater than this
+       * \param[out] num_mps number of inlier map points found
+       * \return a boolean indicating if the number of map points is above the threshold
+       */
+      bool numMpsInMatchPointsAboveThresh(const vslam_datastructure::MatchedPoints& matched_points,
+                                          const size_t goodness_thresh, size_t& num_mps);
 
     }  // namespace utils
   }    // namespace vslam_nodes

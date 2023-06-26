@@ -103,15 +103,6 @@ namespace vslam_components {
        */
       bool processFrameRelocalization(vslam_datastructure::Frame::SharedPtr current_frame) override;
 
-      /// Check the goodness of the mapped points so far to determine the matching and tracking qualities
-      /**
-       * \param[in] matched_points point correspondences
-       * \param[in] goodness_threshold return true if the number of inlier map points is greater than this
-       * \param[out] num_mps number of inlier map points found
-       */
-      bool checkMpsQuality(const vslam_datastructure::MatchedPoints& matched_points, const size_t goodness_thresh,
-                           size_t& num_mps);
-
       /// Camera frame tracker to calculate the relative transform and the matched points
       /**
        * \param frame1[in] frame1 (usually the current keyframe)

@@ -318,7 +318,8 @@ namespace vslam_components {
       const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
       const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
       size_t num_kf_mps{0};
-      if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
+      if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_kf_mps_, num_kf_mps)
+          || rotation_angle > max_rotation_rad_) {
         // Set the current frame as keyframe
         current_frame->setKeyframe();
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
@@ -379,7 +380,8 @@ namespace vslam_components {
           const cv::Mat R_c_p = T_c_p.rowRange(0, 3).colRange(0, 3);
           const double rotation_angle = vslam_utils::conversions::rotationMatrixToRotationAngle(R_c_p);
           size_t num_kf_mps{0};
-          if (!checkMpsQuality(matched_points, min_num_kf_mps_, num_kf_mps) || rotation_angle > max_rotation_rad_) {
+          if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_kf_mps_, num_kf_mps)
+              || rotation_angle > max_rotation_rad_) {
             // Set the current frame as keyframe
             current_frame->setKeyframe();
             const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
@@ -411,7 +413,7 @@ namespace vslam_components {
 
       // Check if we have enough map points for camera tracking
       size_t num_matched_mps{0};
-      if (!checkMpsQuality(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
+      if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_mps_cam_tracking_, num_matched_mps)) {
         RCLCPP_INFO(get_logger(), "Insufficient amount of points (%lu) needed for tracking", num_matched_mps);
         return false;
       }
@@ -424,27 +426,12 @@ namespace vslam_components {
 
       // Check the number of outliers in the calculating the camera pose
       size_t num_matched_inliers{0};
-      if (!checkMpsQuality(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
+      if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_cam_tracking_inliers_, num_matched_inliers)) {
         RCLCPP_INFO(get_logger(), "Insufficient amount of inlier points (%lu) used for tracking", num_matched_inliers);
         return false;
       }
 
       return true;
-    }
-
-    bool IndirectVSlamNode::checkMpsQuality(const vslam_datastructure::MatchedPoints& matched_points,
-                                            const size_t goodness_thresh, size_t& num_mps) {
-      for (const auto& match : matched_points) {
-        if (match.point1->hasMappoint()) {
-          num_mps++;
-        }
-
-        if (num_mps > goodness_thresh) {
-          return true;
-        }
-      }
-
-      return false;
     }
 
     void IndirectVSlamNode::placeRecognitionLoop() {

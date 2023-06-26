@@ -114,6 +114,21 @@ namespace vslam_components {
 
         return best_scale;
       }
+
+      bool numMpsInMatchPointsAboveThresh(const vslam_datastructure::MatchedPoints& matched_points,
+                                          const size_t goodness_thresh, size_t& num_mps) {
+        for (const auto& match : matched_points) {
+          if (match.point1->hasMappoint()) {
+            num_mps++;
+          }
+
+          if (num_mps > goodness_thresh) {
+            return true;
+          }
+        }
+
+        return false;
+      }
     }  // namespace utils
   }    // namespace vslam_nodes
 }  // namespace vslam_components
