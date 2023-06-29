@@ -21,6 +21,14 @@
 
 namespace vslam_datastructure {
 
+  bool PointCmp::operator()(Point* const lhs, Point* const rhs) const {
+    if (!lhs || !lhs->frame() || !rhs || !rhs->frame()) {
+      return false;
+    } else {
+      return lhs->frame()->id() < rhs->frame()->id();
+    }
+  }
+
   long unsigned int MapPoint::point_count_ = 0;
 
   void MapPoint::setPos(const cv::Point3d& pos_3d) {
@@ -34,17 +42,42 @@ namespace vslam_datastructure {
   }
 
   void MapPoint::addProjection(Point* point) {
+    // Ignore the null pointers
+    if (!point) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lck(mutex_);
     projections_.insert(point);
   }
 
   void MapPoint::removeProjection(Point* point) {
+    // Ignore the null pointers
+    if (!point) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lck(mutex_);
     if (projections_.find(point) == projections_.end()) {
       return;
     }
 
     projections_.erase(point);
+  }
+
+  MapPoint::ProjectionSet MapPoint::projections() {
+    // Remove the stale (nullptr) projections
+    for (auto it = projections_.begin(); it != projections_.end();) {
+      if (*it == nullptr) {
+        std::lock_guard<std::mutex> lck(mutex_);
+        it = projections_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    // Create a copy of the projections
+    return ProjectionSet(projections_);
   }
 
   void MapPoint::setHostKeyframeId(const long unsigned int host_keyframe_id) {
@@ -67,7 +100,7 @@ namespace vslam_datastructure {
   Point::Point(const cv::KeyPoint& keypoint, const cv::Mat& descriptor, const Type type)
       : keypoint(keypoint), descriptor(descriptor), type(type) {}
 
-  Point::~Point() {
+  Point::~Point() noexcept {
     // Release resources
     mappoint_.reset();
   }

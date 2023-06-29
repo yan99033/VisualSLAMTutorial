@@ -32,9 +32,15 @@ namespace vslam_datastructure {
   class Point;
   class Frame;
 
+  struct PointCmp {
+    bool operator()(Point* const lhs, Point* const rhs) const;
+  };
+
   class MapPoint {
   public:
     MapPoint() = default;
+
+    using ProjectionSet = std::set<Point*, PointCmp>;
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
@@ -62,14 +68,13 @@ namespace vslam_datastructure {
      */
     void removeProjection(Point* point);
 
-    /// Get the projections
+    /// Return a copy of the projections
     /**
-     * \note Do not modify the projections, i.e., calling MapPoint::addProjection or MapPoint::removeProjection while
-     * iterating through the projections
+     * It will go through the projections and remove any stale projections (i.e., the null pointers in the set)
      *
      * \return projections
      */
-    inline const std::set<Point*>& projections() const { return projections_; }
+    ProjectionSet projections();
 
     /// Make the map point an inlier
     inline void setInlier() { isOutlier_ = false; };
@@ -119,7 +124,7 @@ namespace vslam_datastructure {
     std::atomic_bool isOutlier_{false};
 
     /// The corresponding points in the keyframes
-    std::set<Point*> projections_;
+    ProjectionSet projections_;
 
     /// Point id
     long unsigned int id_{point_count_++};
