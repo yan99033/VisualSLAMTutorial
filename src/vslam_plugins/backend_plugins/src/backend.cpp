@@ -66,8 +66,9 @@ namespace vslam_backend_plugins {
     std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
     std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame*> core_kf_vertices;
     std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
-    std::set<vslam_datastructure::Frame*> non_core_kfs;
     std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
+    std::map<g2o::EdgeSE3ProjectXYZ*, std::pair<vslam_datastructure::MapPoint*, vslam_datastructure::Point*>>
+        edge_projections;
     unsigned long int vertex_edge_id{0};
     for (auto mp : core_mappoints) {
       if (mp == nullptr || mp->isOutlier()) {
@@ -114,7 +115,6 @@ namespace vslam_backend_plugins {
             kf_vertex->setFixed(pt->frame()->active_tracking_state);
           } else {
             // Non-core keyframes
-            non_core_kfs.insert(pt->frame());
             kf_vertex->setFixed(true);
           }
           optimizer.addVertex(kf_vertex);
@@ -131,6 +131,8 @@ namespace vslam_backend_plugins {
         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
         rk->setDelta(huber_kernel_delta_);
         e->setRobustKernel(rk);
+
+        edge_projections[e] = {mp, pt};
 
         const cv::Mat K = pt->frame()->K();
 
@@ -169,11 +171,10 @@ namespace vslam_backend_plugins {
 
     for (auto e : all_edges) {
       if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq_) {
-        auto mp_vertex = static_cast<g2o::VertexPointXYZ*>(e->vertex(0));
-        auto mp_p = core_mp_vertices[mp_vertex];
+        auto [mp_p, pt_p] = edge_projections[e];
 
-        if (mp_p) {
-          mp_p->setOutlier();
+        if (mp_p && pt_p) {
+          mp_p->removeProjection(pt_p);
         }
       }
     }
@@ -259,6 +260,11 @@ namespace vslam_backend_plugins {
 
       if (kf->nearby_keyframes.empty()) {
         kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf.get());
+      }
+
+      if (kf->nearby_keyframes.size() < 3) {
+        kf->setBad();
+        continue;
       }
 
       bool need_recalculating_nearby_keyframes{false};
