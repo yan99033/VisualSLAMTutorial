@@ -80,12 +80,23 @@ namespace vslam_datastructure {
     /// Get a shallow copy of the keyframes
     std::list<Frame::SharedPtr> keyframes();
 
+    /// Cleanup the outlier map points and keyframes
+    /**
+     * \param[in] min_kf_id keyframe ids less than this won't be processed
+     * \param[in] max_kf_id keyframe ids greater than this won't be processed
+     */
+    void cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id = 0,
+                                        const long unsigned int max_kf_id = ULONG_MAX);
+
   private:
     /// kayframe map (where keyframes can be looked up using their id)
     std::unordered_map<long unsigned int, Frame::SharedPtr> keyframe_map_;
 
     /// All keyframes
     std::list<Frame::SharedPtr> keyframes_;
+
+    /// Flag indicating stale keyframes and map points are being cleaned up
+    std::atomic_bool cleaning_stale_keyframes_mappoints_{false};
 
     /// @brief  mutex for modifying the map
     mutable std::mutex map_mutex_;

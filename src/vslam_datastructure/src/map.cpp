@@ -112,4 +112,61 @@ namespace vslam_datastructure {
     return std::list<Frame::SharedPtr>(keyframes_);
   }
 
+  void Map::cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id, const long unsigned int max_kf_id) {
+    if (cleaning_stale_keyframes_mappoints_) {
+      return;
+    }
+
+    cleaning_stale_keyframes_mappoints_ = true;
+
+    std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
+
+    vslam_datastructure::Frame::SharedPtr prev_kf_ptr{nullptr};
+    std::optional<double> prev_rel_translation;
+    int removed_mps{0};
+    int removed_kfs{0};
+    for (auto& kf_ptr : keyframes_) {
+      if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
+        continue;
+      }
+
+      // If the keyframe is being optimized or used for camera tracking or larger than the max id, stop processing the
+      // rest
+      if (kf_ptr->id() > max_kf_id || kf_ptr->active_tracking_state || kf_ptr->active_ba_state) {
+        break;
+      }
+
+      std::set<vslam_datastructure::Frame*> projected_keyframes;
+
+      for (const auto& pt : kf_ptr->points()) {
+        if (pt->hasMappoint() && pt->isMappointHost()) {
+          // if there are less than two projections, remove the map point
+          if (pt->mappoint()->projections().size() < 2) {
+            pt->deleteMappoint();
+            removed_mps++;
+            continue;
+          }
+
+          for (const auto other_pt : pt->mappoint()->projections()) {
+            assert(other_pt->frame());
+
+            if (other_pt->frame()->isBad()) {
+              continue;
+            }
+
+            projected_keyframes.insert(other_pt->frame());
+          }
+        }
+      }
+
+      // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
+      if (projected_keyframes.size() < 2 && (!kf_ptr->active_tracking_state)) {
+        kf_ptr->setBad();
+        removed_kfs++;
+      }
+    }
+
+    cleaning_stale_keyframes_mappoints_ = false;
+  }
+
 }  // namespace vslam_datastructure

@@ -79,98 +79,9 @@ namespace vslam_backend_plugins {
 
       runBundleAdjustmentImpl(core_keyframes, core_mappoints);
 
-      if (!cleaning_stale_keyframes_mappoints_ && !loop_optimization_running_) {
-        cleaning_stale_keyframes_mappoints_ = true;
-        cleanUpStaleKeyframesMappoints((*core_keyframes.begin())->id(), (*core_keyframes.rbegin())->id());
-        cleaning_stale_keyframes_mappoints_ = false;
-      }
+      map_->cleanUpStaleKeyframesMappoints((*core_keyframes.begin())->id(), (*core_keyframes.rbegin())->id());
 
       run_local_ba_ = false;
-    }
-  }
-
-  void IndirectOptimizer::cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id,
-                                                         const long unsigned int max_kf_id) {
-    std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
-
-    vslam_datastructure::Frame::SharedPtr prev_kf_ptr{nullptr};
-    std::optional<double> prev_rel_translation;
-    auto keyframes = map_->keyframes();
-    for (auto& kf_ptr : keyframes) {
-      if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
-        continue;
-      }
-
-      // If the keyframe is being optimized or used for camera tracking or larger than the max id, stop processing the
-      // rest
-      if (kf_ptr->id() > max_kf_id || kf_ptr->active_tracking_state || kf_ptr->active_ba_state) {
-        break;
-      }
-
-      std::set<vslam_datastructure::Frame*> projected_keyframes;
-
-      for (const auto& pt : kf_ptr->points()) {
-        if (pt->hasMappoint() && pt->isMappointHost()) {
-          // if there are less than two projections, remove the map point
-          if (pt->mappoint()->projections().size() < 2) {
-            pt->deleteMappoint();
-            continue;
-          }
-
-          for (const auto other_pt : pt->mappoint()->projections()) {
-            assert(other_pt->frame());
-
-            if (other_pt->frame()->isBad()) {
-              continue;
-            }
-
-            projected_keyframes.insert(other_pt->frame());
-          }
-        }
-      }
-
-      // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
-      if (projected_keyframes.size() < 2 && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
-        kf_ptr->setBad();
-
-        prev_kf_ptr.reset();
-        prev_rel_translation.reset();
-
-        continue;
-      }
-
-      if (!prev_kf_ptr) {
-        prev_kf_ptr = kf_ptr;
-        continue;
-      }
-
-      if (!prev_rel_translation.has_value()) {
-        cv::Mat T_prev_curr = prev_kf_ptr->T_f_w() * kf_ptr->T_w_f();
-        prev_rel_translation = cv::norm(T_prev_curr.rowRange(0, 3).colRange(3, 4));
-        prev_kf_ptr = kf_ptr;
-        continue;
-      }
-
-      // Distance test
-      // Normally if the PnP method fails, it will return a big pose jump or has a large rotation
-      cv::Mat T_prev_curr = prev_kf_ptr->T_f_w() * kf_ptr->T_w_f();
-      const double rel_translation = cv::norm(T_prev_curr.rowRange(0, 3).colRange(3, 4));
-      const cv::Mat R_prev_curr = T_prev_curr.rowRange(0, 3).colRange(0, 3);
-      const double rel_rotation = vslam_utils::conversions::rotationMatrixToRotationAngle(R_prev_curr);
-
-      if ((rel_translation > outlier_rel_translation_scale_ * prev_rel_translation.value()
-           || rel_rotation > max_outlier_rel_rotation_rad_)
-          && (!kf_ptr->active_tracking_state && !kf_ptr->active_ba_state)) {
-        kf_ptr->setBad();
-
-        prev_kf_ptr.reset();
-        prev_rel_translation.reset();
-
-        continue;
-      }
-
-      prev_kf_ptr = kf_ptr;
-      prev_rel_translation = rel_translation;
     }
   }
 
@@ -193,11 +104,7 @@ namespace vslam_backend_plugins {
     auto keyframes = map_->keyframes();
     runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes);
 
-    if (!cleaning_stale_keyframes_mappoints_ && !run_local_ba_) {
-      cleaning_stale_keyframes_mappoints_ = true;
-      cleanUpStaleKeyframesMappoints();
-      cleaning_stale_keyframes_mappoints_ = false;
-    }
+    map_->cleanUpStaleKeyframesMappoints();
 
     loop_optimization_running_ = false;
   }

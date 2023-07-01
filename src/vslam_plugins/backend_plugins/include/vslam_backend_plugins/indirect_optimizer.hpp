@@ -76,28 +76,11 @@ namespace vslam_backend_plugins {
     /// A loop that is running in the local BA thread
     void localBALoop();
 
-    /// Cleanup the outlier map points and keyframes
-    /**
-     * \param[in] min_kf_id keyframe ids less than this won't be processed
-     * \param[in] max_kf_id keyframe ids greater than this won't be processed
-     */
-    void cleanUpStaleKeyframesMappoints(const long unsigned int min_kf_id = 0,
-                                        const long unsigned int max_kf_id = ULONG_MAX);
-
     /// Flag indicating stale keyframes and map points are being cleaned up
     std::atomic_bool cleaning_stale_keyframes_mappoints_{false};
 
     /// Number of core keyframes used in local BA
     size_t num_core_kfs_{5};
-
-    /// Maximum relative rotation between two consecutive keyframes to detect bad keyframes
-    /// Normally the relative rotation is large if tracking fails. Defaults to 60 degrees
-    static constexpr const double max_outlier_rel_rotation_rad_{1.0472};
-
-    /// Scale of the maximum relative translation to detect bad keyframes
-    /// The current relative translation must not be larger than the scale times the previous relative translation.
-    /// Normally we get a big pose jump if tracking fails
-    static constexpr const double outlier_rel_translation_scale_{10.0};
 
     /// A flag to indicate if the pose-graph optimization is running
     std::atomic_bool loop_optimization_running_{false};
