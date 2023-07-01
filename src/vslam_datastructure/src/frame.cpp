@@ -292,6 +292,8 @@ namespace vslam_datastructure {
         // Add projection if the reprojection error is low
         if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_) {
           pt->mappoint()->addProjection(pt.get());
+        } else {
+          pt->deleteMappoint();
         }
       }
     }
