@@ -290,10 +290,8 @@ namespace vslam_datastructure {
         const auto pt_2d = projectPoint3d2d(pt->mappoint()->pos(), K_, T_f_w_);
 
         // Add projection if the reprojection error is low
-        if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_) {
+        if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_thresh_) {
           pt->mappoint()->addProjection(pt.get());
-        } else {
-          pt->deleteMappoint();
         }
       }
     }

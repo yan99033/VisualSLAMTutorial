@@ -128,13 +128,13 @@ namespace vslam_components {
       std::mutex loop_keyframe_mutex_;
 
       /// Minimum number of map points needed for camera tracking
-      size_t min_num_mps_cam_tracking_{20};
+      size_t min_num_mps_cam_tracking_{15};
 
       /// Minimum number of inliers needed for good camera tracking
-      size_t min_num_cam_tracking_inliers_{15};
+      size_t min_num_cam_tracking_inliers_{10};
 
       /// Minimum number of map points needed for a keyframe
-      size_t min_num_kf_mps_{150};
+      size_t min_num_kf_mps_{180};
 
       /// Relative rotation threshond between the keyframe and the current frame. Make the current frame a keyframe if
       /// the relative rotation exceeds this threshold

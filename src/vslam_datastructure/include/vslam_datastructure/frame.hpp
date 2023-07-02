@@ -250,7 +250,7 @@ namespace vslam_datastructure {
     mutable std::mutex data_mutex_;
 
     ///  max reprojection error in pixel to associate a map point with a keypoint
-    static constexpr double max_reproj_err_{8.0};
+    static constexpr double max_reproj_err_thresh_{5.0};
   };
 
 }  // namespace vslam_datastructure
