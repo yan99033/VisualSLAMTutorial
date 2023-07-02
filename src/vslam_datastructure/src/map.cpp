@@ -25,6 +25,10 @@ namespace vslam_datastructure {
   Map::~Map() { clear(); }
 
   void Map::addKeyframe(Frame::SharedPtr keyframe) {
+    if (!keyframe) {
+      return;
+    }
+
     assert(keyframe->isKeyframe());
 
     std::lock_guard<std::mutex> lck(map_mutex_);
@@ -33,13 +37,19 @@ namespace vslam_datastructure {
   }
 
   void Map::removeKeyframe(Frame::SharedPtr keyframe) {
+    if (!keyframe) {
+      return;
+    }
+
+    auto kf_id = keyframe->id();
+
     for (auto it = keyframes_.begin(); it != keyframes_.end();) {
-      if ((*it)->id() == keyframe->id()) {
+      if ((*it)->id() == kf_id) {
         std::lock_guard<std::mutex> lck(map_mutex_);
         keyframes_.erase(it);
 
-        if (keyframe_map_.find(keyframe->id()) != keyframe_map_.end()) {
-          keyframe_map_.erase(keyframe->id());
+        if (keyframe_map_.find(kf_id) != keyframe_map_.end()) {
+          keyframe_map_.erase(kf_id);
         }
 
         break;
@@ -119,12 +129,6 @@ namespace vslam_datastructure {
 
     cleaning_stale_keyframes_mappoints_ = true;
 
-    std::vector<vslam_datastructure::Frame::SharedPtr> keyframes_to_remove;
-
-    vslam_datastructure::Frame::SharedPtr prev_kf_ptr{nullptr};
-    std::optional<double> prev_rel_translation;
-    int removed_mps{0};
-    int removed_kfs{0};
     for (auto& kf_ptr : keyframes_) {
       if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
         continue;
@@ -143,7 +147,6 @@ namespace vslam_datastructure {
           // if there are less than two projections, remove the map point
           if (pt->mappoint()->projections().size() < 2) {
             pt->deleteMappoint();
-            removed_mps++;
             continue;
           }
 
@@ -162,10 +165,19 @@ namespace vslam_datastructure {
       // If the map points weren't projected on more than two frames, the keyframe is an outlier keyframe
       if (projected_keyframes.size() < 2 && (!kf_ptr->active_tracking_state)) {
         kf_ptr->setBad();
-        removed_kfs++;
       }
     }
 
+    for (auto it = keyframes_.begin(); it != keyframes_.end();) {
+      if ((*it)->isBad() && !(*it)->active_tracking_state && !(*it)->active_ba_state) {
+        std::lock_guard<std::mutex> lck(map_mutex_);
+
+        it = keyframes_.erase(it);
+
+      } else {
+        ++it;
+      }
+    }
     cleaning_stale_keyframes_mappoints_ = false;
   }
 
