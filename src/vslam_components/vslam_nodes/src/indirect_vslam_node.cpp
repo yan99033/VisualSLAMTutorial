@@ -262,6 +262,8 @@ namespace vslam_components {
         return false;
       }
 
+      RCLCPP_INFO(get_logger(), "Attempt to initialize a keyframe");
+
       auto [matched_points, matched_index_pairs]
           = feature_matcher_->matchFeatures(current_keyframe_->points(), current_frame->points());
 
@@ -442,8 +444,7 @@ namespace vslam_components {
         // Get the keyframe from the backend
         const auto current_keyframe = map_.getKeyframe(curr_kf_id);
 
-        if (current_keyframe == nullptr) {
-          RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
+        if (!current_keyframe || current_keyframe->isBad()) {
           continue;
         }
 
@@ -457,8 +458,7 @@ namespace vslam_components {
           for (const auto& [prev_kf_id, score] : results) {
             const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
 
-            if (previous_keyframe == nullptr) {
-              RCLCPP_DEBUG(this->get_logger(), "current_keyframe is a nullptr");
+            if (!previous_keyframe || previous_keyframe->isBad()) {
               continue;
             }
 
