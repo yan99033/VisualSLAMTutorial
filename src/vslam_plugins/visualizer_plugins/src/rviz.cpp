@@ -69,7 +69,7 @@ namespace {
     visualization_msgs::msg::Marker pose_marker;
     // Add vertices to the marker msg
     pose_marker.header.frame_id = frame_id;
-    pose_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    pose_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     pose_marker.action = visualization_msgs::msg::Marker::ADD;
     pose_marker.scale.x = line_thickness;
     pose_marker.color.r = rgb[0];
