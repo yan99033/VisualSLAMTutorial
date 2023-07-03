@@ -1,4 +1,4 @@
-# Visual SLAM tutorial (beta)
+# Visual SLAM tutorial
 
 A visual SLAM (simultaneous localization and mapping) framework provides the foundation for integrating different components within it. 
 For example, A visual SLAM system comprises camera tracking, mapping, loop closing via place recognition, and visualization components. 
