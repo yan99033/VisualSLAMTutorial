@@ -71,4 +71,8 @@ install(
   RUNTIME DESTINATION bin
 )
 
+install(DIRECTORY include/vslam_nodes DESTINATION include)
+
+ament_export_include_directories(include)
+
 ament_package()
