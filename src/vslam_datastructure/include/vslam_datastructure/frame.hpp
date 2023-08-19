@@ -145,6 +145,12 @@ namespace vslam_datastructure {
     /// Check if there are points available to match or map
     inline bool hasPoints() const { return !points_.empty(); }
 
+    /// Get the image
+    /**
+     * \return image
+     */
+    inline cv::Mat image() { return image_; }
+
     /// Get the frame id
     /**
      * \return the frame id
@@ -166,6 +172,13 @@ namespace vslam_datastructure {
      * \return the position of the map point in the camera's coordinate frame
      */
     cv::Point3d mappointWorldToCam(const cv::Point3d& world_pos) const;
+
+    /// Project a map point in the camera coordinate frame to the 2D image plane
+    /**
+     * \param[in] cam_pos the position of a map point in the camera coordinate frame
+     * \return the 2D coordinate on the image plane
+     */
+    cv::Point2f mappointCamToPixel(const cv::Point3d& cam_pos) const;
 
     /**
      * The active state denotes the frame and its map points must not be removed.
