@@ -265,6 +265,14 @@ namespace vslam_datastructure {
     return R * world_pos + cv::Point3d(t);
   }
 
+  cv::Point2f Frame::mappointCamToPixel(const cv::Point3d& cam_pos) const {
+    cv::Mat pt_projected = (cv::Mat_<double>(3, 1) << cam_pos.x, cam_pos.y, cam_pos.z);
+    pt_projected = K_ * pt_projected;
+    pt_projected /= pt_projected.at<double>(2, 0);
+
+    return {static_cast<float>(pt_projected.at<double>(0, 0)), static_cast<float>(pt_projected.at<double>(1, 0))};
+  }
+
   bool Frame::isBad() const {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return is_bad_;
