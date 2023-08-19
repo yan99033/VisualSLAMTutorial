@@ -23,7 +23,6 @@
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 
 #include "vslam_datastructure/point.hpp"
 #include "vslam_msgs/msg/frame.hpp"
