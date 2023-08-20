@@ -149,7 +149,7 @@ namespace vslam_datastructure {
     /**
      * \return image
      */
-    inline cv::Mat image() { return image_; }
+    inline cv::Mat image() const { return image_; }
 
     /// Get the frame id
     /**
