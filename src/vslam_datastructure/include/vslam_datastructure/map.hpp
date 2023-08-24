@@ -89,7 +89,7 @@ namespace vslam_datastructure {
                                         const long unsigned int max_kf_id = ULONG_MAX);
 
   private:
-    /// kayframe map (where keyframes can be looked up using their id)
+    /// keyframe map (where keyframes can be looked up using their id)
     std::unordered_map<long unsigned int, Frame::SharedPtr> keyframe_map_;
 
     /// All keyframes
@@ -98,7 +98,7 @@ namespace vslam_datastructure {
     /// Flag indicating stale keyframes and map points are being cleaned up
     std::atomic_bool cleaning_stale_keyframes_mappoints_{false};
 
-    /// @brief  mutex for modifying the map
+    /// mutex for modifying the map
     mutable std::mutex map_mutex_;
   };
 }  // namespace vslam_datastructure
