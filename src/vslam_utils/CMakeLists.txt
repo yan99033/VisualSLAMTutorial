@@ -19,7 +19,7 @@ find_package(Eigen3 REQUIRED)
 
 set(dependencies rclcpp OpenCV Eigen3)
 
-set(sources src/converter.cpp src/undistorter.cpp)
+set(sources src/converter.cpp src/undistorter.cpp src/io.cpp)
 
 include_directories(include)
 add_library(${PROJECT_NAME} SHARED ${sources})

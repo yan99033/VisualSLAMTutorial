@@ -20,7 +20,8 @@
 #include "monocular_camera_plugins/virtual_camera.hpp"
 
 #include <cassert>
-#include <filesystem>
+
+#include "vslam_utils/io.hpp"
 
 namespace monocular_camera_plugins {
   void VirtualCamera::initialize(const std::string &params_file) {
@@ -44,7 +45,11 @@ namespace monocular_camera_plugins {
     std::string image_folder;
     params_fs_["image_folder"] >> image_folder;
 
-    loadFromFolder(image_folder);
+    files_ = vslam_utils::io::loadFromFolder(image_folder);
+
+    if (files_.empty()) {
+      throw std::runtime_error("No image files found in " + image_folder);
+    }
 
     params_fs_.release();
   }
@@ -61,18 +66,6 @@ namespace monocular_camera_plugins {
     i_++;
 
     return image;
-  }
-
-  void VirtualCamera::loadFromFolder(const std::string &folder, const std::string &ext) {
-    for (const auto &f : std::filesystem::directory_iterator(folder)) {
-      if (f.path().extension() == ext) {
-        files_.push_back(f.path());
-      }
-    }
-
-    assert(!files_.empty());
-
-    std::sort(files_.begin(), files_.end());
   }
 
 }  // namespace monocular_camera_plugins
