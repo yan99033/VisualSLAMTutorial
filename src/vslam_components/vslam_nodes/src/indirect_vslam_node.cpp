@@ -175,12 +175,16 @@ namespace vslam_components {
       backend_->initialize(&map_);
 
       // Place recognition
-      place_recognition_ = place_recognition_loader_.createSharedInstance(
-          declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
-      place_recognition_->initialize(declare_parameter("place_recognition.input", ""),
-                                     declare_parameter("place_recognition.top_k", 3),
-                                     declare_parameter("place_recognition.score_thresh", 0.9),
-                                     declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
+      enable_place_recognition_ = declare_parameter("place_recognition.enable", false);
+      if (enable_place_recognition_) {
+        place_recognition_ = place_recognition_loader_.createSharedInstance(
+            declare_parameter("place_recognition_plugin_name", "UNDEFINED"));
+        place_recognition_->initialize(declare_parameter("place_recognition.input", ""),
+                                       declare_parameter("place_recognition.top_k", 3),
+                                       declare_parameter("place_recognition.score_thresh", 0.9),
+                                       declare_parameter("place_recognition.ignore_last_n_keyframes", -1));
+        place_recognition_thread_ = std::thread(&IndirectVSlamNode::placeRecognitionLoop, this);
+      }
 
       // Visualizer
       visualizer_ = visualizer_loader_.createSharedInstance(declare_parameter("visualizer_plugin_name", "UNDEFINED"));
@@ -189,8 +193,6 @@ namespace vslam_components {
       // Frame subscriber and publishers
       frame_subscriber_ = create_subscription<vslam_msgs::msg::Frame>(
           "in_frame", 10, std::bind(&IndirectVSlamNode::frameCallback, this, _1));
-
-      place_recognition_thread_ = std::thread(&IndirectVSlamNode::placeRecognitionLoop, this);
     }
 
     IndirectVSlamNode::~IndirectVSlamNode() {
@@ -200,7 +202,9 @@ namespace vslam_components {
       keyframe_id_queue_->stop();
 
       exit_thread_ = true;
-      place_recognition_thread_.join();
+      if (place_recognition_thread_.joinable()) {
+        place_recognition_thread_.join();
+      }
 
       feature_extractor_.reset();
       feature_matcher_.reset();
@@ -343,9 +347,11 @@ namespace vslam_components {
 
         visualizer_->addKeyframe(keyframe_msg);
 
-        // Add the keyframe id to find a potential loop
-        long unsigned int kf_id = current_frame->id();
-        keyframe_id_queue_->send(std::move(kf_id));
+        if (enable_place_recognition_) {
+          // Add the keyframe id to find a potential loop
+          long unsigned int kf_id = current_frame->id();
+          keyframe_id_queue_->send(std::move(kf_id));
+        }
 
         RCLCPP_INFO(this->get_logger(), "Created a new keyframe");
       }

@@ -9,6 +9,7 @@ indirect_vslam_node:
       num_features: 2000
 
     place_recognition:
+      enable: true
       input: "orbvoc.dbow3"
       top_k: 1
       ignore_last_n_keyframes: 100

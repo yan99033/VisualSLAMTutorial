@@ -185,6 +185,8 @@ namespace vslam_components {
       /// Flag to exit the place recognition thread
       std::atomic_bool exit_thread_{false};
 
+      bool enable_place_recognition_{false};
+
       /// Feature extraction plugin loader
       pluginlib::ClassLoader<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_loader_{
           "vslam_plugins_base", "vslam_feature_extractor::base::FeatureExtractor"};
