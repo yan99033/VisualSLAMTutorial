@@ -32,7 +32,8 @@ namespace vslam_datastructure {
   // Forward declaration
   class Point;
   class MapPoint;
-  using Points = std::vector<std::shared_ptr<Point>>;
+  using PointSharedPtr = std::shared_ptr<Point>;
+  using Points = std::vector<PointSharedPtr>;
   using MapPoints = std::vector<std::shared_ptr<MapPoint>>;
   using MappointIndexPairs = std::vector<std::pair<size_t, std::shared_ptr<MapPoint>>>;
 
@@ -120,21 +121,14 @@ namespace vslam_datastructure {
      */
     inline const Points& points() const { return points_; }
 
-    /// Get map points of the indices
-    /**
-     * \param[in] indices of the points containing the map points
-     * \return a vector of map points
-     */
-    MapPoints mappoints(const std::vector<size_t> point_indices);
-
     /// Set map points to the existing points
     /**
      * Use the set_host flag to make this frame as the host keyframe to the map points
      * \param[in] mappoints map points to be assigned to the points
-     * \param[in] point_indices the indices of the points that are associated with the map points
+     * \param[in] points the points that are associated with the map points
      * \param[in] set_host set true if the map points belong to this frame
      */
-    void setMappoints(const MapPoints& mappoints, const std::vector<size_t> point_indices, const bool set_host = false);
+    void setMappoints(const MapPoints& mappoints, const Points& points, const bool set_host = false);
 
     /// Fuse the old map points with the provided new map points
     /**
@@ -244,6 +238,9 @@ namespace vslam_datastructure {
      * Each point contains a 2D position and a local feature and may be associated with a map point
      */
     Points points_;
+
+    /// Mapping from Point to its index in the `points_` vector
+    std::unordered_map<PointSharedPtr, size_t> point_map_;
 
     /// 3x3 camera matrix
     /**

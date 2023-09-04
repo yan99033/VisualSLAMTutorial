@@ -29,35 +29,6 @@
 using std::placeholders::_1;
 
 namespace {
-  /// Get the first indices in the index pairs
-  /**
-   * \param[in] index_pairs a vector containing pairs of indices
-   * \return a vector containing the first indices in the pairs
-   */
-  std::vector<size_t> getFirstIndices(const std::vector<std::pair<size_t, size_t>>& index_pairs) {
-    std::vector<size_t> first_indices;
-    for (const auto& [idx1, _] : index_pairs) {
-      first_indices.push_back(idx1);
-    }
-    return first_indices;
-  }
-
-  /// Get the first and second indices in the index pairs
-  /**
-   * \param[in] index_pairs a vector containing pairs of indices
-   * \return a pair of vector containing the first and second indices in the pairs
-   */
-  std::pair<std::vector<size_t>, std::vector<size_t>> getFirstAndSecondIndices(
-      const std::vector<std::pair<size_t, size_t>>& index_pairs) {
-    std::vector<size_t> first_indices;
-    std::vector<size_t> second_indices;
-    for (const auto& [idx1, idx2] : index_pairs) {
-      first_indices.push_back(idx1);
-      second_indices.push_back(idx2);
-    }
-    return {first_indices, second_indices};
-  }
-
   /// Get the corresponding map points from the point correspondences
   /**
    * \param[in] matched_points point correspondences
@@ -143,6 +114,18 @@ namespace {
     cv::vconcat(descriptors_vec, descriptors);
 
     return descriptors;
+  }
+
+  vslam_datastructure::MapPoints mappointsFromPoints(const vslam_datastructure::Points& points) {
+    vslam_datastructure::MapPoints mappoints;
+    for (const auto& pt : points) {
+      if (pt->hasMappoint()) {
+        mappoints.push_back(pt->mappoint());
+      } else {
+        mappoints.push_back(nullptr);
+      }
+    }
+    return mappoints;
   }
 }  // namespace
 
@@ -293,7 +276,8 @@ namespace vslam_components {
         return false;
       }
 
-      current_keyframe_->setMappoints(new_mps, getFirstIndices(matched_index_pairs), true);
+      const auto [points1, _] = utils::splitMatchedPoints(matched_points);
+      current_keyframe_->setMappoints(new_mps, points1, true);
 
       current_keyframe_->active_tracking_state = true;
 
@@ -329,10 +313,12 @@ namespace vslam_components {
         // Set the current frame as keyframe
         current_frame->setKeyframe();
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
-        const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
-        current_keyframe_->setMappoints(new_mps, first_indices);
-        const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-        current_frame->setMappoints(new_old_mps, second_indices, true);
+
+        const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
+        current_keyframe_->setMappoints(new_mps, points1);
+        const auto new_old_mps = mappointsFromPoints(points1);
+        current_frame->setMappoints(new_old_mps, points2, true);
+
         map_.addKeyframe(current_frame);
         current_keyframe_->active_tracking_state = false;
         current_keyframe_ = current_frame;
@@ -393,10 +379,12 @@ namespace vslam_components {
             // Set the current frame as keyframe
             current_frame->setKeyframe();
             const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
-            const auto [first_indices, second_indices] = getFirstAndSecondIndices(matched_index_pairs);
-            current_keyframe_->setMappoints(new_mps, first_indices);
-            const auto new_old_mps = current_keyframe_->mappoints(first_indices);
-            current_frame->setMappoints(new_old_mps, second_indices, true);
+
+            const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
+            current_keyframe_->setMappoints(new_mps, points1);
+            const auto new_old_mps = mappointsFromPoints(points1);
+            current_frame->setMappoints(new_old_mps, points2, true);
+
             map_.addKeyframe(current_frame);
             current_keyframe_->active_tracking_state = false;
             current_keyframe_ = current_frame;

@@ -183,43 +183,36 @@ namespace vslam_datastructure {
     points_.swap(points);
 
     // Set the frame ptr
+    size_t i = 0;
     for (auto& pt : points_) {
       pt->setFrame(this);
+
+      point_map_[pt] = i++;
     }
   }
 
-  MapPoints Frame::mappoints(const std::vector<size_t> point_indices) {
-    std::lock_guard<std::mutex> lck(data_mutex_);
-
-    MapPoints mappoints;
-    for (const auto i : point_indices) {
-      if (points_.at(i)->hasMappoint()) {
-        mappoints.push_back(points_.at(i)->mappoint());
-      } else {
-        mappoints.push_back(nullptr);
-      }
-    }
-    return mappoints;
-  }
-
-  void Frame::setMappoints(const MapPoints& mappoints, const std::vector<size_t> indices, const bool set_host) {
+  void Frame::setMappoints(const MapPoints& mappoints, const Points& points, const bool set_host) {
     assert(is_keyframe_);
-    assert(mappoints.size() == indices.size());
+    assert(mappoints.size() == points.size());
 
     std::lock_guard<std::mutex> lck(data_mutex_);
 
-    for (size_t idx = 0; idx < indices.size(); idx++) {
-      const auto i = indices.at(idx);
-      if (!mappoints.at(idx).get()) {
+    for (size_t idx = 0; idx < points.size(); idx++) {
+      assert(point_map_.find(points[idx]) != point_map_.end());
+
+      const auto i = point_map_[points[idx]];
+
+      if (!mappoints[idx].get()) {
         continue;
       }
 
-      if (!points_.at(i)->hasMappoint()) {
+      // TODO: resolve the discrepancy if there is an existing map point
+      if (!points_[i]->hasMappoint()) {
         // Create a new map point
-        points_.at(i)->setMappoint(mappoints.at(idx));
+        points_[i]->setMappoint(mappoints[idx]);
 
-        if (set_host && !points_.at(i)->mappoint()->hasHost()) {
-          points_.at(i)->mappoint()->setHostKeyframeId(id_);
+        if (set_host && !points_[i]->mappoint()->hasHost()) {
+          points_[i]->mappoint()->setHostKeyframeId(id_);
         }
       }
     }
