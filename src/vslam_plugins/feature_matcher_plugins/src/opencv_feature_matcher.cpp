@@ -49,17 +49,16 @@ namespace {
    * \param[in] mask the inlier mask of the match results
    * \return matches which consists of point correspondences and the corresponding indices
    */
-  vslam_datastructure::Matches createMatchedPoints(const vslam_datastructure::Points& points1,
-                                                   const vslam_datastructure::Points& points2,
-                                                   const std::vector<cv::DMatch>& matches,
-                                                   const std::vector<char>& mask) {
+  vslam_datastructure::MatchedPoints createMatchedPoints(const vslam_datastructure::Points& points1,
+                                                         const vslam_datastructure::Points& points2,
+                                                         const std::vector<cv::DMatch>& matches,
+                                                         const std::vector<char>& mask) {
     if (!mask.empty() && (mask.size() != matches.size())) {
       throw std::runtime_error("Invalid mask " + std::to_string(mask.size()) + " or matches size "
                                + std::to_string(matches.size()));
     }
 
     vslam_datastructure::MatchedPoints matched_points;
-    vslam_datastructure::MatchedIndexPairs matched_index_pairs;
     for (size_t i = 0; i < matches.size(); i++) {
       if (mask.empty() || mask[i]) {
         const int i1 = matches[i].queryIdx;
@@ -69,12 +68,10 @@ namespace {
         vslam_datastructure::MatchedPoint matched_point{points1.at(i1), points2.at(i2)};
 
         matched_points.push_back(matched_point);
-
-        matched_index_pairs.push_back({i1, i2});
       }
     }
 
-    return {matched_points, matched_index_pairs};
+    return matched_points;
   }
 }  // namespace
 
@@ -89,10 +86,10 @@ namespace vslam_feature_matcher_plugins {
     }
   }
 
-  vslam_datastructure::Matches OpenCVFeatureMatcher::matchFeatures(const vslam_datastructure::Points& points1,
-                                                                   const vslam_datastructure::Points& points2) {
+  vslam_datastructure::MatchedPoints OpenCVFeatureMatcher::matchFeatures(const vslam_datastructure::Points& points1,
+                                                                         const vslam_datastructure::Points& points2) {
     if (points1.empty() || points2.empty()) {
-      return {vslam_datastructure::MatchedPoints(), vslam_datastructure::MatchedIndexPairs()};
+      return vslam_datastructure::MatchedPoints();
     }
 
     // Get keypoints and descriptors
@@ -104,9 +101,9 @@ namespace vslam_feature_matcher_plugins {
     std::vector<char> matcher_mask;
     feature_matcher_->match(descriptors1, descriptors2, matches, matcher_mask);
 
-    const auto [matched_points, matched_index_pairs] = createMatchedPoints(points1, points2, matches, matcher_mask);
+    const auto matched_points = createMatchedPoints(points1, points2, matches, matcher_mask);
 
-    return {matched_points, matched_index_pairs};
+    return matched_points;
   }
 
 }  // namespace vslam_feature_matcher_plugins
