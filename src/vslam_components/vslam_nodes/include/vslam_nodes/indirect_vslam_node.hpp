@@ -108,12 +108,10 @@ namespace vslam_components {
        * \param frame1[in] frame1 (usually the current keyframe)
        * \param frame2[in] frame2 (usually the current frame)
        * \param matched_points[out] Point correspondences
-       * \param matched_index_pairs[out] Index of the matched points in frame1 and frame2
        * \return a boolean indicating the goodness of the tracking
        */
       bool trackCamera(const vslam_datastructure::Frame* const frame1, const vslam_datastructure::Frame* const frame2,
-                       cv::Mat& T_2_1, vslam_datastructure::MatchedPoints& matched_points,
-                       vslam_datastructure::MatchedIndexPairs& matched_index_pairs);
+                       cv::Mat& T_2_1, vslam_datastructure::MatchedPoints& matched_points);
 
       /// Frame subscriber to get new frames from dataloader
       rclcpp::Subscription<vslam_msgs::msg::Frame>::SharedPtr frame_subscriber_;
@@ -144,8 +142,7 @@ namespace vslam_components {
       size_t min_num_mps_sim3_scale_{25};
 
       /// Signal queue for keyframes to find potential loop
-      vslam_datastructure::FrameIdQueue::SharedPtr keyframe_id_queue_{
-          std::make_shared<vslam_datastructure::FrameIdQueue>()};
+      vslam_datastructure::FrameQueue::SharedPtr keyframe_queue_{std::make_shared<vslam_datastructure::FrameQueue>()};
 
       /// Place recognition thread for detecting loop closure
       std::thread place_recognition_thread_;
@@ -165,11 +162,11 @@ namespace vslam_components {
        * \param[in] previous_keyframe previous keyframe (found by place recognition)
        * \param[out] T_c_p relative transformation between the current and previous keyframe
        * \param[out] scale Sim(3) scale
-       * \param[out] mappoint_index_pairs the corresponding indices of the matched points
+       * \param[out] point_mappoint_pairs the corresponding points of their (new) map points å
        */
       bool verifyLoop(const vslam_datastructure::Frame* const current_keyframe,
                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
-                      std::vector<std::pair<size_t, vslam_datastructure::MapPoint::SharedPtr>>& mappoint_index_pairs);
+                      vslam_datastructure::PointMappointPairs& point_mappoint_pairs);
 
       /// The id of the keyframe successfully merged into the loop after place recognition and pose-graph optimization
       long unsigned int last_kf_loop_found_{0};

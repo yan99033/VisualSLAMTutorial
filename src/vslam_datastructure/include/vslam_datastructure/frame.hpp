@@ -34,8 +34,9 @@ namespace vslam_datastructure {
   class MapPoint;
   using PointSharedPtr = std::shared_ptr<Point>;
   using Points = std::vector<PointSharedPtr>;
-  using MapPoints = std::vector<std::shared_ptr<MapPoint>>;
-  using MappointIndexPairs = std::vector<std::pair<size_t, std::shared_ptr<MapPoint>>>;
+  using MapPointSharedPtr = std::shared_ptr<MapPoint>;
+  using MapPoints = std::vector<MapPointSharedPtr>;
+  using PointMappointPairs = std::vector<std::pair<PointSharedPtr, MapPointSharedPtr>>;
 
   class Frame {
   public:
@@ -132,9 +133,9 @@ namespace vslam_datastructure {
 
     /// Fuse the old map points with the provided new map points
     /**
-     * \param[in] mappoint_index_pairs the indices of the points and the new map points to replace the old ones
+     * \param[in] point_mappoint_pairs the points and the new map points to replace the old ones
      */
-    void fuseMappoints(const MappointIndexPairs& mappoint_index_pairs);
+    void fuseMappoints(const PointMappointPairs& point_mappoint_pairs);
 
     /// Check if there are points available to match or map
     inline bool hasPoints() const { return !points_.empty(); }

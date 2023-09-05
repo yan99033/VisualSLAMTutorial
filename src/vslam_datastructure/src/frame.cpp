@@ -220,27 +220,27 @@ namespace vslam_datastructure {
     setMappointProjections();
   }
 
-  void Frame::fuseMappoints(const MappointIndexPairs& mappoint_index_pairs) {
+  void Frame::fuseMappoints(const PointMappointPairs& point_mappoint_pairs) {
     assert(is_keyframe_);
 
     std::lock_guard<std::mutex> lck(data_mutex_);
 
-    for (const auto& [idx, mappoint] : mappoint_index_pairs) {
+    for (const auto& [pt, mappoint] : point_mappoint_pairs) {
       assert(mappoint != nullptr);
 
-      if (!points_.at(idx)->hasMappoint()) {
+      if (!pt->hasMappoint()) {
         // Associate the new map point with the old point
-        mappoint->addProjection(points_.at(idx).get());
-        points_.at(idx)->setMappoint(mappoint);
+        mappoint->addProjection(pt.get());
+        pt->setMappoint(mappoint);
       } else {
-        auto old_mappoint = points_.at(idx)->mappoint();
+        auto old_mappoint = pt->mappoint();
 
-        for (auto point : old_mappoint->projections()) {
+        for (auto old_pt : old_mappoint->projections()) {
           // Add new projections to the new map point
-          mappoint->addProjection(point);
+          mappoint->addProjection(old_pt);
 
           // Replace the old map point
-          point->setMappoint(mappoint);
+          old_pt->setMappoint(mappoint);
         }
       }
     }

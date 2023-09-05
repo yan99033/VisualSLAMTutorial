@@ -36,8 +36,8 @@ namespace vslam_feature_matcher {
        * \param[in] points2 a vector of points from frame 2
        * \return matches between the two vector of points
        */
-      virtual vslam_datastructure::Matches matchFeatures(const vslam_datastructure::Points& points1,
-                                                         const vslam_datastructure::Points& points2)
+      virtual vslam_datastructure::MatchedPoints matchFeatures(const vslam_datastructure::Points& points1,
+                                                               const vslam_datastructure::Points& points2)
           = 0;
 
       /// Destructor

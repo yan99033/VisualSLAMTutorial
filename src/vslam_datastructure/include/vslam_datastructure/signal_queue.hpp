@@ -26,6 +26,7 @@
 #include <map>
 #include <mutex>
 
+#include "vslam_datastructure/frame.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
 namespace vslam_datastructure {
@@ -88,7 +89,6 @@ namespace vslam_datastructure {
     /// A flag to clear the queue and exit
     std::atomic_bool exit_{false};
   };
-  using FrameIdQueue = SignalQueue<long unsigned int>;
-
+  using FrameQueue = SignalQueue<Frame::SharedPtr>;
 }  // namespace vslam_datastructure
 #endif  // VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_
