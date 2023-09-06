@@ -34,6 +34,11 @@ namespace vslam_datastructure {
   public:
     using SharedPtr = std::shared_ptr<SignalQueue>;
 
+    ~SignalQueue() {
+      queue_.clear();
+      std::cerr << "Terminated SignalQueue" << std::endl;
+    }
+
     /// Send a message
     /**
      * \param[in] msg message
