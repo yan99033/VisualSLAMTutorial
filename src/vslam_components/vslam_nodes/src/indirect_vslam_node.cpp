@@ -230,8 +230,6 @@ namespace vslam_components {
 
     bool IndirectVSlamNode::processFrameInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       current_frame->setKeyframe();
-
-      map_.addKeyframe(current_frame);
       current_keyframe_ = current_frame;
 
       return true;
@@ -239,8 +237,6 @@ namespace vslam_components {
 
     bool IndirectVSlamNode::processFrameAttemptInit(vslam_datastructure::Frame::SharedPtr current_frame) {
       if (!current_keyframe_->hasPoints() || !current_frame->hasPoints()) {
-        map_.removeKeyframe(current_keyframe_);
-
         current_keyframe_ = nullptr;
         return false;
       }
@@ -252,7 +248,6 @@ namespace vslam_components {
       // Get the tracked camera pose and check the tracking quality
       cv::Mat T_c_p;
       if (!camera_tracker_->trackCamera2d2d(matched_points, current_frame->K(), T_c_p)) {
-        map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
       }
@@ -266,14 +261,13 @@ namespace vslam_components {
 
       // Check if we have enough initial map points
       if (new_mps.size() < min_num_kf_mps_) {
-        map_.removeKeyframe(current_keyframe_);
         current_keyframe_ = nullptr;
         return false;
       }
 
       const auto [points1, _] = utils::splitMatchedPoints(matched_points);
       current_keyframe_->setMappoints(new_mps, points1, true);
-
+      map_.addKeyframe(current_keyframe_);
       current_keyframe_->active_tracking_state = true;
 
       return true;
