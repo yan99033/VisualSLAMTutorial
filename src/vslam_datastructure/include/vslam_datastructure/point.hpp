@@ -26,21 +26,12 @@
 #include <optional>
 
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 
 namespace vslam_datastructure {
-  // Forward declarations
-  class Point;
-  class Frame;
-
-  struct PointCmp {
-    bool operator()(Point* const lhs, Point* const rhs) const;
-  };
-
   class MapPoint {
   public:
     MapPoint() = default;
-
-    using ProjectionSet = std::set<Point*, PointCmp>;
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
@@ -135,7 +126,6 @@ namespace vslam_datastructure {
     // The host keyframe id
     std::optional<long unsigned int> host_keyframe_id_{std::nullopt};
   };
-  using MapPoints = std::vector<MapPoint::SharedPtr>;
 
   class Point {
   public:
@@ -222,7 +212,6 @@ namespace vslam_datastructure {
     /// Mutex for reading and writing point data
     std::mutex mutex_;
   };
-  using Points = std::vector<Point::SharedPtr>;
 
   /// Point correspondence
   struct MatchedPoint {
@@ -232,9 +221,6 @@ namespace vslam_datastructure {
     /// Point in frame 2
     Point::SharedPtr point2;
   };
-  using MatchedPoints = std::vector<MatchedPoint>;
-  using MatchedIndexPairs = std::vector<std::pair<size_t, size_t>>;
-  using PointMappointPairs = std::vector<std::pair<Point::SharedPtr, MapPoint::SharedPtr>>;
 }  // namespace vslam_datastructure
 
 #endif  // VSLAM_DATASTRUCTURE__POINT_HPP_

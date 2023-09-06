@@ -21,7 +21,7 @@ find_package(vslam_utils REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
-set(sources src/frame.cpp src/map.cpp src/point.cpp)
+set(sources src/frame.cpp src/map.cpp src/point.cpp src/typedefs.cpp)
 
 set(dependencies OpenCV vslam_msgs vslam_utils tf2_eigen tf2_geometry_msgs)
 

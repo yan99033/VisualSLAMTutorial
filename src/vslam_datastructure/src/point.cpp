@@ -20,15 +20,6 @@
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_datastructure {
-
-  bool PointCmp::operator()(Point* const lhs, Point* const rhs) const {
-    if (!lhs || !lhs->frame() || !rhs || !rhs->frame()) {
-      return false;
-    } else {
-      return lhs->frame()->id() < rhs->frame()->id();
-    }
-  }
-
   long unsigned int MapPoint::point_count_ = 0;
 
   void MapPoint::setPos(const cv::Point3d& pos_3d) {
@@ -65,7 +56,7 @@ namespace vslam_datastructure {
     projections_.erase(point);
   }
 
-  MapPoint::ProjectionSet MapPoint::projections() {
+  ProjectionSet MapPoint::projections() {
     // Remove the stale (nullptr) projections
     for (auto it = projections_.begin(); it != projections_.end();) {
       if (*it == nullptr) {

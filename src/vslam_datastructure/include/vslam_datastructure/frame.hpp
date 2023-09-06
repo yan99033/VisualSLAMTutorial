@@ -26,18 +26,10 @@
 #include <opencv2/core/mat.hpp>
 #include <unordered_set>
 
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
 namespace vslam_datastructure {
-  // Forward declaration
-  class Point;
-  class MapPoint;
-  using PointSharedPtr = std::shared_ptr<Point>;
-  using Points = std::vector<PointSharedPtr>;
-  using MapPointSharedPtr = std::shared_ptr<MapPoint>;
-  using MapPoints = std::vector<MapPointSharedPtr>;
-  using PointMappointPairs = std::vector<std::pair<PointSharedPtr, MapPointSharedPtr>>;
-
   class Frame {
   public:
     using SharedPtr = std::shared_ptr<Frame>;

@@ -89,6 +89,5 @@ namespace vslam_datastructure {
     /// A flag to clear the queue and exit
     std::atomic_bool exit_{false};
   };
-  using FrameQueue = SignalQueue<Frame::SharedPtr>;
 }  // namespace vslam_datastructure
 #endif  // VSLAM_DATASTRUCTURE__SIGNAL_QUEUE_HPP_

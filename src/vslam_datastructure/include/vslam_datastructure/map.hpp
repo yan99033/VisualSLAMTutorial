@@ -26,16 +26,10 @@
 #include <unordered_map>
 
 #include "vslam_datastructure/frame.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_msgs/msg/frame.hpp"
 
 namespace vslam_datastructure {
-  template <typename T> struct Cmp {
-    bool operator()(const T* lhs, const T* rhs) const { return lhs->id() < rhs->id(); }
-  };
-
-  using CoreKfsSet = std::set<Frame*, Cmp<Frame>>;
-  using CoreMpsSet = std::set<MapPoint*, Cmp<MapPoint>>;
-
   class Map {
   public:
     /// Default constructor
