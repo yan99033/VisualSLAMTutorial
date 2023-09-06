@@ -177,12 +177,13 @@ namespace vslam_components {
       // Unsubscribe from the frame topic
       frame_subscriber_.reset();
 
-      keyframe_queue_->stop();
-
       exit_thread_ = true;
       if (place_recognition_thread_.joinable()) {
         place_recognition_thread_.join();
       }
+
+      keyframe_queue_->stop();
+      keyframe_queue_.reset();
 
       feature_extractor_.reset();
       feature_matcher_.reset();
