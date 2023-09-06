@@ -89,7 +89,7 @@ namespace vslam_datastructure {
 
       core_keyframes.insert(kf.get());
 
-      for (auto pt : kf->points()) {
+      for (const auto& pt : kf->points()) {
         if (pt->hasMappoint() && pt->mappoint()->projections().size() > 1) {
           core_mappoints.insert(pt->mappoint().get());
         }
