@@ -82,14 +82,16 @@ namespace vslam_components {
       // Unsubscribe from the frame topic
       frame_subscriber_.reset();
 
+      keyframe_queue_->stop();
+
       exit_thread_ = true;
       if (place_recognition_thread_.joinable()) {
         place_recognition_thread_.join();
       }
 
-      keyframe_queue_->stop();
       keyframe_queue_.reset();
 
+      // Destroy the plugins
       feature_extractor_.reset();
       feature_matcher_.reset();
       camera_tracker_.reset();
@@ -323,11 +325,12 @@ namespace vslam_components {
       while (!exit_thread_) {
         // Get a keyframe from the keyframe queue
         auto current_keyframe = keyframe_queue_->receive();
-        const auto curr_kf_id = current_keyframe->id();
 
         if (!current_keyframe || current_keyframe->isBad()) {
           continue;
         }
+
+        const auto curr_kf_id = current_keyframe->id();
 
         // Query from database
         cv::Mat visual_features = vslam_datastructure::utils::extractDescriptorsFromPoints(current_keyframe->points());
