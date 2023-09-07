@@ -29,8 +29,8 @@ namespace vslam_datastructure {
           assert(match.point1->hasFrame() && match.point2->hasFrame());
 
           cv::Point3d mp1 = match.point1->frame()->mappointWorldToCam(match.point1->mappoint()->pos());
-
           cv::Point3d mp2 = match.point2->frame()->mappointWorldToCam(match.point2->mappoint()->pos());
+
           mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
         }
       }
