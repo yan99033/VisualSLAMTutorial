@@ -170,7 +170,7 @@ namespace vslam_components {
         return false;
       }
 
-      const auto [points1, _] = utils::splitMatchedPoints(matched_points);
+      const auto [points1, _] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
       current_keyframe_->setMappoints(new_mps, points1, true);
       map_.addKeyframe(current_keyframe_);
       current_keyframe_->active_tracking_state = true;
@@ -207,7 +207,7 @@ namespace vslam_components {
         current_frame->setKeyframe();
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
 
-        const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
+        const auto [points1, points2] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
         current_keyframe_->setMappoints(new_mps, points1);
         const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
         current_frame->setMappoints(new_old_mps, points2, true);
@@ -271,7 +271,7 @@ namespace vslam_components {
             current_frame->setKeyframe();
             const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
 
-            const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
+            const auto [points1, points2] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
             current_keyframe_->setMappoints(new_mps, points1);
             const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
             current_frame->setMappoints(new_old_mps, points2, true);

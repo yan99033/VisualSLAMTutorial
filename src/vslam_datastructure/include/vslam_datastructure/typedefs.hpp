@@ -35,6 +35,7 @@ namespace vslam_datastructure {
 
   using PointSharedPtr = std::shared_ptr<Point>;
   using Points = std::vector<PointSharedPtr>;
+  using PointsPair = std::pair<Points, Points>;
   using MapPointSharedPtr = std::shared_ptr<MapPoint>;
   using MapPoints = std::vector<MapPointSharedPtr>;
   using PointMappointPairs = std::vector<std::pair<PointSharedPtr, MapPointSharedPtr>>;

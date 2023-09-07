@@ -54,6 +54,13 @@ namespace vslam_datastructure {
      */
     MapPoints extractMappointsFromPoints(const Points& points);
 
+    /// Split the matched points into two vectors of the same length containing the corresponding points
+    /**
+     * \param[in] matched_points matched points where each match has the points in frame1 and frame2
+     * \return a pair of vectors containing the corresponding points
+     */
+    PointsPair splitMatchedPoints(const vslam_datastructure::MatchedPoints& matched_points);
+
   }  // namespace utils
 }  // namespace vslam_datastructure
 

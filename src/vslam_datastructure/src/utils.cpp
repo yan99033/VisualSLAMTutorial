@@ -80,5 +80,15 @@ namespace vslam_datastructure {
       return mappoints;
     }
 
+    PointsPair splitMatchedPoints(const vslam_datastructure::MatchedPoints& matched_points) {
+      vslam_datastructure::Points pts1;
+      vslam_datastructure::Points pts2;
+      for (const auto& [pt1, pt2] : matched_points) {
+        pts1.push_back(pt1);
+        pts2.push_back(pt2);
+      }
+      return {pts1, pts2};
+    }
+
   }  // namespace utils
 }  // namespace vslam_datastructure

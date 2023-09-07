@@ -53,14 +53,6 @@ namespace vslam_components {
       bool numMpsInMatchPointsAboveThresh(const vslam_datastructure::MatchedPoints& matched_points,
                                           const size_t goodness_thresh, size_t& num_mps);
 
-      /// Split the matched points into two vectors of the same length containing the corresponding points
-      /**
-       * \param[in] matched_points matched points where each match has the points in frame1 and frame2
-       * \return a pair of vectors containing the corresponding points
-       */
-      std::pair<vslam_datastructure::Points, vslam_datastructure::Points> splitMatchedPoints(
-          const vslam_datastructure::MatchedPoints& matched_points);
-
     }  // namespace utils
   }    // namespace vslam_nodes
 }  // namespace vslam_components
