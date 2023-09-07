@@ -45,23 +45,11 @@ namespace {
       return mappoint_pairs;
     }
 
-    const cv::Mat T_1_w = frame1->T_f_w();
-    cv::Matx33d R_1_w = T_1_w.rowRange(0, 3).colRange(0, 3);
-    cv::Mat t_1_w = T_1_w.rowRange(0, 3).colRange(3, 4);
-    cv::Point3d t_1_w_pt = cv::Point3d(t_1_w);
-
-    const cv::Mat T_2_w = frame2->T_f_w();
-    cv::Matx33d R_2_w = T_2_w.rowRange(0, 3).colRange(0, 3);
-    cv::Mat t_2_w = T_2_w.rowRange(0, 3).colRange(3, 4);
-    cv::Point3d t_2_w_pt = cv::Point3d(t_2_w);
-
     for (const auto& match : matched_points) {
       if (match.point1->hasMappoint() && match.point2->hasMappoint()) {
-        cv::Point3d mp1 = match.point1->mappoint()->pos();
-        mp1 = R_1_w * mp1 + t_1_w_pt;
+        cv::Point3d mp1 = frame1->mappointWorldToCam(match.point1->mappoint()->pos());
 
-        cv::Point3d mp2 = match.point2->mappoint()->pos();
-        mp2 = R_2_w * mp2 + t_2_w_pt;
+        cv::Point3d mp2 = frame2->mappointWorldToCam(match.point2->mappoint()->pos());
         mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
       }
     }
