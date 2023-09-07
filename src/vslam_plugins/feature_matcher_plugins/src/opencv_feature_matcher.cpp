@@ -22,21 +22,18 @@
 #include <cmath>
 #include <iostream>
 
+#include "vslam_datastructure/utils.hpp"
+
 namespace {
   /// Concatenate the keypoint descriptors into a matrix
   /**
    * \param points[in] a vector of points
    * \return a pair of type keypoints and descriptors
    */
-  std::pair<std::vector<cv::KeyPoint>, cv::Mat> extractKeypointsDescriptors(const vslam_datastructure::Points& points) {
-    std::vector<cv::KeyPoint> keypoints;
-    std::vector<cv::Mat> descriptors_vec;
-    for (const auto& pt : points) {
-      keypoints.push_back(pt->keypoint);
-      descriptors_vec.push_back(pt->descriptor);
-    }
-    cv::Mat descriptors;
-    cv::vconcat(descriptors_vec, descriptors);
+  std::pair<vslam_datastructure::KeyPoints, cv::Mat> extractKeypointsDescriptors(
+      const vslam_datastructure::Points& points) {
+    const auto keypoints = vslam_datastructure::utils::extractKeypointsFromPoints(points);
+    const auto descriptors = vslam_datastructure::utils::extractDescriptorsFromPoints(points);
 
     return {keypoints, descriptors};
   }

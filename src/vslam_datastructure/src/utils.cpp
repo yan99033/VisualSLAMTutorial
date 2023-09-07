@@ -57,6 +57,15 @@ namespace vslam_datastructure {
       return point_mappoint_pairs;
     }
 
+    KeyPoints extractKeypointsFromPoints(const Points& points) {
+      std::vector<cv::KeyPoint> keypoints;
+      for (const auto& pt : points) {
+        keypoints.push_back(pt->keypoint);
+      }
+
+      return keypoints;
+    }
+
     cv::Mat extractDescriptorsFromPoints(const Points& points) {
       std::vector<cv::Mat> descriptors_vec;
       for (const auto& pt : points) {

@@ -156,7 +156,7 @@ namespace vslam_feature_extractor_plugins {
     return ft_points;
   }
 
-  OpenCVFeatureExtractor::KeyPoints OpenCVFeatureExtractor::calculateKeypoints(const cv::Mat& grey_image) {
+  vslam_datastructure::KeyPoints OpenCVFeatureExtractor::calculateKeypoints(const cv::Mat& grey_image) {
     std::vector<cv::Point2d> corners;
     cv::goodFeaturesToTrack(grey_image, corners, num_features_, quality_level_, min_dist_);
 
@@ -195,7 +195,7 @@ namespace vslam_feature_extractor_plugins {
       ++v0;
     }
 
-    KeyPoints keypoints;
+    vslam_datastructure::KeyPoints keypoints;
     keypoints.reserve(corners.size());
     for (const auto& corner : corners) {
       cv::KeyPoint kp(corner, 1.0f);

@@ -58,6 +58,7 @@ namespace vslam_datastructure {
   using FrameQueue = SignalQueue<FrameSharedPtr>;
 
   using Point3dPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
+  using KeyPoints = std::vector<cv::KeyPoint>;
 
 }  // namespace vslam_datastructure
 

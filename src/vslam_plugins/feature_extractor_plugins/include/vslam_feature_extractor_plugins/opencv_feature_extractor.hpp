@@ -23,21 +23,20 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_plugins_base/feature_extractor.hpp"
 
 namespace vslam_feature_extractor_plugins {
   namespace abstract {
     class OpenCVFeatureExtractor : public virtual vslam_feature_extractor::base::FeatureExtractor {
     protected:
-      using KeyPoints = std::vector<cv::KeyPoint>;
-
       /// Calculate the 2D keypoints in the image
       /**
        * \sa https://docs.opencv.org/4.x/d2/d29/classcv_1_1KeyPoint.html
        * \param image[in] a greyscale image
        * \return a vector of keypoints
        */
-      virtual KeyPoints calculateKeypoints(const cv::Mat& grey_image) = 0;
+      virtual vslam_datastructure::KeyPoints calculateKeypoints(const cv::Mat& grey_image) = 0;
     };
   }  // namespace abstract
 
@@ -84,7 +83,7 @@ namespace vslam_feature_extractor_plugins {
      * \param image[in] a greyscale image
      * \return a vector of keypoints
      */
-    KeyPoints calculateKeypoints(const cv::Mat& image) override;
+    vslam_datastructure::KeyPoints calculateKeypoints(const cv::Mat& image) override;
 
   private:
     using CvMatPyr = std::vector<cv::Mat>;

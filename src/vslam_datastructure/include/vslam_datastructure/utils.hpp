@@ -40,6 +40,13 @@ namespace vslam_datastructure {
      */
     PointMappointPairs secondPointFirstMappointPairsFromMatchedPoints(const MatchedPoints& matched_points);
 
+    /// Concatenate the keypoint descriptors into a matrix
+    /**
+     * \param points[in] a vector of points
+     * \return a pair of type keypoints and descriptors
+     */
+    KeyPoints extractKeypointsFromPoints(const Points& points);
+
     /// Extract and concatenate descriptors from a vector of points
     /**
      * \param[in] points a vector of points
