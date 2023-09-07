@@ -21,96 +21,13 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 
+#include "vslam_datastructure/utils.hpp"
 #include "vslam_msgs/msg/vector2d.hpp"
 #include "vslam_msgs/msg/vector3d.hpp"
 #include "vslam_nodes/utils.hpp"
 #include "vslam_utils/converter.hpp"
 
 using std::placeholders::_1;
-
-namespace {
-  /// Get the corresponding map points from the point correspondences
-  /**
-   * \param[in] matched_points point correspondences
-   * \param[in] frame1 frame 1
-   * \param[in] frame2 frame 2
-   * \return a vector containing pairs of corresponding map points
-   */
-  std::vector<std::pair<cv::Point3d, cv::Point3d>> mappointCorrespondences(
-      const vslam_datastructure::MatchedPoints& matched_points, const vslam_datastructure::Frame* const frame1,
-      const vslam_datastructure::Frame* const frame2) {
-    std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_pairs;
-
-    if (frame1 == nullptr || frame2 == nullptr) {
-      return mappoint_pairs;
-    }
-
-    for (const auto& match : matched_points) {
-      if (match.point1->hasMappoint() && match.point2->hasMappoint()) {
-        cv::Point3d mp1 = frame1->mappointWorldToCam(match.point1->mappoint()->pos());
-
-        cv::Point3d mp2 = frame2->mappointWorldToCam(match.point2->mappoint()->pos());
-        mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
-      }
-    }
-
-    return mappoint_pairs;
-  }
-
-  /// Get the corresponding points and their map points to fuse (replacing the old map points with
-  /// corresponding new ones)
-  /**
-   * map point indices are the indices to the old map points and they are replaced by the new map points
-   * \param[in] matched_points point correspondences
-   */
-  vslam_datastructure::PointMappointPairs pointMappointPairsToFuse(
-      const vslam_datastructure::MatchedPoints& matched_points) {
-    vslam_datastructure::PointMappointPairs point_mappoint_pairs;
-
-    for (const auto& [pt1, pt2] : matched_points) {
-      if (!pt1->hasMappoint()) {
-        continue;
-      }
-
-      // Skip if the point has a map point but it is not the host of the map point
-      if (pt2->hasMappoint() && !pt2->isMappointHost()) {
-        continue;
-      }
-
-      point_mappoint_pairs.emplace_back(std::make_pair(pt2, pt1->mappoint()));
-    }
-
-    return point_mappoint_pairs;
-  }
-
-  /// Extract and concatenate descriptors from a vector of points
-  /**
-   * \param[in] points a vector of points
-   * \return descriptors
-   */
-  cv::Mat extractDescriptors(const vslam_datastructure::Points& points) {
-    std::vector<cv::Mat> descriptors_vec;
-    for (const auto& pt : points) {
-      descriptors_vec.push_back(pt->descriptor);
-    }
-    cv::Mat descriptors;
-    cv::vconcat(descriptors_vec, descriptors);
-
-    return descriptors;
-  }
-
-  vslam_datastructure::MapPoints mappointsFromPoints(const vslam_datastructure::Points& points) {
-    vslam_datastructure::MapPoints mappoints;
-    for (const auto& pt : points) {
-      if (pt->hasMappoint()) {
-        mappoints.push_back(pt->mappoint());
-      } else {
-        mappoints.push_back(nullptr);
-      }
-    }
-    return mappoints;
-  }
-}  // namespace
 
 namespace vslam_components {
 
@@ -292,7 +209,7 @@ namespace vslam_components {
 
         const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
         current_keyframe_->setMappoints(new_mps, points1);
-        const auto new_old_mps = mappointsFromPoints(points1);
+        const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
         current_frame->setMappoints(new_old_mps, points2, true);
 
         map_.addKeyframe(current_frame);
@@ -356,7 +273,7 @@ namespace vslam_components {
 
             const auto [points1, points2] = utils::splitMatchedPoints(matched_points);
             current_keyframe_->setMappoints(new_mps, points1);
-            const auto new_old_mps = mappointsFromPoints(points1);
+            const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
             current_frame->setMappoints(new_old_mps, points2, true);
 
             map_.addKeyframe(current_frame);
@@ -413,7 +330,7 @@ namespace vslam_components {
         }
 
         // Query from database
-        cv::Mat visual_features = extractDescriptors(current_keyframe->points());
+        cv::Mat visual_features = vslam_datastructure::utils::extractDescriptorsFromPoints(current_keyframe->points());
         auto results = place_recognition_->query(visual_features);
         place_recognition_->addToDatabase(curr_kf_id, visual_features);
 
@@ -499,7 +416,7 @@ namespace vslam_components {
       }
 
       // Calculate the scale
-      const auto mappoint_pairs = mappointCorrespondences(matched_points, current_keyframe, previous_keyframe);
+      const auto mappoint_pairs = vslam_datastructure::utils::mappointCorrespondencesFromMatchedPoints(matched_points);
 
       if (mappoint_pairs.size() < min_num_mps_sim3_scale_) {
         RCLCPP_INFO(this->get_logger(),
@@ -514,7 +431,8 @@ namespace vslam_components {
       if (scale <= 0) {
         return false;
       } else {
-        point_mappoint_pairs = pointMappointPairsToFuse(matched_points);
+        point_mappoint_pairs
+            = vslam_datastructure::utils::secondPointFirstMappointPairsFromMatchedPoints(matched_points);
         return true;
       }
     }
