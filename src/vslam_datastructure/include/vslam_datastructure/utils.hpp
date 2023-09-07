@@ -21,6 +21,7 @@
 #define VSLAM_DATASTRUCTURE__UTILS_HPP_
 
 #include "vslam_datastructure/point.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 
 namespace vslam_datastructure {
   namespace utils {
@@ -29,8 +30,7 @@ namespace vslam_datastructure {
      * \param[in] matched_points point correspondences
      * \return a vector containing pairs of corresponding map points
      */
-    std::vector<std::pair<cv::Point3d, cv::Point3d>> mappointCorrespondencesFromMatchedPoints(
-        const vslam_datastructure::MatchedPoints& matched_points);
+    Point3dPairs mappointCorrespondencesFromMatchedPoints(const vslam_datastructure::MatchedPoints& matched_points);
 
     /// Get the corresponding points and their map points from the matched points
     /**

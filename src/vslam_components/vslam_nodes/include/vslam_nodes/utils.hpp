@@ -30,7 +30,6 @@
 
 namespace vslam_components {
   namespace vslam_nodes {
-    using PointPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
     namespace utils {
       /// Calculate the Sim(3) scale of the relative pose constraint
       /**
@@ -40,8 +39,8 @@ namespace vslam_components {
        * \param[in] ransac_n number of random samples used in each RANSAC iteration to calculate the Sim(3) scale
        * \return Sim(3) scale (return 0 if we cannot find the scale)
        */
-      double calculateSim3Scale(const PointPairs& mappoint_pairs, const cv::Mat& T_2_1, const int ransac_iters = 100,
-                                size_t ransac_n = 10);
+      double calculateSim3Scale(const vslam_datastructure::Point3dPairs& mappoint_pairs, const cv::Mat& T_2_1,
+                                const int ransac_iters = 100, size_t ransac_n = 10);
 
       /// Check if the number of number of map points in the matched points is above the threshold to determine the
       /// matching and tracking quality

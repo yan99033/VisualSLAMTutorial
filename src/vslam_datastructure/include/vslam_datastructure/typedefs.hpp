@@ -21,6 +21,7 @@
 #define VSLAM_DATASTRUCTURE__TYPEDEFS_HPP_
 
 #include <memory>
+#include <opencv2/opencv.hpp>
 #include <set>
 #include <vector>
 
@@ -54,6 +55,8 @@ namespace vslam_datastructure {
   using ProjectionSet = std::set<Point*, PointCmp>;
 
   using FrameQueue = SignalQueue<FrameSharedPtr>;
+
+  using Point3dPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
 
 }  // namespace vslam_datastructure
 

@@ -21,9 +21,8 @@
 
 namespace vslam_datastructure {
   namespace utils {
-    std::vector<std::pair<cv::Point3d, cv::Point3d>> mappointCorrespondencesFromMatchedPoints(
-        const vslam_datastructure::MatchedPoints& matched_points) {
-      std::vector<std::pair<cv::Point3d, cv::Point3d>> mappoint_pairs;
+    Point3dPairs mappointCorrespondencesFromMatchedPoints(const vslam_datastructure::MatchedPoints& matched_points) {
+      Point3dPairs mappoint_pairs;
 
       for (const auto& match : matched_points) {
         if (match.point1->hasMappoint() && match.point2->hasMappoint()) {
