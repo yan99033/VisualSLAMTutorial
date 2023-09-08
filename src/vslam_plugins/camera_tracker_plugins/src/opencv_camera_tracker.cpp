@@ -48,10 +48,11 @@ namespace {
     PointPtrVec points_3d_1_ptr;
     for (const auto& match : matched_points) {
       if (match.point1->hasMappoint()) {
-        assert(match.point1->hasFrame());
+        auto frame1 = match.point1->frame();
+        assert(frame1);
 
         // Transform the 3d point in point1 to local
-        const cv::Point3d pt_3d_1 = match.point1->frame()->mappointWorldToCam(match.point1->mappoint()->pos());
+        const cv::Point3d pt_3d_1 = frame1->mappointWorldToCam(match.point1->mappoint()->pos());
 
         cv_points_3d_1.push_back(pt_3d_1);
         cv_points_2d_2.push_back(match.point2->keypoint.pt);

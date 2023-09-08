@@ -30,9 +30,10 @@
 #include "vslam_msgs/msg/frame.hpp"
 
 namespace vslam_datastructure {
-  class Frame {
+  class Frame : public std::enable_shared_from_this<Frame> {
   public:
     using SharedPtr = std::shared_ptr<Frame>;
+    using WeakPtr = std::weak_ptr<Frame>;
 
     /// Constructor
     Frame() = default;

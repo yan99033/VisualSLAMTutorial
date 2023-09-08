@@ -96,14 +96,14 @@ namespace vslam_datastructure {
     mappoint_.reset();
   }
 
-  void Point::setFrame(Frame* frame) {
+  void Point::setFrame(Frame::SharedPtr frame) {
     std::lock_guard<std::mutex> lck(mutex_);
     frame_ = frame;
   }
 
-  Frame* Point::frame() {
+  Frame::SharedPtr Point::frame() {
     std::lock_guard<std::mutex> lck(mutex_);
-    return frame_;
+    return frame_.lock();
   }
 
   MapPoint::SharedPtr Point::mappoint() {
@@ -134,20 +134,13 @@ namespace vslam_datastructure {
     }
   }
 
-  bool Point::hasFrame() {
-    std::lock_guard<std::mutex> lck(mutex_);
-    if (frame_) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   bool Point::isMappointHost() {
     std::lock_guard<std::mutex> lck(mutex_);
-    if (mappoint_ && frame_) {
-      if (mappoint_->isHost(frame_->id())) {
-        return true;
+    if (mappoint_) {
+      if (auto frame = frame_.lock()) {
+        if (mappoint_->isHost(frame->id())) {
+          return true;
+        }
       }
     }
     return false;

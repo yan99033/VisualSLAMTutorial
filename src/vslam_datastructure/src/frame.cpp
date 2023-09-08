@@ -185,7 +185,7 @@ namespace vslam_datastructure {
     // Set the frame ptr
     size_t i = 0;
     for (auto& pt : points_) {
-      pt->setFrame(this);
+      pt->setFrame(shared_from_this());
 
       point_map_[pt] = i++;
     }

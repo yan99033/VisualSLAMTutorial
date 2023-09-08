@@ -26,10 +26,13 @@ namespace vslam_datastructure {
 
       for (const auto& match : matched_points) {
         if (match.point1->hasMappoint() && match.point2->hasMappoint()) {
-          assert(match.point1->hasFrame() && match.point2->hasFrame());
+          auto frame1 = match.point1->frame();
+          auto frame2 = match.point2->frame();
 
-          cv::Point3d mp1 = match.point1->frame()->mappointWorldToCam(match.point1->mappoint()->pos());
-          cv::Point3d mp2 = match.point2->frame()->mappointWorldToCam(match.point2->mappoint()->pos());
+          assert(frame1 && frame2);
+
+          cv::Point3d mp1 = frame1->mappointWorldToCam(match.point1->mappoint()->pos());
+          cv::Point3d mp2 = frame2->mappointWorldToCam(match.point2->mappoint()->pos());
 
           mappoint_pairs.emplace_back(std::make_pair(mp1, mp2));
         }

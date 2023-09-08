@@ -78,9 +78,15 @@ namespace vslam_backend_plugins {
       // Check if we have at least two valid projections
       int num_valid_projections{0};
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->hasFrame() || pt->frame()->isBad()) {
+        if (!pt) {
           continue;
         }
+
+        auto frame = pt->frame();
+        if (!frame || frame->isBad()) {
+          continue;
+        }
+
         num_valid_projections++;
       }
       if (num_valid_projections < 2) {
@@ -96,23 +102,28 @@ namespace vslam_backend_plugins {
 
       // Projections
       for (auto pt : mp->projections()) {
-        if (pt == nullptr || !pt->hasFrame() || pt->frame()->isBad()) {
+        if (!pt) {
+          continue;
+        }
+
+        auto frame = pt->frame();
+        if (!frame || frame->isBad()) {
           continue;
         }
 
         // Keyframe vertex
         g2o::VertexSE3Expmap* kf_vertex;
-        if (existing_kf_vertices.find(pt->frame()) != existing_kf_vertices.end()) {
-          kf_vertex = existing_kf_vertices[pt->frame()];
+        if (existing_kf_vertices.find(frame.get()) != existing_kf_vertices.end()) {
+          kf_vertex = existing_kf_vertices[frame.get()];
         } else {
           kf_vertex = new g2o::VertexSE3Expmap();
-          existing_kf_vertices[pt->frame()] = kf_vertex;
-          kf_vertex->setEstimate(utils::cvMatToSE3Quat(pt->frame()->T_f_w()));
+          existing_kf_vertices[frame.get()] = kf_vertex;
+          kf_vertex->setEstimate(utils::cvMatToSE3Quat(frame.get()->T_f_w()));
           kf_vertex->setId(vertex_edge_id++);
-          if (core_keyframes.find(pt->frame()) != core_keyframes.end()) {
+          if (core_keyframes.find(frame.get()) != core_keyframes.end()) {
             // Core keyframes
-            core_kf_vertices[kf_vertex] = pt->frame();
-            kf_vertex->setFixed(pt->frame()->active_tracking_state);
+            core_kf_vertices[kf_vertex] = frame.get();
+            kf_vertex->setFixed(frame.get()->active_tracking_state);
           } else {
             // Non-core keyframes
             kf_vertex->setFixed(true);

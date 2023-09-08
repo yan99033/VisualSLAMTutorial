@@ -140,7 +140,7 @@ namespace vslam_datastructure {
         break;
       }
 
-      std::set<vslam_datastructure::Frame*> projected_keyframes;
+      std::set<vslam_datastructure::Frame::SharedPtr> projected_keyframes;
 
       for (const auto& pt : kf_ptr->points()) {
         if (pt->hasMappoint() && pt->isMappointHost()) {
@@ -151,13 +151,15 @@ namespace vslam_datastructure {
           }
 
           for (const auto other_pt : pt->mappoint()->projections()) {
-            assert(other_pt->frame());
+            auto other_pt_frame = other_pt->frame();
 
-            if (other_pt->frame()->isBad()) {
+            assert(other_pt_frame);
+
+            if (other_pt_frame->isBad()) {
               continue;
             }
 
-            projected_keyframes.insert(other_pt->frame());
+            projected_keyframes.insert(other_pt_frame);
           }
         }
       }

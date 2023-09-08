@@ -161,10 +161,10 @@ namespace vslam_datastructure {
     /**
      * \param[in] frame frame pointer
      */
-    void setFrame(Frame* frame);
+    void setFrame(Frame::SharedPtr frame);
 
     /// Get the frame pointer
-    Frame* frame();
+    Frame::SharedPtr frame();
 
     /// Get the map point of the point
     MapPoint::SharedPtr mappoint();
@@ -184,12 +184,6 @@ namespace vslam_datastructure {
      */
     bool hasMappoint();
 
-    /// Check if there is a frame associated with the point
-    /**
-     * \return A boolean indicating if there is a frame
-     */
-    bool hasFrame();
-
     /// A boolean indicating if the host of the map point (if there is one associated) is 'this' point
     /**
      * \return A boolean indicating if the this point host the map point
@@ -201,7 +195,7 @@ namespace vslam_datastructure {
     MapPoint::SharedPtr mappoint_;
 
     /// The frame of this point
-    Frame* frame_;
+    Frame::WeakPtr frame_;
 
     /// Point id
     long unsigned int id{point_count_++};
