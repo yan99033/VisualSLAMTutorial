@@ -22,6 +22,8 @@
 namespace vslam_datastructure {
   long unsigned int MapPoint::point_count_ = 0;
 
+  MapPoint::MapPoint(const cv::Point3d& pos_3d) : pos_3d_(pos_3d) {}
+
   void MapPoint::setPos(const cv::Point3d& pos_3d) {
     std::lock_guard<std::mutex> lck(mutex_);
     pos_3d_ = pos_3d;

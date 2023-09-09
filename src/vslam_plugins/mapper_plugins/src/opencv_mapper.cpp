@@ -110,8 +110,8 @@ namespace vslam_mapper_plugins {
       pos_3d = T_1_w.inv() * pos_3d;
 
       // Create a new map point
-      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>();
-      mp->setPos(cv::Point3d(pos_3d.at<double>(0, 0), pos_3d.at<double>(1, 0), pos_3d.at<double>(2, 0)));
+      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>(
+          cv::Point3d(pos_3d.at<double>(0, 0), pos_3d.at<double>(1, 0), pos_3d.at<double>(2, 0)));
 
       new_mps.push_back(mp);
     }

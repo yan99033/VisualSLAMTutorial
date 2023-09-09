@@ -35,6 +35,8 @@ namespace vslam_datastructure {
 
     using SharedPtr = std::shared_ptr<MapPoint>;
 
+    MapPoint(const cv::Point3d& pos_3d);
+
     /// Set the position of the map point
     /**
      * \param[in] pos_3d position of the map point
