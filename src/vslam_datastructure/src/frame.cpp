@@ -87,24 +87,19 @@ namespace vslam_datastructure {
 
   void Frame::updateSim3PoseAndMps(const cv::Mat& S_f_w, const cv::Mat& T_f_w) {
     cv::Mat S_w_f = S_f_w.inv();
-    cv::Matx33d sR_w_f = S_w_f.rowRange(0, 3).colRange(0, 3);
-    cv::Mat st_w_f = S_w_f.rowRange(0, 3).colRange(3, 4);
-    cv::Point3d st_w_f_pt(st_w_f);
 
-    cv::Matx33d old_R_f_w = T_f_w_.rowRange(0, 3).colRange(0, 3);
-    cv::Mat old_t_f_w = T_f_w_.rowRange(0, 3).colRange(3, 4);
-    cv::Point3d old_t_f_w_pt(old_t_f_w);
+    cv::Mat old_T_f_w = this->T_f_w();
 
     // Iterate through the map points with this keyframe being the host and update their global position
     for (auto& pt : points_) {
       if (pt->hasMappoint() && pt->mappoint()->isHost(id_)) {
         // Transform to this frame
-        auto mp = pt->mappoint()->pos();
-        mp = old_R_f_w * mp + old_t_f_w_pt;
+        auto mp_w_old_homo = vslam_utils::conversions::cvPoint3dToHomogeneous(pt->mappoint()->pos());
+        auto mp_f_old_homo = old_T_f_w * mp_w_old_homo;
 
         // Transform to the new pos in the world coordinate frame
-        mp = sR_w_f * mp + st_w_f_pt;
-        pt->mappoint()->setPos(mp);
+        cv::Mat mp_w_mat = S_w_f.rowRange(0, 3) * mp_f_old_homo;
+        pt->mappoint()->setPos(cv::Point3d(mp_w_mat));
       }
     }
 
@@ -255,11 +250,11 @@ namespace vslam_datastructure {
     is_keyframe_ = true;
   }
 
-  cv::Point3d Frame::mappointWorldToCam(const cv::Point3d& world_pos) const {
+  cv::Point3d Frame::mappointWorldToCam(const cv::Point3d& pos_w) const {
     std::lock_guard<std::mutex> lck(data_mutex_);
-    cv::Matx33d R = T_f_w_.rowRange(0, 3).colRange(0, 3);
-    cv::Mat t = T_f_w_.rowRange(0, 3).colRange(3, 4);
-    return R * world_pos + cv::Point3d(t);
+    cv::Mat pos_w_homo = vslam_utils::conversions::cvPoint3dToHomogeneous(pos_w);
+    cv::Mat pos_f_mat = T_f_w_.rowRange(0, 3) * pos_w_homo;
+    return cv::Point3d(pos_f_mat);
   }
 
   cv::Point2f Frame::mappointCamToPixel(const cv::Point3d& cam_pos) const {

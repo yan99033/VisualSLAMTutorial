@@ -40,6 +40,15 @@ namespace vslam_utils {
      */
     inline Eigen::Vector3d cvPoint3dToEigenVector3d(const cv::Point3d& pt) { return Eigen::Vector3d(pt.x, pt.y, pt.z); }
 
+    /// Transform a 3d point to homogeneous coordinates
+    /**
+     * \param[in] pos 3d point (x, y, z)
+     * \return matrix of shape (4, 1) containing (x, y, z, 1)
+     */
+    inline cv::Mat cvPoint3dToHomogeneous(const cv::Point3d& pos) {
+      return (cv::Mat_<double>(4, 1) << pos.x, pos.y, pos.z, 1.0);
+    }
+
     /// Convert Eigen rotation matrix and translation vector to 4x4 transformation of type cv::Mat
     /**
      * \param[in] R 3x3 rotation matrix
