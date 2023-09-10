@@ -36,10 +36,18 @@ namespace vslam_datastructure {
     using WeakPtr = std::weak_ptr<Frame>;
 
     /// Constructor
+    /**
+     * \note For thread safety, the points should be set upon or shortly after the frame is created,
+     * and they shouldn't be modified (i.e., calling Frame::setPoints more than once). We provide a
+     * factory function (Frame::createFromPoints) for creating a frame instance with points
+     */
     Frame() = default;
 
     /// Destructor
     ~Frame() noexcept;
+
+    /// Factory function to construct a frame with points
+    static Frame::SharedPtr createFromPoints(Points&& points);
 
     /// Get the 4x4 camera pose
     /**
@@ -107,7 +115,7 @@ namespace vslam_datastructure {
     /**
      * \param[in] points a vector of points
      */
-    void setPoints(Points& points);
+    void setPoints(Points&& points);
 
     /// Get points
     /**
@@ -234,7 +242,7 @@ namespace vslam_datastructure {
     Points points_;
 
     /// Mapping from Point to its index in the `points_` vector
-    std::unordered_map<PointSharedPtr, size_t> point_map_;
+    std::unordered_set<PointSharedPtr> point_set_;
 
     /// 3x3 camera matrix
     /**

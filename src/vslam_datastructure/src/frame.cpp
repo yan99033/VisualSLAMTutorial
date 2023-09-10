@@ -65,6 +65,14 @@ namespace vslam_datastructure {
     points_.clear();
   }
 
+  Frame::SharedPtr Frame::createFromPoints(Points&& points) {
+    auto frame = std::make_shared<Frame>();
+
+    frame->setPoints(std::move(points));
+
+    return frame;
+  }
+
   cv::Mat Frame::T_f_w() const {
     std::lock_guard<std::mutex> lck(data_mutex_);
     return T_f_w_.clone();
@@ -86,8 +94,6 @@ namespace vslam_datastructure {
     cv::Matx33d old_R_f_w = T_f_w_.rowRange(0, 3).colRange(0, 3);
     cv::Mat old_t_f_w = T_f_w_.rowRange(0, 3).colRange(3, 4);
     cv::Point3d old_t_f_w_pt(old_t_f_w);
-
-    std::lock_guard<std::mutex> lck(data_mutex_);
 
     // Iterate through the map points with this keyframe being the host and update their global position
     for (auto& pt : points_) {
@@ -137,23 +143,27 @@ namespace vslam_datastructure {
     if (frame_msg == nullptr) {
       return;
     }
-    std::lock_guard<std::mutex> lck(data_mutex_);
 
-    frame_msg->id = id_;
+    {
+      std::lock_guard<std::mutex> lck(data_mutex_);
 
-    if (!skip_loaded) {
-      frame_msg->header.stamp.sec = ros_timestamp_sec_;
-      frame_msg->header.stamp.nanosec = ros_timestamp_nanosec_;
+      frame_msg->id = id_;
 
-      frame_msg->image.height = image_.rows;
-      frame_msg->image.width = image_.cols;
-      frame_msg->image.encoding = vslam_utils::conversions::cvMatTypeToEncoding(image_.type());
-      frame_msg->image.is_bigendian = false;
-      frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
-      frame_msg->image.data.assign(image_.datastart, image_.dataend);
+      if (!skip_loaded) {
+        frame_msg->header.stamp.sec = ros_timestamp_sec_;
+        frame_msg->header.stamp.nanosec = ros_timestamp_nanosec_;
+
+        frame_msg->image.height = image_.rows;
+        frame_msg->image.width = image_.cols;
+        frame_msg->image.encoding = vslam_utils::conversions::cvMatTypeToEncoding(image_.type());
+        frame_msg->image.is_bigendian = false;
+        frame_msg->image.step = static_cast<sensor_msgs::msg::Image::_step_type>(image_.step);
+        frame_msg->image.data.assign(image_.datastart, image_.dataend);
+      }
+
+      frame_msg->pose = transformationMatToPoseMsg(T_f_w_.inv());
     }
 
-    frame_msg->pose = transformationMatToPoseMsg(T_f_w_.inv());
     for (const auto& pt : points_) {
       if (pt->hasMappoint()) {
         if (!no_mappoints) {
@@ -178,16 +188,16 @@ namespace vslam_datastructure {
     }
   }
 
-  void Frame::setPoints(Points& points) {
-    std::lock_guard<std::mutex> lck(data_mutex_);
-    points_.swap(points);
+  void Frame::setPoints(Points&& points) {
+    assert(points_.empty());
+
+    points_ = std::move(points);
 
     // Set the frame ptr
-    size_t i = 0;
     for (auto& pt : points_) {
       pt->setFrame(shared_from_this());
 
-      point_map_[pt] = i++;
+      point_set_.insert(pt);
     }
   }
 
@@ -195,24 +205,20 @@ namespace vslam_datastructure {
     assert(is_keyframe_);
     assert(mappoints.size() == points.size());
 
-    std::lock_guard<std::mutex> lck(data_mutex_);
-
     for (size_t idx = 0; idx < points.size(); idx++) {
-      assert(point_map_.find(points[idx]) != point_map_.end());
-
-      const auto i = point_map_[points[idx]];
+      assert(point_set_.find(points[idx]) != point_set_.end());
 
       if (!mappoints[idx].get()) {
         continue;
       }
 
       // TODO: resolve the discrepancy if there is an existing map point
-      if (!points_[i]->hasMappoint()) {
+      if (!points[idx]->hasMappoint()) {
         // Create a new map point
-        points_[i]->setMappoint(mappoints[idx]);
+        points[idx]->setMappoint(mappoints[idx]);
 
-        if (set_host && !points_[i]->mappoint()->hasHost()) {
-          points_[i]->mappoint()->setHostKeyframeId(id_);
+        if (set_host && !points[idx]->mappoint()->hasHost()) {
+          points[idx]->mappoint()->setHostKeyframeId(id_);
         }
       }
     }
@@ -222,8 +228,6 @@ namespace vslam_datastructure {
 
   void Frame::fuseMappoints(const PointMappointPairs& point_mappoint_pairs) {
     assert(is_keyframe_);
-
-    std::lock_guard<std::mutex> lck(data_mutex_);
 
     for (const auto& [pt, mappoint] : point_mappoint_pairs) {
       assert(mappoint != nullptr);

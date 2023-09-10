@@ -120,9 +120,8 @@ namespace vslam_components {
       auto points = feature_extractor_->extractFeatures(cv_mat);
 
       // Create a new frame
-      auto current_frame = std::make_shared<vslam_datastructure::Frame>();
+      auto current_frame = vslam_datastructure::Frame::createFromPoints(std::move(points));
       current_frame->fromMsg(frame_msg.get());
-      current_frame->setPoints(points);
 
       processFrame(current_frame);
 
