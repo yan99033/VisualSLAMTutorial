@@ -56,6 +56,15 @@ namespace {
 
     return pos_projected.rowRange(0, 2);
   }
+
+  bool pos3dHasNaN(const cv::Mat& pos) {
+    for (size_t j = 0; j < 3; j++) {
+      if (std::isnan(pos.at<double>(j, 0))) {
+        return true;
+      }
+    }
+    return false;
+  }
 }  // namespace
 
 namespace vslam_mapper_plugins {
@@ -81,14 +90,7 @@ namespace vslam_mapper_plugins {
       pos_3d /= pos_3d.at<double>(3, 0);
 
       // Check if NaN exists
-      bool nan_found{false};
-      for (size_t j = 0; j < 3; j++) {
-        if (std::isnan(pos_3d.at<double>(j, 0))) {
-          nan_found = true;
-          break;
-        }
-      }
-      if (nan_found) {
+      if (pos3dHasNaN(pos_3d)) {
         new_mps.push_back(nullptr);
         continue;
       }
@@ -110,8 +112,8 @@ namespace vslam_mapper_plugins {
       pos_3d = T_1_w.inv() * pos_3d;
 
       // Create a new map point
-      vslam_datastructure::MapPoint::SharedPtr mp = std::make_shared<vslam_datastructure::MapPoint>(
-          cv::Point3d(pos_3d.at<double>(0, 0), pos_3d.at<double>(1, 0), pos_3d.at<double>(2, 0)));
+      vslam_datastructure::MapPoint::SharedPtr mp
+          = std::make_shared<vslam_datastructure::MapPoint>(cv::Point3d(pos_3d.rowRange(0, 3)));
 
       new_mps.push_back(mp);
     }
