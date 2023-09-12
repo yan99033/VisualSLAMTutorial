@@ -87,11 +87,11 @@ namespace vslam_datastructure {
         continue;
       }
 
-      core_keyframes.insert(kf.get());
+      core_keyframes.insert(kf);
 
       for (const auto& pt : kf->points()) {
         if (pt->hasMappoint() && pt->mappoint()->projections().size() > 1) {
-          core_mappoints.insert(pt->mappoint().get());
+          core_mappoints.insert(pt->mappoint());
         }
       }
 
@@ -150,16 +150,16 @@ namespace vslam_datastructure {
             continue;
           }
 
-          for (const auto other_pt : pt->mappoint()->projections()) {
-            auto other_pt_frame = other_pt->frame();
+          for (const auto& other_pt_weakptr : pt->mappoint()->projections()) {
+            if (auto other_pt = other_pt_weakptr.lock()) {
+              if (auto other_pt_frame = other_pt->frame()) {
+                if (other_pt_frame->isBad()) {
+                  continue;
+                }
 
-            assert(other_pt_frame);
-
-            if (other_pt_frame->isBad()) {
-              continue;
+                projected_keyframes.insert(other_pt_frame);
+              }
             }
-
-            projected_keyframes.insert(other_pt_frame);
           }
         }
       }

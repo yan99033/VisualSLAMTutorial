@@ -229,17 +229,19 @@ namespace vslam_datastructure {
 
       if (!pt->hasMappoint()) {
         // Associate the new map point with the old point
-        mappoint->addProjection(pt.get());
+        mappoint->addProjection(pt);
         pt->setMappoint(mappoint);
       } else {
         auto old_mappoint = pt->mappoint();
 
-        for (auto old_pt : old_mappoint->projections()) {
-          // Add new projections to the new map point
-          mappoint->addProjection(old_pt);
+        for (auto old_pt_weakptr : old_mappoint->projections()) {
+          if (auto old_pt = old_pt_weakptr.lock()) {
+            // Add new projections to the new map point
+            mappoint->addProjection(old_pt);
 
-          // Replace the old map point
-          old_pt->setMappoint(mappoint);
+            // Replace the old map point
+            old_pt->setMappoint(mappoint);
+          }
         }
       }
     }
@@ -291,7 +293,7 @@ namespace vslam_datastructure {
 
         // Add projection if the reprojection error is low
         if (cv::norm(pt_2d - pt->keypoint.pt) < max_reproj_err_thresh_) {
-          pt->mappoint()->addProjection(pt.get());
+          pt->mappoint()->addProjection(pt);
         }
       }
     }

@@ -19,14 +19,15 @@
 
 #include "vslam_datastructure/typedefs.hpp"
 
+#include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
 
 namespace vslam_datastructure {
-  bool PointCmp::operator()(Point* const lhs, Point* const rhs) const {
-    if (!lhs || !lhs->frame() || !rhs || !rhs->frame()) {
-      return false;
+  bool FrameCmp::operator()(Frame::SharedPtr const lhs, Frame::SharedPtr const rhs) const {
+    if (lhs && rhs) {
+      return lhs->id() < rhs->id();
     } else {
-      return lhs->frame()->id() < rhs->frame()->id();
+      return false;
     }
   }
 

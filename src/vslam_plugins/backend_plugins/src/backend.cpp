@@ -63,12 +63,11 @@ namespace vslam_backend_plugins {
     }
 
     // Create vertices and edges
-    std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint*> core_mp_vertices;
-    std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame*> core_kf_vertices;
+    std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint::SharedPtr> core_mp_vertices;
+    std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame::SharedPtr> core_kf_vertices;
     std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
-    std::map<vslam_datastructure::Frame*, g2o::VertexSE3Expmap*> existing_kf_vertices;
-    std::map<g2o::EdgeSE3ProjectXYZ*, std::pair<vslam_datastructure::MapPoint*, vslam_datastructure::Point*>>
-        edge_projections;
+    std::map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
+    std::map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edge_projections;
     unsigned long int vertex_edge_id{0};
     for (auto mp : core_mappoints) {
       if (mp == nullptr || mp->isOutlier()) {
@@ -76,20 +75,18 @@ namespace vslam_backend_plugins {
       }
 
       // Check if we have at least two valid projections
-      int num_valid_projections{0};
-      for (auto pt : mp->projections()) {
-        if (!pt) {
-          continue;
+      std::set<vslam_datastructure::PointFramePair> valid_projections;
+      // int num_valid_projections{0};
+      for (auto pt_weakptr : mp->projections()) {
+        if (auto pt = pt_weakptr.lock()) {
+          if (auto frame = pt->frame()) {
+            if (!frame->isBad()) {
+              valid_projections.insert({pt, frame});
+            }
+          }
         }
-
-        auto frame = pt->frame();
-        if (!frame || frame->isBad()) {
-          continue;
-        }
-
-        num_valid_projections++;
       }
-      if (num_valid_projections < 2) {
+      if (valid_projections.size() < 2) {
         continue;
       }
 
@@ -101,29 +98,20 @@ namespace vslam_backend_plugins {
       optimizer.addVertex(mp_vertex);
 
       // Projections
-      for (auto pt : mp->projections()) {
-        if (!pt) {
-          continue;
-        }
-
-        auto frame = pt->frame();
-        if (!frame || frame->isBad()) {
-          continue;
-        }
-
+      for (auto& [pt, frame] : valid_projections) {
         // Keyframe vertex
         g2o::VertexSE3Expmap* kf_vertex;
-        if (existing_kf_vertices.find(frame.get()) != existing_kf_vertices.end()) {
-          kf_vertex = existing_kf_vertices[frame.get()];
+        if (existing_kf_vertices.find(frame) != existing_kf_vertices.end()) {
+          kf_vertex = existing_kf_vertices[frame];
         } else {
           kf_vertex = new g2o::VertexSE3Expmap();
-          existing_kf_vertices[frame.get()] = kf_vertex;
-          kf_vertex->setEstimate(utils::cvMatToSE3Quat(frame.get()->T_f_w()));
+          existing_kf_vertices[frame] = kf_vertex;
+          kf_vertex->setEstimate(utils::cvMatToSE3Quat(frame->T_f_w()));
           kf_vertex->setId(vertex_edge_id++);
-          if (core_keyframes.find(frame.get()) != core_keyframes.end()) {
+          if (core_keyframes.find(frame) != core_keyframes.end()) {
             // Core keyframes
-            core_kf_vertices[kf_vertex] = frame.get();
-            kf_vertex->setFixed(frame.get()->active_tracking_state);
+            core_kf_vertices[kf_vertex] = frame;
+            kf_vertex->setFixed(frame->active_tracking_state);
           } else {
             // Non-core keyframes
             kf_vertex->setFixed(true);
@@ -143,7 +131,7 @@ namespace vslam_backend_plugins {
         rk->setDelta(huber_kernel_delta_);
         e->setRobustKernel(rk);
 
-        edge_projections[e] = {mp, pt};
+        edge_projections[e] = {pt, mp};
 
         const cv::Mat K = pt->frame()->K();
 
@@ -182,7 +170,7 @@ namespace vslam_backend_plugins {
 
     for (auto e : all_edges) {
       if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq_) {
-        auto [mp_p, pt_p] = edge_projections[e];
+        auto [pt_p, mp_p] = edge_projections[e];
 
         if (mp_p && pt_p) {
           mp_p->removeProjection(pt_p);

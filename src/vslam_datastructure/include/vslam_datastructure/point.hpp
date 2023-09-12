@@ -53,13 +53,13 @@ namespace vslam_datastructure {
     /**
      * \param[in] point add a new projection from the map point to the point in a frame
      */
-    void addProjection(Point* point);
+    void addProjection(PointSharedPtr point);
 
     /// Remove the projection of the point
     /**
      * \param[in] point remove the existing projection from the map point to the point in a frame
      */
-    void removeProjection(Point* point);
+    void removeProjection(PointSharedPtr point);
 
     /// Return a copy of the projections
     /**
@@ -135,9 +135,10 @@ namespace vslam_datastructure {
     enum class Type { undefined = 0, orb = 1 };
 
     using SharedPtr = std::shared_ptr<Point>;
+    using WeakPtr = std::weak_ptr<Point>;
 
-    /// Remove the default constructor
-    Point() = delete;
+    /// Default constructor
+    Point() = default;
 
     /// Constructor
     /**

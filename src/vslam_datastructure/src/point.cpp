@@ -34,7 +34,7 @@ namespace vslam_datastructure {
     return pos_3d_;
   }
 
-  void MapPoint::addProjection(Point* point) {
+  void MapPoint::addProjection(Point::SharedPtr point) {
     // Ignore the null pointers
     if (!point) {
       return;
@@ -44,7 +44,7 @@ namespace vslam_datastructure {
     projections_.insert(point);
   }
 
-  void MapPoint::removeProjection(Point* point) {
+  void MapPoint::removeProjection(Point::SharedPtr point) {
     // Ignore the null pointers
     if (!point) {
       return;
@@ -61,7 +61,7 @@ namespace vslam_datastructure {
   ProjectionSet MapPoint::projections() {
     // Remove the stale (nullptr) projections
     for (auto it = projections_.begin(); it != projections_.end();) {
-      if (*it == nullptr) {
+      if (it->expired()) {
         std::lock_guard<std::mutex> lck(mutex_);
         it = projections_.erase(it);
       } else {

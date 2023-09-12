@@ -23,6 +23,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace vslam_datastructure {
@@ -34,26 +35,25 @@ namespace vslam_datastructure {
   template <typename T> class SignalQueue;
 
   using PointSharedPtr = std::shared_ptr<Point>;
+  using PointWeakPtr = std::weak_ptr<Point>;
   using Points = std::vector<PointSharedPtr>;
   using PointsPair = std::pair<Points, Points>;
   using MapPointSharedPtr = std::shared_ptr<MapPoint>;
   using MapPoints = std::vector<MapPointSharedPtr>;
-  using PointMappointPairs = std::vector<std::pair<PointSharedPtr, MapPointSharedPtr>>;
+  using PointMappointPair = std::pair<PointSharedPtr, MapPointSharedPtr>;
+  using PointMappointPairs = std::vector<PointMappointPair>;
   using MatchedPoints = std::vector<MatchedPoint>;
   using MatchedIndexPairs = std::vector<std::pair<size_t, size_t>>;
-  using PointMappointPairs = std::vector<std::pair<PointSharedPtr, MapPointSharedPtr>>;
   using FrameSharedPtr = std::shared_ptr<Frame>;
+  using PointFramePair = std::pair<PointSharedPtr, FrameSharedPtr>;
 
-  template <typename T> struct Cmp {
-    bool operator()(const T* lhs, const T* rhs) const { return lhs->id() < rhs->id(); }
+  struct FrameCmp {
+    bool operator()(FrameSharedPtr const lhs, FrameSharedPtr const rhs) const;
   };
-  using CoreKfsSet = std::set<Frame*, Cmp<Frame>>;
-  using CoreMpsSet = std::set<MapPoint*, Cmp<MapPoint>>;
+  using CoreKfsSet = std::set<FrameSharedPtr, FrameCmp>;
+  using CoreMpsSet = std::unordered_set<MapPointSharedPtr>;
 
-  struct PointCmp {
-    bool operator()(Point* const lhs, Point* const rhs) const;
-  };
-  using ProjectionSet = std::set<Point*, PointCmp>;
+  using ProjectionSet = std::set<PointWeakPtr, std::owner_less<PointWeakPtr>>;
 
   using FrameQueue = SignalQueue<FrameSharedPtr>;
 

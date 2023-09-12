@@ -57,18 +57,19 @@ namespace vslam_backend_plugins {
           continue;
         }
 
-        for (const auto& other_pt : pt->mappoint()->projections()) {
-          auto other_pt_frame = other_pt->frame();
-          assert(other_pt_frame);
+        for (const auto& other_pt_weakptr : pt->mappoint()->projections()) {
+          if (auto other_pt = other_pt_weakptr.lock()) {
+            if (auto other_pt_frame = other_pt->frame()) {
+              if (other_pt_frame->isBad() || other_pt_frame.get() == frame) {
+                continue;
+              }
 
-          if (other_pt_frame->isBad() || other_pt_frame.get() == frame) {
-            continue;
-          }
-
-          if (projection_counts.find(other_pt_frame.get()) == projection_counts.end()) {
-            projection_counts[other_pt_frame.get()] = 1;
-          } else {
-            projection_counts[other_pt_frame.get()] += 1;
+              if (projection_counts.find(other_pt_frame.get()) == projection_counts.end()) {
+                projection_counts[other_pt_frame.get()] = 1;
+              } else {
+                projection_counts[other_pt_frame.get()] += 1;
+              }
+            }
           }
         }
       }
