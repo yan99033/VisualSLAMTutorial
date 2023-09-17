@@ -63,11 +63,11 @@ namespace vslam_backend_plugins {
     }
 
     // Create vertices and edges
-    std::map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint::SharedPtr> core_mp_vertices;
-    std::map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame::SharedPtr> core_kf_vertices;
+    std::unordered_map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint::SharedPtr> core_mp_vertices;
+    std::unordered_map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame::SharedPtr> core_kf_vertices;
     std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
-    std::map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
-    std::map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edge_projections;
+    std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
+    std::unordered_map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edge_projections;
     unsigned long int vertex_edge_id{0};
     for (auto& mp : core_mappoints) {
       if (mp == nullptr || mp->isOutlier()) {
@@ -223,7 +223,7 @@ namespace vslam_backend_plugins {
 
     // Create vertices
     unsigned long int vertex_edge_id{0};
-    std::map<long unsigned int, g2o::VertexSim3Expmap*> kf_vertices;
+    std::unordered_map<long unsigned int, g2o::VertexSim3Expmap*> kf_vertices;
     for (const auto& kf : keyframes) {
       if (kf->isBad()) {
         continue;
