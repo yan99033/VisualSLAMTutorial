@@ -75,8 +75,7 @@ namespace vslam_backend_plugins {
       }
 
       // Check if we have at least two valid projections
-      std::set<vslam_datastructure::PointFramePair> valid_projections;
-      // int num_valid_projections{0};
+      vslam_datastructure::PointFramePairSet valid_projections;
       for (auto pt_weakptr : mp->projections()) {
         if (auto pt = pt_weakptr.lock()) {
           if (auto frame = pt->frame()) {
@@ -258,7 +257,7 @@ namespace vslam_backend_plugins {
       auto v_sim3_this = kf_vertices.at(kf->id());
 
       if (kf->nearby_keyframes.empty()) {
-        kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf.get());
+        kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf);
       }
 
       if (kf->nearby_keyframes.size() < 3) {
@@ -267,7 +266,7 @@ namespace vslam_backend_plugins {
       }
 
       bool need_recalculating_nearby_keyframes{false};
-      for (const auto other_kf : kf->nearby_keyframes) {
+      for (const auto& other_kf : kf->nearby_keyframes) {
         if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
           continue;
         }
@@ -378,8 +377,8 @@ namespace vslam_backend_plugins {
     auto kf_1 = map_->getKeyframe(kf_id_1);
     auto kf_2 = map_->getKeyframe(kf_id_2);
     if (kf_1 && kf_2) {
-      kf_1->loop_keyframes.insert(kf_2.get());
-      kf_2->loop_keyframes.insert(kf_1.get());
+      kf_1->loop_keyframes.insert(kf_2);
+      kf_2->loop_keyframes.insert(kf_1);
     }
   }
 

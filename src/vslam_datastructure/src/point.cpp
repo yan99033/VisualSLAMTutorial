@@ -59,7 +59,7 @@ namespace vslam_datastructure {
   }
 
   ProjectionSet MapPoint::projections() {
-    // Remove the stale (nullptr) projections
+    // Remove the stale (expired) projections
     for (auto it = projections_.begin(); it != projections_.end();) {
       if (it->expired()) {
         std::lock_guard<std::mutex> lck(mutex_);

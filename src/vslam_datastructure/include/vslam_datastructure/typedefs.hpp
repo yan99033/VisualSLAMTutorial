@@ -20,6 +20,7 @@
 #ifndef VSLAM_DATASTRUCTURE__TYPEDEFS_HPP_
 #define VSLAM_DATASTRUCTURE__TYPEDEFS_HPP_
 
+#include <functional>
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <set>
@@ -46,19 +47,29 @@ namespace vslam_datastructure {
   using MatchedIndexPairs = std::vector<std::pair<size_t, size_t>>;
   using FrameSharedPtr = std::shared_ptr<Frame>;
   using PointFramePair = std::pair<PointSharedPtr, FrameSharedPtr>;
-
-  struct FrameCmp {
-    bool operator()(FrameSharedPtr const lhs, FrameSharedPtr const rhs) const;
-  };
-  using CoreKfsSet = std::set<FrameSharedPtr, FrameCmp>;
-  using CoreMpsSet = std::unordered_set<MapPointSharedPtr>;
-
-  using ProjectionSet = std::set<PointWeakPtr, std::owner_less<PointWeakPtr>>;
-
   using FrameQueue = SignalQueue<FrameSharedPtr>;
-
   using Point3dPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
   using KeyPoints = std::vector<cv::KeyPoint>;
+
+  struct FrameHash {
+    size_t operator()(const FrameSharedPtr& point) const noexcept;
+  };
+
+  struct PointFramePairHash {
+    size_t operator()(const PointFramePair& point_frame_pair) const noexcept;
+  };
+
+  struct FrameCmp {
+    bool operator()(const FrameSharedPtr& lhs, const FrameSharedPtr& rhs) const noexcept;
+  };
+
+  using FrameSet = std::unordered_set<FrameSharedPtr>;
+  using PointSet = std::unordered_set<PointSharedPtr>;
+  using PointFramePairSet
+      = std::unordered_set<vslam_datastructure::PointFramePair, vslam_datastructure::PointFramePairHash>;
+  using CoreKfsSet = std::set<FrameSharedPtr, FrameCmp>;
+  using CoreMpsSet = std::unordered_set<MapPointSharedPtr>;
+  using ProjectionSet = std::set<PointWeakPtr, std::owner_less<PointWeakPtr>>;
 
 }  // namespace vslam_datastructure
 

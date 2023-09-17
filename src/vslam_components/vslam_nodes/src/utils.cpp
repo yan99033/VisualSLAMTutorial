@@ -48,7 +48,7 @@ namespace vslam_components {
 
         for (int i = 0; i < ransac_iters; i++) {
           // Randomly select n indices
-          std::set<size_t> indices;
+          std::unordered_set<size_t> indices;
           while (indices.size() < ransac_n) {
             indices.insert(static_cast<size_t>(dis(gen)));
           }

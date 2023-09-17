@@ -22,13 +22,33 @@
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/point.hpp"
 
+namespace {
+  /// Combine hash values
+  /// https://stackoverflow.com/a/2595226
+  template <class T> inline void hash_combine(std::size_t& seed, const T& v) {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+}  // namespace
+
 namespace vslam_datastructure {
-  bool FrameCmp::operator()(Frame::SharedPtr const lhs, Frame::SharedPtr const rhs) const {
+
+  size_t FrameHash::operator()(const Frame::SharedPtr& frame) const noexcept {
+    return std::hash<long unsigned int>()(frame->id());
+  }
+
+  size_t PointFramePairHash::operator()(const PointFramePair& point_frame_pair) const noexcept {
+    size_t hash{0};
+    hash_combine(hash, point_frame_pair.first);
+    hash_combine(hash, point_frame_pair.second);
+    return hash;
+  }
+
+  bool FrameCmp::operator()(const Frame::SharedPtr& lhs, const Frame::SharedPtr& rhs) const noexcept {
     if (lhs && rhs) {
       return lhs->id() < rhs->id();
     } else {
       return false;
     }
   }
-
 }  // namespace vslam_datastructure

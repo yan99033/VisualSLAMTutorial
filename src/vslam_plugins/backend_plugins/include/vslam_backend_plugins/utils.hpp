@@ -54,9 +54,10 @@ namespace vslam_backend_plugins {
      * of projections divided by the keyframe id distance
      * \return the top k keyframes
      */
-    std::unordered_set<const vslam_datastructure::Frame*> getFrameMappointProjectedFrames(
-        vslam_datastructure::Frame* const frame, const bool use_host_mps = false, const size_t min_projections = 10,
-        const size_t top_k_projections = 5);
+    vslam_datastructure::FrameSet getFrameMappointProjectedFrames(const vslam_datastructure::Frame::SharedPtr frame,
+                                                                  const bool use_host_mps = false,
+                                                                  const size_t min_projections = 10,
+                                                                  const size_t top_k_projections = 5);
 
   }  // namespace utils
 }  // namespace vslam_backend_plugins

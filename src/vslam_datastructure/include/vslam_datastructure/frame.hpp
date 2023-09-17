@@ -199,13 +199,13 @@ namespace vslam_datastructure {
     /**
      * \note: this is used exclusively in pose graph optimization, hence unprotected
      */
-    std::unordered_set<const vslam_datastructure::Frame*> nearby_keyframes;
+    FrameSet nearby_keyframes;
 
     /// Loop keyframes
     /**
      * \note: this is used exclusively in pose graph optimization, hence unprotected
      */
-    std::unordered_set<const vslam_datastructure::Frame*> loop_keyframes;
+    FrameSet loop_keyframes;
 
   private:
     /// Iterate through the map points and set the projection constraints
@@ -242,7 +242,7 @@ namespace vslam_datastructure {
     Points points_;
 
     /// Mapping from Point to its index in the `points_` vector
-    std::unordered_set<PointSharedPtr> point_set_;
+    PointSet point_set_;
 
     /// 3x3 camera matrix
     /**

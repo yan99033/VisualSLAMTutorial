@@ -140,7 +140,7 @@ namespace vslam_datastructure {
         break;
       }
 
-      std::set<vslam_datastructure::Frame::SharedPtr> projected_keyframes;
+      vslam_datastructure::FrameSet projected_keyframes;
 
       for (const auto& pt : kf_ptr->points()) {
         if (pt->hasMappoint() && pt->isMappointHost()) {
