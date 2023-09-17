@@ -58,7 +58,7 @@ namespace vslam_backend_plugins {
         = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
     optimizer.setAlgorithm(solver);
 
-    for (auto core_kf : core_keyframes) {
+    for (auto& core_kf : core_keyframes) {
       core_kf->active_ba_state = true;
     }
 
@@ -69,14 +69,14 @@ namespace vslam_backend_plugins {
     std::map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
     std::map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edge_projections;
     unsigned long int vertex_edge_id{0};
-    for (auto mp : core_mappoints) {
+    for (auto& mp : core_mappoints) {
       if (mp == nullptr || mp->isOutlier()) {
         continue;
       }
 
       // Check if we have at least two valid projections
       vslam_datastructure::PointFramePairSet valid_projections;
-      for (auto pt_weakptr : mp->projections()) {
+      for (auto& pt_weakptr : mp->projections()) {
         if (auto pt = pt_weakptr.lock()) {
           if (auto frame = pt->frame()) {
             if (!frame->isBad()) {
@@ -157,7 +157,7 @@ namespace vslam_backend_plugins {
     }
 
     // Update keyframes
-    for (auto [kf_vertex, kf_p] : core_kf_vertices) {
+    for (auto& [kf_vertex, kf_p] : core_kf_vertices) {
       auto T_f_w = kf_vertex->estimate();
       cv::Mat cv_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(T_f_w.rotation().toRotationMatrix(),
                                                                                    T_f_w.translation());
@@ -167,7 +167,7 @@ namespace vslam_backend_plugins {
       }
     }
 
-    for (auto e : all_edges) {
+    for (auto& e : all_edges) {
       if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq_) {
         auto [pt_p, mp_p] = edge_projections[e];
 
@@ -179,7 +179,7 @@ namespace vslam_backend_plugins {
 
     // Update map points
     int inlier_mappoints{0};
-    for (auto [mp_vertex, mp_p] : core_mp_vertices) {
+    for (auto& [mp_vertex, mp_p] : core_mp_vertices) {
       auto mp = mp_vertex->estimate();
       if (mp_p && mp.hasNaN()) {
         mp_p->setOutlier();
@@ -194,7 +194,7 @@ namespace vslam_backend_plugins {
       }
     }
 
-    for (auto core_kf : core_keyframes) {
+    for (auto& core_kf : core_keyframes) {
       core_kf->active_ba_state = false;
     }
   }
@@ -351,7 +351,7 @@ namespace vslam_backend_plugins {
     }
 
     // Recalculate SE(3) poses and map points in their host keyframe
-    for (const auto [kf_id, kf_vertex] : kf_vertices) {
+    for (const auto& [kf_id, kf_vertex] : kf_vertices) {
       auto kf = map_->getKeyframe(kf_id);
 
       // If the keyframe is being used or optimized

@@ -234,7 +234,7 @@ namespace vslam_datastructure {
       } else {
         auto old_mappoint = pt->mappoint();
 
-        for (auto old_pt_weakptr : old_mappoint->projections()) {
+        for (auto& old_pt_weakptr : old_mappoint->projections()) {
           if (auto old_pt = old_pt_weakptr.lock()) {
             // Add new projections to the new map point
             mappoint->addProjection(old_pt);
