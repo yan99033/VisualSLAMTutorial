@@ -19,7 +19,17 @@
 
 #include "vslam_backend_plugins/utils.hpp"
 
+#include <g2o/core/block_solver.h>
+#include <g2o/core/optimization_algorithm_gauss_newton.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+
 #include "vslam_datastructure/point.hpp"
+
+#if defined G2O_HAVE_CHOLMOD
+#  include <g2o/solvers/cholmod/linear_solver_cholmod.h>
+#else
+#  include <g2o/solvers/eigen/linear_solver_eigen.h>
+#endif
 
 namespace vslam_backend_plugins {
   namespace utils {
@@ -41,6 +51,36 @@ namespace vslam_backend_plugins {
       Eigen::Vector3d t(pose.at<double>(0, 3), pose.at<double>(1, 3), pose.at<double>(2, 3));
 
       return g2o::Sim3(R, t, scale);
+    }
+
+    void setupSparseBAOptimizer(g2o::SparseOptimizer& optimizer) {
+      // Setup g2o optimizer
+      optimizer.setVerbose(false);
+#ifdef G2O_HAVE_CHOLMOD
+      std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver
+          = std::make_unique<g2o::LinearSolverCholmod<g2o::BlockSolver_6_3::PoseMatrixType>>();
+#else
+      std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver
+          = g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
+#endif
+      g2o::OptimizationAlgorithmLevenberg* solver
+          = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
+      optimizer.setAlgorithm(solver);
+    }
+
+    void setupPoseGraphOptimizer(g2o::SparseOptimizer& optimizer) {
+      // Setup g2o optimizer
+      optimizer.setVerbose(false);
+      typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 3>> BlockSolverType;
+#ifdef G2O_HAVE_CHOLMOD
+      typedef g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType> LinearSolverType;
+#else
+      typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
+#endif
+
+      auto solver = new g2o::OptimizationAlgorithmGaussNewton(
+          g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+      optimizer.setAlgorithm(solver);
     }
 
     vslam_datastructure::FrameSet getFrameMappointProjectedFrames(const vslam_datastructure::Frame::SharedPtr frame,

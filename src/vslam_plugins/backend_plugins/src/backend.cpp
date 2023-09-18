@@ -19,22 +19,8 @@
 
 #include "vslam_backend_plugins/backend.hpp"
 
-#include <g2o/core/block_solver.h>
-#include <g2o/core/optimization_algorithm_factory.h>
-#include <g2o/core/optimization_algorithm_gauss_newton.h>
-#include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/core/robust_kernel_impl.h>
 #include <g2o/core/sparse_optimizer.h>
-// #include <g2o/solvers/eigen/linear_solver_eigen.h>
-#include <g2o/types/sba/types_sba.h>
-#include <g2o/types/sba/types_six_dof_expmap.h>
-#include <g2o/types/sim3/types_seven_dof_expmap.h>
-
-#if defined G2O_HAVE_CHOLMOD
-#  include "g2o/solvers/cholmod/linear_solver_cholmod.h"
-#else
-#  include "g2o/solvers/eigen/linear_solver_eigen.h"
-#endif
 
 #include "vslam_backend_plugins/utils.hpp"
 #include "vslam_utils/converter.hpp"
@@ -46,17 +32,7 @@ namespace vslam_backend_plugins {
                                           vslam_datastructure::CoreMpsSet& core_mappoints) {
     // Setup g2o optimizer
     g2o::SparseOptimizer optimizer;
-    optimizer.setVerbose(false);
-#ifdef G2O_HAVE_CHOLMOD
-    std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver
-        = std::make_unique<g2o::LinearSolverCholmod<g2o::BlockSolver_6_3::PoseMatrixType>>();
-#else
-    std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver
-        = g2o::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
-#endif
-    g2o::OptimizationAlgorithmLevenberg* solver
-        = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
-    optimizer.setAlgorithm(solver);
+    utils::setupSparseBAOptimizer(optimizer);
 
     for (auto& core_kf : core_keyframes) {
       core_kf->active_ba_state = true;
@@ -209,17 +185,7 @@ namespace vslam_backend_plugins {
 
     // Setup optimizer
     g2o::SparseOptimizer optimizer;
-    optimizer.setVerbose(false);
-    typedef g2o::BlockSolver<g2o::BlockSolverTraits<7, 3>> BlockSolverType;
-#ifdef G2O_HAVE_CHOLMOD
-    typedef g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType> LinearSolverType;
-#else
-    typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
-#endif
-
-    auto solver = new g2o::OptimizationAlgorithmGaussNewton(
-        g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
-    optimizer.setAlgorithm(solver);
+    utils::setupPoseGraphOptimizer(optimizer);
 
     // Create vertices
     unsigned long int vertex_edge_id{0};
