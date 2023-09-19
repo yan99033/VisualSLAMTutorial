@@ -19,7 +19,6 @@
 
 #include "vslam_backend_plugins/backend.hpp"
 
-#include <g2o/core/robust_kernel_impl.h>
 #include <g2o/core/sparse_optimizer.h>
 
 #include "vslam_backend_plugins/utils.hpp"
@@ -39,86 +38,8 @@ namespace vslam_backend_plugins {
     }
 
     // Create vertices and edges
-    std::unordered_map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint::SharedPtr> core_mp_vertices;
-    std::unordered_map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame::SharedPtr> core_kf_vertices;
-    std::list<g2o::EdgeSE3ProjectXYZ*> all_edges;
-    std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
-    std::unordered_map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edge_projections;
-    unsigned long int vertex_edge_id{0};
-    for (auto& mp : core_mappoints) {
-      if (mp == nullptr || mp->isOutlier()) {
-        continue;
-      }
-
-      // Check if we have at least two valid projections
-      vslam_datastructure::PointFramePairSet valid_projections;
-      for (auto& pt_weakptr : mp->projections()) {
-        if (auto pt = pt_weakptr.lock()) {
-          if (auto frame = pt->frame()) {
-            if (!frame->isBad()) {
-              valid_projections.insert({pt, frame});
-            }
-          }
-        }
-      }
-      if (valid_projections.size() < 2) {
-        continue;
-      }
-
-      g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
-      core_mp_vertices[mp_vertex] = mp;
-      mp_vertex->setEstimate(vslam_utils::conversions::cvPoint3dToEigenVector3d(mp->pos()));
-      mp_vertex->setId(vertex_edge_id++);
-      mp_vertex->setMarginalized(true);
-      optimizer.addVertex(mp_vertex);
-
-      // Projections
-      for (auto& [pt, frame] : valid_projections) {
-        // Keyframe vertex
-        g2o::VertexSE3Expmap* kf_vertex;
-        if (existing_kf_vertices.find(frame) != existing_kf_vertices.end()) {
-          kf_vertex = existing_kf_vertices[frame];
-        } else {
-          kf_vertex = new g2o::VertexSE3Expmap();
-          existing_kf_vertices[frame] = kf_vertex;
-          kf_vertex->setEstimate(utils::cvMatToSE3Quat(frame->T_f_w()));
-          kf_vertex->setId(vertex_edge_id++);
-          if (core_keyframes.find(frame) != core_keyframes.end()) {
-            // Core keyframes
-            core_kf_vertices[kf_vertex] = frame;
-            kf_vertex->setFixed(frame->active_tracking_state);
-          } else {
-            // Non-core keyframes
-            kf_vertex->setFixed(true);
-          }
-          optimizer.addVertex(kf_vertex);
-        }
-
-        // Projection
-        g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
-        e->setId(vertex_edge_id++);
-        e->setVertex(0, mp_vertex);
-        e->setVertex(1, kf_vertex);
-        e->setMeasurement(vslam_utils::conversions::cvPoint2fToEigenVector2d(pt->keypoint.pt));
-        e->setInformation(Eigen::Matrix2d::Identity());  // TODO: incorporate uncertainty
-
-        g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-        rk->setDelta(huber_kernel_delta_);
-        e->setRobustKernel(rk);
-
-        edge_projections[e] = {pt, mp};
-
-        const cv::Mat K = pt->frame()->K();
-
-        e->fx = K.at<double>(0, 0);
-        e->fy = K.at<double>(1, 1);
-        e->cx = K.at<double>(0, 2);
-        e->cy = K.at<double>(1, 2);
-
-        optimizer.addEdge(e);
-        all_edges.push_back(e);
-      }
-    }
+    types::SparseBAResults results;
+    utils::constructSparseBAGraph(core_keyframes, core_mappoints, optimizer, huber_kernel_delta_, results);
 
     // optimize graph
     optimizer.initializeOptimization();
@@ -132,43 +53,7 @@ namespace vslam_backend_plugins {
       return;
     }
 
-    // Update keyframes
-    for (auto& [kf_vertex, kf_p] : core_kf_vertices) {
-      auto T_f_w = kf_vertex->estimate();
-      cv::Mat cv_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(T_f_w.rotation().toRotationMatrix(),
-                                                                                   T_f_w.translation());
-
-      if (kf_p) {
-        kf_p->setPose(cv_T_f_w);
-      }
-    }
-
-    for (auto& e : all_edges) {
-      if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq_) {
-        auto [pt_p, mp_p] = edge_projections[e];
-
-        if (mp_p && pt_p) {
-          mp_p->removeProjection(pt_p);
-        }
-      }
-    }
-
-    // Update map points
-    int inlier_mappoints{0};
-    for (auto& [mp_vertex, mp_p] : core_mp_vertices) {
-      auto mp = mp_vertex->estimate();
-      if (mp_p && mp.hasNaN()) {
-        mp_p->setOutlier();
-        continue;
-      }
-
-      if (mp_p && !mp_p->isOutlier()) {
-        auto pt_3d = vslam_utils::conversions::eigenVector3dToCvPoint3d(mp);
-
-        mp_p->setPos(pt_3d);
-        inlier_mappoints++;
-      }
-    }
+    utils::transferOptimizedSparseBAResults(results, huber_kernel_delta_sq_);
 
     for (auto& core_kf : core_keyframes) {
       core_kf->active_ba_state = false;
@@ -239,6 +124,7 @@ namespace vslam_backend_plugins {
 
         if (other_kf->isBad()) {
           need_recalculating_nearby_keyframes = true;
+          continue;
         }
 
         cv::Mat T_this_other = kf->T_f_w() * other_kf->T_w_f();

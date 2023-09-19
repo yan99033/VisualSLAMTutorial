@@ -27,6 +27,7 @@
 #include <opencv2/opencv.hpp>
 #include <unordered_set>
 
+#include "vslam_backend_plugins/types.hpp"
 #include "vslam_datastructure/frame.hpp"
 
 namespace vslam_backend_plugins {
@@ -51,6 +52,13 @@ namespace vslam_backend_plugins {
 
     // Setup a sparse optimizer for pose graph optimizer
     void setupPoseGraphOptimizer(g2o::SparseOptimizer& optimizer);
+
+    /// Construct the bundle adjustment graph from the core keyframes and core map points
+    void constructSparseBAGraph(const vslam_datastructure::CoreKfsSet& core_keyframes,
+                                const vslam_datastructure::CoreMpsSet& core_mappoints, g2o::SparseOptimizer& optimizer,
+                                const double huber_kernel_delta, types::SparseBAResults& results);
+
+    void transferOptimizedSparseBAResults(const types::SparseBAResults& results, const double huber_kernel_delta_sq);
 
     /// Get the nearby (key)frames based on the map point projections
     /**
