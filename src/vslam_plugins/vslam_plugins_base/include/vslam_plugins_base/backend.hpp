@@ -23,6 +23,7 @@
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/map.hpp"
 #include "vslam_datastructure/point.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_plugins_base/base.hpp"
 
 namespace vslam_backend {
@@ -40,14 +41,9 @@ namespace vslam_backend {
 
       /// Add a loop constraint and run pose-graph optimization
       /**
-       * \param[in] kf_id_1 the first keyframe id
-       * \param[in] kf_id_2 the second keyframe id
-       * \param[in] T_1_2 relative transformation from the first to the second keyframe
-       * \param[in] sim3_scale the similarity transform scale
+       * \param[in] sim3_constraint relative transformation and scale between two keyframes
        */
-      virtual void addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                     const cv::Mat& T_1_2, const double sim3_scale)
-          = 0;
+      virtual void addLoopConstraint(const vslam_datastructure::Sim3Constraint& sim3_constraint) = 0;
 
       /// Destructor
       virtual ~Backend() {}

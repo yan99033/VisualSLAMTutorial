@@ -85,24 +85,21 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void IndirectOptimizer::addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                            const cv::Mat& T_1_2, const double sim3_scale) {
+  void IndirectOptimizer::addLoopConstraint(const vslam_datastructure::Sim3Constraint& sim3_constraint) {
     if (loop_optimization_running_) {
       return;
     }
 
-    // Check if the keyframes exist
-    auto kf1 = map_->getKeyframe(kf_id_1);
-    auto kf2 = map_->getKeyframe(kf_id_2);
-
-    if (!kf1 || !kf2 || kf1->isBad() || kf2->isBad()) {
+    // Check if the keyframes are good
+    if (!sim3_constraint.keyframe1 || !sim3_constraint.keyframe2 || sim3_constraint.keyframe1->isBad()
+        || sim3_constraint.keyframe2->isBad()) {
       return;
     }
 
     loop_optimization_running_ = true;
 
     auto keyframes = map_->keyframes();
-    runPoseGraphOptimizationImpl(kf_id_1, kf_id_2, T_1_2, sim3_scale, keyframes);
+    runPoseGraphOptimizationImpl(sim3_constraint, keyframes);
 
     map_->cleanUpStaleKeyframesMappoints();
 

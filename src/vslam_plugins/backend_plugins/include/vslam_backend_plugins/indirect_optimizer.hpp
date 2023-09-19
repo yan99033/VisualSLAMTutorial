@@ -27,6 +27,7 @@
 #include "vslam_backend_plugins/backend.hpp"
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/map.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_plugins_base/backend.hpp"
 
 namespace vslam_backend_plugins {
@@ -49,13 +50,9 @@ namespace vslam_backend_plugins {
 
     /// Add a loop constraint and run pose-graph optimization
     /**
-     * \param[in] kf_id_1 the first keyframe id
-     * \param[in] kf_id_2 the second keyframe id
-     * \param[in] T_1_2 relative transformation from the first to the second keyframe
-     * \param[in] sim3_scale the similarity transform scale
+     * \param[in] sim3_constraint relative transformation and scale between two keyframes
      */
-    void addLoopConstraint(const long unsigned int kf_id_1, const long unsigned int kf_id_2, const cv::Mat& T_1_2,
-                           const double sim3_scale) override;
+    void addLoopConstraint(const vslam_datastructure::Sim3Constraint& sim3_constraint) override;
 
     /// Get the plugin name
     inline std::string getPluginName() override { return "vslam_backend_plugins::IndirectOptimizer"; }

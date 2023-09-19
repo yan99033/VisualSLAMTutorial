@@ -71,6 +71,21 @@ namespace vslam_datastructure {
   using CoreMpsSet = std::unordered_set<MapPointSharedPtr>;
   using ProjectionSet = std::set<PointWeakPtr, std::owner_less<PointWeakPtr>>;
 
+  /// Sim3 constraint between two keyframes
+  struct Sim3Constraint {
+    /// First keyframe
+    FrameSharedPtr keyframe1;
+
+    /// Second keyframe
+    FrameSharedPtr keyframe2;
+
+    /// Relative transformation from the first to the second keyframe
+    cv::Mat T_1_2;
+
+    /// Similarity transform scale
+    double scale;
+  };
+
 }  // namespace vslam_datastructure
 
 #endif  // VSLAM_DATASTRUCTURE__TYPEDEFS_HPP_

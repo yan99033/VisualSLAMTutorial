@@ -60,8 +60,7 @@ namespace vslam_backend_plugins {
     }
   }
 
-  void Optimizer::runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                               const cv::Mat& T_1_2, const double sim3_scale,
+  void Optimizer::runPoseGraphOptimizationImpl(const vslam_datastructure::Sim3Constraint& sim3_constraint,
                                                std::list<vslam_datastructure::Frame::SharedPtr>& keyframes) {
     if (!map_) {
       std::cerr << "Map is not set. Not running pose graph optimizartion." << std::endl;
@@ -74,7 +73,7 @@ namespace vslam_backend_plugins {
 
     // Create vertices
     unsigned long int vertex_edge_id{0};
-    std::unordered_map<long unsigned int, g2o::VertexSim3Expmap*> kf_vertices;
+    std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSim3Expmap*> kf_vertices;
     for (const auto& kf : keyframes) {
       if (kf->isBad()) {
         continue;
@@ -87,7 +86,7 @@ namespace vslam_backend_plugins {
       v_sim3->setMarginalized(false);
       optimizer.addVertex(v_sim3);
 
-      kf_vertices[kf->id()] = v_sim3;
+      kf_vertices[kf] = v_sim3;
 
       if (kf->active_tracking_state) {
         break;
@@ -95,17 +94,18 @@ namespace vslam_backend_plugins {
     }
 
     // If the loop edge cannot be established
-    if (kf_vertices.find(kf_id_1) == kf_vertices.end() || kf_vertices.find(kf_id_2) == kf_vertices.end()) {
+    if (kf_vertices.find(sim3_constraint.keyframe1) == kf_vertices.end()
+        || kf_vertices.find(sim3_constraint.keyframe2) == kf_vertices.end()) {
       return;
     }
 
     // Create edges
     for (const auto& kf : keyframes) {
-      if (kf->isBad() || kf_vertices.find(kf->id()) == kf_vertices.end()) {
+      if (kf->isBad() || kf_vertices.find(kf) == kf_vertices.end()) {
         continue;
       }
 
-      auto v_sim3_this = kf_vertices.at(kf->id());
+      auto v_sim3_this = kf_vertices.at(kf);
 
       if (kf->nearby_keyframes.empty()) {
         kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf);
@@ -118,7 +118,7 @@ namespace vslam_backend_plugins {
 
       bool need_recalculating_nearby_keyframes{false};
       for (const auto& other_kf : kf->nearby_keyframes) {
-        if (kf_vertices.find(other_kf->id()) == kf_vertices.end()) {
+        if (kf_vertices.find(other_kf) == kf_vertices.end()) {
           continue;
         }
 
@@ -129,7 +129,7 @@ namespace vslam_backend_plugins {
 
         cv::Mat T_this_other = kf->T_f_w() * other_kf->T_w_f();
 
-        auto v_sim3_other = kf_vertices.at(other_kf->id());
+        auto v_sim3_other = kf_vertices.at(other_kf);
 
         g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
         e_sim3->setId(vertex_edge_id++);
@@ -147,7 +147,7 @@ namespace vslam_backend_plugins {
       }
 
       for (auto it = kf->loop_keyframes.begin(); it != kf->loop_keyframes.end();) {
-        if (kf_vertices.find((*it)->id()) == kf_vertices.end()) {
+        if (kf_vertices.find(*it) == kf_vertices.end()) {
           ++it;
           continue;
         }
@@ -160,7 +160,7 @@ namespace vslam_backend_plugins {
 
         cv::Mat T_this_other = kf->T_f_w() * (*it)->T_w_f();
 
-        auto v_sim3_other = kf_vertices.at((*it)->id());
+        auto v_sim3_other = kf_vertices.at(*it);
 
         g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
         e_sim3->setId(vertex_edge_id++);
@@ -179,13 +179,13 @@ namespace vslam_backend_plugins {
       }
     }
 
-    auto v_sim3_1 = kf_vertices.at(kf_id_1);
-    auto v_sim3_2 = kf_vertices.at(kf_id_2);
+    auto v_sim3_1 = kf_vertices.at(sim3_constraint.keyframe1);
+    auto v_sim3_2 = kf_vertices.at(sim3_constraint.keyframe2);
     g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
     e_sim3->setId(vertex_edge_id++);
     e_sim3->setVertex(0, v_sim3_1);
     e_sim3->setVertex(1, v_sim3_2);
-    e_sim3->setMeasurement(utils::cvMatToSim3(T_1_2, sim3_scale).inverse());
+    e_sim3->setMeasurement(utils::cvMatToSim3(sim3_constraint.T_1_2, sim3_constraint.scale).inverse());
     e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
 
     optimizer.addEdge(e_sim3);
@@ -203,9 +203,7 @@ namespace vslam_backend_plugins {
     }
 
     // Recalculate SE(3) poses and map points in their host keyframe
-    for (const auto& [kf_id, kf_vertex] : kf_vertices) {
-      auto kf = map_->getKeyframe(kf_id);
-
+    for (const auto& [kf, kf_vertex] : kf_vertices) {
       // If the keyframe is being used or optimized
       if (!kf || kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
         continue;
@@ -226,12 +224,8 @@ namespace vslam_backend_plugins {
     }
 
     // Add the loop keyframe
-    auto kf_1 = map_->getKeyframe(kf_id_1);
-    auto kf_2 = map_->getKeyframe(kf_id_2);
-    if (kf_1 && kf_2) {
-      kf_1->loop_keyframes.insert(kf_2);
-      kf_2->loop_keyframes.insert(kf_1);
-    }
+    sim3_constraint.keyframe1->loop_keyframes.insert(sim3_constraint.keyframe2);
+    sim3_constraint.keyframe2->loop_keyframes.insert(sim3_constraint.keyframe1);
   }
 
 }  // namespace vslam_backend_plugins

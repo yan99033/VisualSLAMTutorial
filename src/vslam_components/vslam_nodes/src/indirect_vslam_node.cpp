@@ -363,7 +363,7 @@ namespace vslam_components {
               bool refresh_visual{false};
               if (curr_kf_id - last_kf_loop_found_ > skip_n_after_loop_found_) {
                 // Run pose-graph optimization
-                backend_->addLoopConstraint(prev_kf_id, curr_kf_id, T_p_c, scale);
+                backend_->addLoopConstraint({previous_keyframe, current_keyframe, T_p_c, scale});
                 last_kf_loop_found_ = curr_kf_id;
 
                 // Fuse the matched new map points with the existing ones

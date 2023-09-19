@@ -22,6 +22,7 @@
 
 #include "vslam_datastructure/frame.hpp"
 #include "vslam_datastructure/map.hpp"
+#include "vslam_datastructure/typedefs.hpp"
 #include "vslam_plugins_base/backend.hpp"
 
 namespace vslam_backend_plugins {
@@ -40,14 +41,10 @@ namespace vslam_backend_plugins {
 
       /// Implementation of pose graph optimization
       /**
-       * \param[in] kf_id_1 the first keyframe id of the loop constraint
-       * \param[in] kf_id_2 the second keyframe id of the loop constraint
-       * \param[in] T_1_2 the relative pose constraint
-       * \param[in] sim3_scale the Sim(3) scale of the loop constraint
+       * \param[in] sim3_constraint relative transformation and scale between two keyframes
        * \param[in,out] keyframes the keyframes in the map
        */
-      virtual void runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                                const cv::Mat& T_1_2, const double sim3_scale,
+      virtual void runPoseGraphOptimizationImpl(const vslam_datastructure::Sim3Constraint& sim3_constraint,
                                                 std::list<vslam_datastructure::Frame::SharedPtr>& keyframes)
           = 0;
     };
@@ -68,14 +65,10 @@ namespace vslam_backend_plugins {
 
     /// Implementation of pose graph optimization
     /**
-     * \param[in] kf_id_1 the first keyframe id of the loop constraint
-     * \param[in] kf_id_2 the second keyframe id of the loop constraint
-     * \param[in] T_1_2 the relative pose constraint
-     * \param[in] sim3_scale the Sim(3) scale of the loop constraint
+     * \param[in] sim3_constraint relative transformation and scale between two keyframes
      * \param[in,out] keyframes the keyframes in the map
      */
-    void runPoseGraphOptimizationImpl(const long unsigned int kf_id_1, const long unsigned int kf_id_2,
-                                      const cv::Mat& T_1_2, const double sim3_scale,
+    void runPoseGraphOptimizationImpl(const vslam_datastructure::Sim3Constraint& sim3_constraint,
                                       std::list<vslam_datastructure::Frame::SharedPtr>& keyframes) override;
 
     /// (Non-owning) map comprising the keyframes
