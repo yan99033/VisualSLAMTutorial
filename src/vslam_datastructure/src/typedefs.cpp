@@ -32,11 +32,6 @@ namespace {
 }  // namespace
 
 namespace vslam_datastructure {
-
-  size_t FrameHash::operator()(const Frame::SharedPtr& frame) const noexcept {
-    return std::hash<long unsigned int>()(frame->id());
-  }
-
   size_t PointFramePairHash::operator()(const PointFramePair& point_frame_pair) const noexcept {
     size_t hash{0};
     hash_combine(hash, point_frame_pair.first);

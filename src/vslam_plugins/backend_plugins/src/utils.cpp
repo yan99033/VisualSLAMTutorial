@@ -359,8 +359,7 @@ namespace vslam_backend_plugins {
         return vslam_datastructure::FrameSet();
       }
 
-      std::unordered_map<vslam_datastructure::Frame::SharedPtr, size_t, vslam_datastructure::FrameHash>
-          projection_counts;
+      std::unordered_map<vslam_datastructure::Frame::SharedPtr, size_t> projection_counts;
 
       for (const auto& pt : frame->points()) {
         if (!pt->hasMappoint() || (!pt->isMappointHost() && use_host_mps)) {

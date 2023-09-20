@@ -51,10 +51,6 @@ namespace vslam_datastructure {
   using Point3dPairs = std::vector<std::pair<cv::Point3d, cv::Point3d>>;
   using KeyPoints = std::vector<cv::KeyPoint>;
 
-  struct FrameHash {
-    size_t operator()(const FrameSharedPtr& point) const noexcept;
-  };
-
   struct PointFramePairHash {
     size_t operator()(const PointFramePair& point_frame_pair) const noexcept;
   };
