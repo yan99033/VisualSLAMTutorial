@@ -337,59 +337,57 @@ namespace vslam_components {
         place_recognition_->addToDatabase(curr_kf_id, visual_features);
 
         // Verify any potential loops
-        if (results.size() > 0) {
-          for (const auto& [prev_kf_id, score] : results) {
-            const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
+        for (const auto& [prev_kf_id, score] : results) {
+          const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
 
-            if (!previous_keyframe || previous_keyframe->isBad()) {
-              continue;
+          if (!previous_keyframe || previous_keyframe->isBad()) {
+            continue;
+          }
+
+          cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
+          double scale{0.0};
+          RCLCPP_DEBUG(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
+                       score);
+          vslam_datastructure::PointMappointPairs point_mappoint_pairs;
+          if (verifyLoop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, point_mappoint_pairs)) {
+            RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
+                        prev_kf_id, score, scale);
+
+            // Keep the keyframe so it can be used for relocalization
+            {
+              std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
+              loop_keyframe_ = previous_keyframe;
             }
 
-            cv::Mat T_p_c{cv::Mat::eye(4, 4, CV_64F)};
-            double scale{0.0};
-            RCLCPP_DEBUG(this->get_logger(), "Trying to find a loop: %lu <-> %lu. (Score: %f)", curr_kf_id, prev_kf_id,
-                         score);
-            vslam_datastructure::PointMappointPairs point_mappoint_pairs;
-            if (verifyLoop(current_keyframe.get(), previous_keyframe.get(), T_p_c, scale, point_mappoint_pairs)) {
-              RCLCPP_INFO(this->get_logger(), "Found a loop: %lu <-> %lu. (Score: %f) (Scale: %f)", curr_kf_id,
-                          prev_kf_id, score, scale);
+            bool refresh_visual{false};
+            if (curr_kf_id - last_kf_loop_found_ > skip_n_after_loop_found_) {
+              // Run pose-graph optimization
+              backend_->addLoopConstraint({previous_keyframe, current_keyframe, T_p_c, scale});
+              last_kf_loop_found_ = curr_kf_id;
 
-              // Keep the keyframe so it can be used for relocalization
-              {
-                std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
-                loop_keyframe_ = previous_keyframe;
+              // Fuse the matched new map points with the existing ones
+              if (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state) {
+                previous_keyframe->fuseMappoints(point_mappoint_pairs);
+
+                refresh_visual = true;
               }
 
-              bool refresh_visual{false};
-              if (curr_kf_id - last_kf_loop_found_ > skip_n_after_loop_found_) {
-                // Run pose-graph optimization
-                backend_->addLoopConstraint({previous_keyframe, current_keyframe, T_p_c, scale});
-                last_kf_loop_found_ = curr_kf_id;
-
+            } else {
+              // The relative scale has to small to fuse the map points
+              if ((scale < 1.1 && scale > 0.9)
+                  && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
                 // Fuse the matched new map points with the existing ones
-                if (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state) {
-                  previous_keyframe->fuseMappoints(point_mappoint_pairs);
+                previous_keyframe->fuseMappoints(point_mappoint_pairs);
 
-                  refresh_visual = true;
-                }
-
-              } else {
-                // The relative scale has to small to fuse the map points
-                if ((scale < 1.1 && scale > 0.9)
-                    && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
-                  // Fuse the matched new map points with the existing ones
-                  previous_keyframe->fuseMappoints(point_mappoint_pairs);
-
-                  refresh_visual = true;
-                }
+                refresh_visual = true;
               }
+            }
 
-              if (refresh_visual) {
-                // Refresh the display
-                const auto keyframe_msgs = map_.getAllKeyframeMsgs();
+            if (refresh_visual) {
+              // Refresh the display
+              const auto keyframe_msgs = map_.getAllKeyframeMsgs();
 
-                visualizer_->replaceAllKeyframes(keyframe_msgs);
-              }
+              visualizer_->replaceAllKeyframes(keyframe_msgs);
             }
           }
         }
