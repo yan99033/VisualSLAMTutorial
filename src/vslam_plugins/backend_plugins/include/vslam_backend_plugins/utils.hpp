@@ -58,7 +58,13 @@ namespace vslam_backend_plugins {
                                 const vslam_datastructure::CoreMpsSet& core_mappoints, g2o::SparseOptimizer& optimizer,
                                 const double huber_kernel_delta, types::SparseBAResults& results);
 
+    void constructPoseGraph(const std::list<vslam_datastructure::Frame::SharedPtr>& keyframes,
+                            const vslam_datastructure::Sim3Constraint& sim3_constraint, g2o::SparseOptimizer& optimizer,
+                            types::poseGraphOptimizationResults& results);
+
     void transferOptimizedSparseBAResults(const types::SparseBAResults& results, const double huber_kernel_delta_sq);
+
+    void transferOptimizedPoseGraphResults(const types::poseGraphOptimizationResults& results);
 
     /// Get the nearby (key)frames based on the map point projections
     /**

@@ -111,7 +111,7 @@ namespace vslam_backend_plugins {
         }
 
         g2o::VertexPointXYZ* mp_vertex = new g2o::VertexPointXYZ();
-        results.mappoint_vertices[mp_vertex] = mp;
+        results.mappoint_vertices[mp] = mp_vertex;
         mp_vertex->setEstimate(vslam_utils::conversions::cvPoint3dToEigenVector3d(mp->pos()));
         mp_vertex->setId(vertex_edge_id++);
         mp_vertex->setMarginalized(true);
@@ -130,7 +130,7 @@ namespace vslam_backend_plugins {
             kf_vertex->setId(vertex_edge_id++);
             if (core_keyframes.find(frame) != core_keyframes.end()) {
               // Core keyframes
-              results.keyframe_vertices[kf_vertex] = frame;
+              results.keyframe_vertices[frame] = kf_vertex;
               kf_vertex->setFixed(frame->active_tracking_state);
             } else {
               // Non-core keyframes
@@ -164,9 +164,131 @@ namespace vslam_backend_plugins {
       }
     }
 
+    void constructPoseGraph(const std::list<vslam_datastructure::Frame::SharedPtr>& keyframes,
+                            const vslam_datastructure::Sim3Constraint& sim3_constraint, g2o::SparseOptimizer& optimizer,
+                            types::poseGraphOptimizationResults& results) {
+      // Create vertices
+      unsigned long int vertex_edge_id{0};
+      for (const auto& kf : keyframes) {
+        if (kf->isBad()) {
+          continue;
+        }
+
+        g2o::VertexSim3Expmap* v_sim3 = new g2o::VertexSim3Expmap();
+        v_sim3->setId(vertex_edge_id++);
+        v_sim3->setEstimate(utils::cvMatToSim3(kf->T_f_w(), 1.0));
+        v_sim3->setFixed(kf->active_tracking_state);
+        v_sim3->setMarginalized(false);
+        optimizer.addVertex(v_sim3);
+
+        results[kf] = v_sim3;
+
+        if (kf == sim3_constraint.keyframe2 || kf->active_tracking_state) {
+          break;
+        }
+      }
+
+      // If the loop edge cannot be established
+      if (results.find(sim3_constraint.keyframe1) == results.end()
+          || results.find(sim3_constraint.keyframe2) == results.end()) {
+        return;
+      }
+
+      // Create edges
+      for (const auto& kf : keyframes) {
+        if (kf->isBad() || results.find(kf) == results.end()) {
+          continue;
+        }
+
+        auto v_sim3_this = results.at(kf);
+
+        if (kf->nearby_keyframes.empty()) {
+          kf->nearby_keyframes = utils::getFrameMappointProjectedFrames(kf);
+        }
+
+        if (kf->nearby_keyframes.size() < 3) {
+          kf->setBad();
+          continue;
+        }
+
+        bool need_recalculating_nearby_keyframes{false};
+        for (const auto& other_kf : kf->nearby_keyframes) {
+          if (results.find(other_kf) == results.end()) {
+            continue;
+          }
+
+          if (other_kf->isBad()) {
+            need_recalculating_nearby_keyframes = true;
+            continue;
+          }
+
+          cv::Mat T_this_other = kf->T_f_w() * other_kf->T_w_f();
+
+          auto v_sim3_other = results.at(other_kf);
+
+          g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+          e_sim3->setId(vertex_edge_id++);
+          e_sim3->setVertex(0, v_sim3_this);
+          e_sim3->setVertex(1, v_sim3_other);
+          e_sim3->setMeasurement(utils::cvMatToSim3(T_this_other, 1.0).inverse());
+          e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+          optimizer.addEdge(e_sim3);
+        }
+
+        // Recalculate the nearby keyframes if there are new bad keyframes
+        if (need_recalculating_nearby_keyframes) {
+          kf->nearby_keyframes.clear();
+        }
+
+        for (auto it = kf->loop_keyframes.begin(); it != kf->loop_keyframes.end();) {
+          if (results.find(*it) == results.end()) {
+            ++it;
+            continue;
+          }
+
+          if ((*it)->isBad()) {
+            it = kf->loop_keyframes.erase(it);
+            ++it;
+            continue;
+          }
+
+          cv::Mat T_this_other = kf->T_f_w() * (*it)->T_w_f();
+
+          auto v_sim3_other = results.at(*it);
+
+          g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+          e_sim3->setId(vertex_edge_id++);
+          e_sim3->setVertex(0, v_sim3_this);
+          e_sim3->setVertex(1, v_sim3_other);
+          e_sim3->setMeasurement(utils::cvMatToSim3(T_this_other, 1.0).inverse());
+          e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+          optimizer.addEdge(e_sim3);
+
+          ++it;
+        }
+
+        if (kf == sim3_constraint.keyframe2 || kf->active_tracking_state) {
+          break;
+        }
+      }
+
+      auto v_sim3_1 = results.at(sim3_constraint.keyframe1);
+      auto v_sim3_2 = results.at(sim3_constraint.keyframe2);
+      g2o::EdgeSim3* e_sim3 = new g2o::EdgeSim3();
+      e_sim3->setId(vertex_edge_id++);
+      e_sim3->setVertex(0, v_sim3_1);
+      e_sim3->setVertex(1, v_sim3_2);
+      e_sim3->setMeasurement(utils::cvMatToSim3(sim3_constraint.T_1_2, sim3_constraint.scale).inverse());
+      e_sim3->information() = Eigen::Matrix<double, 7, 7>::Identity();
+
+      optimizer.addEdge(e_sim3);
+    }
+
     void transferOptimizedSparseBAResults(const types::SparseBAResults& results, const double huber_kernel_delta_sq) {
       // Update keyframes
-      for (auto& [kf_vertex, kf_p] : results.keyframe_vertices) {
+      for (auto& [kf_p, kf_vertex] : results.keyframe_vertices) {
         auto T_f_w = kf_vertex->estimate();
         cv::Mat cv_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(
             T_f_w.rotation().toRotationMatrix(), T_f_w.translation());
@@ -188,7 +310,11 @@ namespace vslam_backend_plugins {
       }
 
       // Update map points
-      for (auto& [mp_vertex, mp_p] : results.mappoint_vertices) {
+      for (auto& [mp_p, mp_vertex] : results.mappoint_vertices) {
+        if (!mp_vertex) {
+          continue;
+        }
+
         auto mp = mp_vertex->estimate();
         if (mp_p && mp.hasNaN()) {
           mp_p->setOutlier();
@@ -200,6 +326,29 @@ namespace vslam_backend_plugins {
 
           mp_p->setPos(pt_3d);
         }
+      }
+    }
+
+    void transferOptimizedPoseGraphResults(const types::poseGraphOptimizationResults& results) {
+      // Recalculate SE(3) poses and map points in their host keyframe
+      for (const auto& [kf, kf_vertex] : results) {
+        // If the keyframe is being used or optimized
+        if (!kf_vertex || !kf || kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
+          continue;
+        }
+
+        // calculate the pose and scale
+        const auto g2o_S_f_w = kf_vertex->estimate();
+        const cv::Mat temp_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(
+            g2o_S_f_w.rotation().toRotationMatrix(), g2o_S_f_w.translation());
+        const double scale = g2o_S_f_w.scale();
+
+        cv::Mat T_f_w = temp_T_f_w.clone();
+        T_f_w.rowRange(0, 3).colRange(3, 4) /= scale;
+        cv::Mat S_f_w = temp_T_f_w.clone();
+        S_f_w.rowRange(0, 3).colRange(0, 3) *= scale;
+
+        kf->updateSim3PoseAndMps(S_f_w, T_f_w);
       }
     }
 

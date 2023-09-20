@@ -32,14 +32,17 @@ namespace vslam_backend_plugins {
     /// map points and projections in the visual SLAM map
     struct SparseBAResults {
       /// Map from the g2o map point vertices to the map points
-      std::unordered_map<g2o::VertexPointXYZ*, vslam_datastructure::MapPoint::SharedPtr> mappoint_vertices;
+      std::unordered_map<vslam_datastructure::MapPoint::SharedPtr, g2o::VertexPointXYZ*> mappoint_vertices;
 
       /// Map from the g2o frame vertices to the keyframes
-      std::unordered_map<g2o::VertexSE3Expmap*, vslam_datastructure::Frame::SharedPtr> keyframe_vertices;
+      std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> keyframe_vertices;
 
       /// Map from the g2o edges to the map point projections
       std::unordered_map<g2o::EdgeSE3ProjectXYZ*, vslam_datastructure::PointMappointPair> edges;
     };
+
+    using poseGraphOptimizationResults
+        = std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSim3Expmap*>;
   }  // namespace types
 }  // namespace vslam_backend_plugins
 
