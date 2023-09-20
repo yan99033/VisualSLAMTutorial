@@ -21,6 +21,7 @@
 #define VSLAM_UTILS__IO_HPP_
 
 #include <string>
+#include <vector>
 
 namespace vslam_utils {
 

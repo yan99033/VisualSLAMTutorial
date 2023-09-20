@@ -1,5 +1,6 @@
 #include "vslam_utils/io.hpp"
 
+#include <algorithm>
 #include <filesystem>
 
 namespace vslam_utils {
