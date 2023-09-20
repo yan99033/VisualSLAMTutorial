@@ -183,7 +183,7 @@ namespace vslam_backend_plugins {
 
         results[kf] = v_sim3;
 
-        if (kf == sim3_constraint.keyframe2 || kf->active_tracking_state) {
+        if (kf->active_tracking_state) {
           break;
         }
       }
@@ -269,7 +269,7 @@ namespace vslam_backend_plugins {
           ++it;
         }
 
-        if (kf == sim3_constraint.keyframe2 || kf->active_tracking_state) {
+        if (kf->active_tracking_state) {
           break;
         }
       }
