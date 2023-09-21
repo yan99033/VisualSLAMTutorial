@@ -91,8 +91,7 @@ namespace vslam_backend_plugins {
     }
 
     // Check if the keyframes are good
-    if (!sim3_constraint.keyframe1 || !sim3_constraint.keyframe2 || sim3_constraint.keyframe1->isBad()
-        || sim3_constraint.keyframe2->isBad()) {
+    if (sim3_constraint.keyframe1->isBad() || sim3_constraint.keyframe2->isBad()) {
       return;
     }
 

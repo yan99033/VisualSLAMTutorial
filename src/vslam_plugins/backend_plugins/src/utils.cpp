@@ -91,7 +91,7 @@ namespace vslam_backend_plugins {
       std::unordered_map<vslam_datastructure::Frame::SharedPtr, g2o::VertexSE3Expmap*> existing_kf_vertices;
       unsigned long int vertex_edge_id{0};
       for (auto& mp : core_mappoints) {
-        if (mp == nullptr || mp->isOutlier()) {
+        if (mp->isOutlier()) {
           continue;
         }
 
@@ -289,39 +289,36 @@ namespace vslam_backend_plugins {
     void transferOptimizedSparseBAResults(const types::SparseBAResults& results, const double huber_kernel_delta_sq) {
       // Update keyframes
       for (auto& [kf_p, kf_vertex] : results.keyframe_vertices) {
+        assert(kf_vertex != nullptr);
+
         auto T_f_w = kf_vertex->estimate();
         cv::Mat cv_T_f_w = vslam_utils::conversions::eigenRotationTranslationToCvMat(
             T_f_w.rotation().toRotationMatrix(), T_f_w.translation());
 
-        if (kf_p) {
-          kf_p->setPose(cv_T_f_w);
-        }
+        kf_p->setPose(cv_T_f_w);
       }
 
       // Check projections
       for (auto& [e, pt_mp_pair] : results.edges) {
+        assert(e != nullptr);
         if (!e->isDepthPositive() || e->chi2() > huber_kernel_delta_sq) {
           auto& [pt_p, mp_p] = pt_mp_pair;
 
-          if (mp_p && pt_p) {
-            mp_p->removeProjection(pt_p);
-          }
+          mp_p->removeProjection(pt_p);
         }
       }
 
       // Update map points
       for (auto& [mp_p, mp_vertex] : results.mappoint_vertices) {
-        if (!mp_vertex) {
-          continue;
-        }
+        assert(mp_vertex != nullptr);
 
         auto mp = mp_vertex->estimate();
-        if (mp_p && mp.hasNaN()) {
+        if (mp.hasNaN()) {
           mp_p->setOutlier();
           continue;
         }
 
-        if (mp_p && !mp_p->isOutlier()) {
+        if (!mp_p->isOutlier()) {
           auto pt_3d = vslam_utils::conversions::eigenVector3dToCvPoint3d(mp);
 
           mp_p->setPos(pt_3d);
@@ -332,8 +329,10 @@ namespace vslam_backend_plugins {
     void transferOptimizedPoseGraphResults(const types::poseGraphOptimizationResults& results) {
       // Recalculate SE(3) poses and map points in their host keyframe
       for (const auto& [kf, kf_vertex] : results) {
+        assert(kf_vertex != nullptr);
+
         // If the keyframe is being used or optimized
-        if (!kf_vertex || !kf || kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
+        if (kf->active_tracking_state || kf->active_ba_state || kf->isBad()) {
           continue;
         }
 
