@@ -203,7 +203,7 @@ namespace vslam_datastructure {
     for (size_t idx = 0; idx < points.size(); idx++) {
       assert(point_set_.find(points[idx]) != point_set_.end());
 
-      if (!mappoints[idx].get()) {
+      if (!mappoints[idx]) {
         continue;
       }
 

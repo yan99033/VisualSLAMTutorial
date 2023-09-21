@@ -130,7 +130,7 @@ namespace vslam_datastructure {
     cleaning_stale_keyframes_mappoints_ = true;
 
     for (auto& kf_ptr : keyframes_) {
-      if (!kf_ptr.get() || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
+      if (!kf_ptr || kf_ptr->isBad() || kf_ptr->id() < min_kf_id) {
         continue;
       }
 

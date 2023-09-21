@@ -204,6 +204,7 @@ namespace vslam_components {
       size_t num_kf_mps{0};
       if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_kf_mps_, num_kf_mps)
           || rotation_angle > max_rotation_rad_) {
+        // TODO: refactor replacing the current keyframe with the current frame
         // Set the current frame as keyframe
         current_frame->setKeyframe();
         const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
@@ -248,7 +249,7 @@ namespace vslam_components {
         tracked = true;
         current_keyframe_->active_tracking_state = true;
       } else {
-        if (loop_keyframe_ != nullptr) {
+        if (loop_keyframe_) {
           // Track current frame relative to the keyframe found using place recognition
           std::lock_guard<std::mutex> lck(loop_keyframe_mutex_);
           if (trackCamera(loop_keyframe_.get(), current_frame.get(), T_c_p, matched_points)) {
@@ -257,7 +258,7 @@ namespace vslam_components {
             // Make the current keyframe the keyframe found using place recognition
             current_keyframe_ = loop_keyframe_;
             current_keyframe_->active_tracking_state = true;
-            loop_keyframe_ = nullptr;
+            loop_keyframe_.reset();
           }
         }
 
@@ -340,7 +341,7 @@ namespace vslam_components {
         for (const auto& [prev_kf_id, score] : results) {
           const auto previous_keyframe = map_.getKeyframe(prev_kf_id);
 
-          if (!previous_keyframe || previous_keyframe->isBad()) {
+          if (previous_keyframe->isBad()) {
             continue;
           }
 
@@ -374,6 +375,7 @@ namespace vslam_components {
 
             } else {
               // The relative scale has to small to fuse the map points
+              // TODO: try a smaller error (1.05, 0.95)
               if ((scale < 1.1 && scale > 0.9)
                   && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
                 // Fuse the matched new map points with the existing ones

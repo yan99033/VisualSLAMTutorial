@@ -129,7 +129,7 @@ namespace vslam_datastructure {
 
   bool Point::hasMappoint() {
     std::lock_guard<std::mutex> lck(mutex_);
-    if (mappoint_.get() && !mappoint_->isOutlier()) {
+    if (mappoint_ && !mappoint_->isOutlier()) {
       return true;
     } else {
       return false;
