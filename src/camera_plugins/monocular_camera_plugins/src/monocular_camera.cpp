@@ -22,39 +22,35 @@
 namespace monocular_camera_plugins {
 
   MonocularCamera::~MonocularCamera() {
-    if (params_fs_.isOpened()) {
-      params_fs_.release();
-    }
-
     if (video_capture_.isOpened()) {
       video_capture_.release();
     }
   }
 
   void MonocularCamera::initialize(const std::string& params_file) {
-    params_fs_ = cv::FileStorage(params_file, cv::FileStorage::READ);
+    cv::FileStorage params_fs(params_file, cv::FileStorage::READ);
 
-    if (!params_fs_.isOpened()) {
+    if (!params_fs.isOpened()) {
       throw std::runtime_error("failed to open " + params_file);
     }
 
     int camera_id;
-    params_fs_["camera_id"] >> camera_id;
-    params_fs_["image_height"] >> image_height_;
-    params_fs_["image_width"] >> image_width_;
+    params_fs["camera_id"] >> camera_id;
+    params_fs["image_height"] >> image_height_;
+    params_fs["image_width"] >> image_width_;
 
     openCamera(camera_id);
 
     cv::Mat K;
-    params_fs_["K"] >> K;
+    params_fs["K"] >> K;
 
     cv::Mat dist_coeffs;
-    params_fs_["D"] >> dist_coeffs;
+    params_fs["D"] >> dist_coeffs;
 
     undistorter_ = std::make_unique<vslam_utils::camera::Undistorter>(K, image_width_, image_height_, dist_coeffs);
     K_ = undistorter_->K();
 
-    params_fs_.release();
+    params_fs.release();
   }
 
   cv::Mat MonocularCamera::grabImage() {

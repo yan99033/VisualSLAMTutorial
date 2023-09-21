@@ -61,9 +61,6 @@ namespace monocular_camera_plugins {
      */
     void openCamera(int camera_id) override;
 
-    /// File storage object for keeping the parameters
-    cv::FileStorage params_fs_;
-
     /// Image height
     int image_height_{-1};
 

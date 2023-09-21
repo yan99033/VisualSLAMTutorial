@@ -23,8 +23,8 @@
 
 namespace monocular_camera_plugins {
   void CaliCam::initialize(const std::string& params_file) {
-    params_fs_ = cv::FileStorage(params_file, cv::FileStorage::READ);
-    if (!params_fs_.isOpened()) {
+    cv::FileStorage params_fs(params_file, cv::FileStorage::READ);
+    if (!params_fs.isOpened()) {
       throw std::runtime_error("failed to open " + params_file);
     }
     cv::Mat K;
@@ -36,18 +36,18 @@ namespace monocular_camera_plugins {
     int image_height_out;
     int image_width_out;
 
-    params_fs_["K"] >> K;
-    params_fs_["D"] >> dist_coeffs;
-    params_fs_["fov"] >> fov;
-    params_fs_["xi"] >> xi;
-    params_fs_["R"] >> R;
-    params_fs_["camera_id"] >> camera_id;
-    params_fs_["image_height_in"] >> image_height_;
-    params_fs_["image_width_in"] >> image_width_;
-    params_fs_["image_height_out"] >> image_height_out;
-    params_fs_["image_width_out"] >> image_width_out;
+    params_fs["K"] >> K;
+    params_fs["D"] >> dist_coeffs;
+    params_fs["fov"] >> fov;
+    params_fs["xi"] >> xi;
+    params_fs["R"] >> R;
+    params_fs["camera_id"] >> camera_id;
+    params_fs["image_height_in"] >> image_height_;
+    params_fs["image_width_in"] >> image_width_;
+    params_fs["image_height_out"] >> image_height_out;
+    params_fs["image_width_out"] >> image_width_out;
 
-    params_fs_.release();
+    params_fs.release();
 
     openCamera(camera_id);
 
