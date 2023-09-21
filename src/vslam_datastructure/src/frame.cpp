@@ -207,13 +207,23 @@ namespace vslam_datastructure {
         continue;
       }
 
-      // TODO: resolve the discrepancy if there is an existing map point
       if (!points[idx]->hasMappoint()) {
         // Create a new map point
         points[idx]->setMappoint(mappoints[idx]);
 
         if (set_host && !points[idx]->mappoint()->hasHost()) {
           points[idx]->mappoint()->setHostKeyframeId(id_);
+        }
+      } else {
+        auto existing_mp = points[idx]->mappoint()->pos();
+        auto curr_mp = mappoints[idx]->pos();
+
+        // Mark the map point as outlier if it is relatively far from the newly triangulated map point
+        if (cv::norm(existing_mp - curr_mp) > 0.1 * cv::norm(existing_mp)) {
+          points[idx]->mappoint()->setOutlier();
+        } else {
+          // Take the mean position if they are close
+          points[idx]->mappoint()->setPos((existing_mp + curr_mp) / 2.0);
         }
       }
     }
