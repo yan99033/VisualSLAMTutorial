@@ -375,8 +375,7 @@ namespace vslam_components {
 
             } else {
               // The relative scale has to small to fuse the map points
-              // TODO: try a smaller error (1.05, 0.95)
-              if ((scale < 1.1 && scale > 0.9)
+              if (abs(scale - 1.0) < 0.05
                   && (!previous_keyframe->active_ba_state && !previous_keyframe->active_tracking_state)) {
                 // Fuse the matched new map points with the existing ones
                 previous_keyframe->fuseMappoints(point_mappoint_pairs);
