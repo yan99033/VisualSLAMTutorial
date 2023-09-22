@@ -192,8 +192,6 @@ namespace vslam_components {
       /// Flag to enable place recognition
       bool enable_place_recognition_{false};
 
-      // TODO: consider using a factory class to load the plugins
-
       /// Feature extraction plugin loader
       pluginlib::ClassLoader<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_loader_{
           "vslam_plugins_base", "vslam_feature_extractor::base::FeatureExtractor"};
