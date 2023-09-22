@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>vslam_feature_matcher_plugins</name>
-  <version>1.0.1</version>
+  <version>0.1.1</version>
   <description>Feature matcher plugins to match features between two images</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
