@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>Plugins for monocular cameras to get images from cameras</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
-  <license>TODO: License declaration</license>
+  <license>GPL-3.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
