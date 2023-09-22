@@ -6,7 +6,7 @@
 
 - Use smart pointers to avoid illegal access to invalid memory addresses
 
-## Changed
+### Changed
 
 - Major refactoring to make functions available for downstream applications
 
