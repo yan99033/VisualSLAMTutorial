@@ -3,7 +3,7 @@
 <package format="3">
   <name>vslam_plugins_base</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Plugins that are available for visual SLAM</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
 

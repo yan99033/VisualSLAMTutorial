@@ -3,7 +3,7 @@
 <package format="3">
   <name>vslam_mapper_plugins</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Mapper plugins to recover the structure of the scene</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
 

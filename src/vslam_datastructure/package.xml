@@ -3,7 +3,7 @@
 <package format="3">
   <name>vslam_datastructure</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Datastructure and custom types used in visual SLAM nodes</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
 

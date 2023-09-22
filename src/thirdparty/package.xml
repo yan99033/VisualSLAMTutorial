@@ -3,7 +3,7 @@
 <package format="3">
   <name>thirdparty</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Thirdparty packages</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
 
