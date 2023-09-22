@@ -37,7 +37,7 @@ namespace vslam_mapper {
        * \param[in] T_2_1 camera pose from the first to second frame
        * \param[in] K camera matrix
        */
-      virtual vslam_datastructure::MapPoints map(vslam_datastructure::MatchedPoints& matched_points,
+      virtual vslam_datastructure::MapPoints map(const vslam_datastructure::MatchedPoints& matched_points,
                                                  const cv::Mat& T_1_w, const cv::Mat& T_2_1, const cv::Mat& K)
           = 0;
 

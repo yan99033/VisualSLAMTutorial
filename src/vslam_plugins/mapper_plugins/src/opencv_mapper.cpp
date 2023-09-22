@@ -68,7 +68,7 @@ namespace {
 }  // namespace
 
 namespace vslam_mapper_plugins {
-  vslam_datastructure::MapPoints OpenCVMapper::map(vslam_datastructure::MatchedPoints& matched_points,
+  vslam_datastructure::MapPoints OpenCVMapper::map(const vslam_datastructure::MatchedPoints& matched_points,
                                                    const cv::Mat& T_1_w, const cv::Mat& T_2_1, const cv::Mat& K) {
     // Preprocess the matched points for triangulation
     const auto [cv_points1, cv_points2] = getCorrespondences(matched_points);

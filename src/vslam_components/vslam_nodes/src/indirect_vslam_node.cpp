@@ -204,20 +204,7 @@ namespace vslam_components {
       size_t num_kf_mps{0};
       if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_kf_mps_, num_kf_mps)
           || rotation_angle > max_rotation_rad_) {
-        // TODO: refactor replacing the current keyframe with the current frame
-        // Set the current frame as keyframe
-        current_frame->setKeyframe();
-        const auto new_mps = mapper_->map(matched_points, T_p_w, T_c_p, current_frame->K());
-
-        const auto [points1, points2] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
-        current_keyframe_->setMappoints(new_mps, points1);
-        const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
-        current_frame->setMappoints(new_old_mps, points2, true);
-
-        map_.addKeyframe(current_frame);
-        current_keyframe_->active_tracking_state = false;
-        current_keyframe_ = current_frame;
-        current_keyframe_->active_tracking_state = true;
+        replaceKeyframe(current_frame, matched_points, T_c_p);
 
         // Run local BA
         backend_->runLocalBA();
@@ -269,19 +256,7 @@ namespace vslam_components {
           size_t num_kf_mps{0};
           if (!utils::numMpsInMatchPointsAboveThresh(matched_points, min_num_kf_mps_, num_kf_mps)
               || rotation_angle > max_rotation_rad_) {
-            // Set the current frame as keyframe
-            current_frame->setKeyframe();
-            const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_c_p, current_frame->K());
-
-            const auto [points1, points2] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
-            current_keyframe_->setMappoints(new_mps, points1);
-            const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
-            current_frame->setMappoints(new_old_mps, points2, true);
-
-            map_.addKeyframe(current_frame);
-            current_keyframe_->active_tracking_state = false;
-            current_keyframe_ = current_frame;
-            current_keyframe_->active_tracking_state = true;
+            replaceKeyframe(current_frame, matched_points, T_c_p);
           }
         }
       }
@@ -436,6 +411,24 @@ namespace vslam_components {
             = vslam_datastructure::utils::secondPointFirstMappointPairsFromMatchedPoints(matched_points);
         return true;
       }
+    }
+
+    void IndirectVSlamNode::replaceKeyframe(vslam_datastructure::Frame::SharedPtr new_keyframe,
+                                            const vslam_datastructure::MatchedPoints& matched_points,
+                                            const cv::Mat& T_new_old) {
+      // Set the current frame as keyframe
+      new_keyframe->setKeyframe();
+      const auto new_mps = mapper_->map(matched_points, current_keyframe_->T_f_w(), T_new_old, new_keyframe->K());
+
+      const auto [points1, points2] = vslam_datastructure::utils::splitMatchedPoints(matched_points);
+      current_keyframe_->setMappoints(new_mps, points1);
+      const auto new_old_mps = vslam_datastructure::utils::extractMappointsFromPoints(points1);
+      new_keyframe->setMappoints(new_old_mps, points2, true);
+
+      map_.addKeyframe(new_keyframe);
+      current_keyframe_->active_tracking_state = false;
+      current_keyframe_ = new_keyframe;
+      current_keyframe_->active_tracking_state = true;
     }
 
   }  // namespace vslam_nodes

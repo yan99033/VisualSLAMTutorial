@@ -168,6 +168,13 @@ namespace vslam_components {
                       const vslam_datastructure::Frame* const previous_keyframe, cv::Mat& T_c_p, double& scale,
                       vslam_datastructure::PointMappointPairs& point_mappoint_pairs);
 
+      /// Replace the current keyframe with the new keyframe
+      /**
+       * \param[in] new_keyframe the new keyframe to replace `current_keyframe_`
+       */
+      void replaceKeyframe(vslam_datastructure::Frame::SharedPtr new_keyframe,
+                           const vslam_datastructure::MatchedPoints& matched_points, const cv::Mat& T_new_old);
+
       /// The id of the keyframe successfully merged into the loop after place recognition and pose-graph optimization
       long unsigned int last_kf_loop_found_{0};
 
@@ -182,7 +189,10 @@ namespace vslam_components {
       /// Flag to exit the place recognition thread
       std::atomic_bool exit_thread_{false};
 
+      /// Flag to enable place recognition
       bool enable_place_recognition_{false};
+
+      // TODO: consider using a factory class to load the plugins
 
       /// Feature extraction plugin loader
       pluginlib::ClassLoader<vslam_feature_extractor::base::FeatureExtractor> feature_extractor_loader_{
