@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>data_loader_nodes</name>
-  <version>0.0.0</version>
+  <version>1.0.1</version>
   <description>Image frame loader to the visual SLAM pipeline</description>
   <maintainer email="yan99033@gmail.com">sy</maintainer>
   <license>GPL-3.0</license>
