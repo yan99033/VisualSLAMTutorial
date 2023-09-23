@@ -1,5 +1,9 @@
 <library path="vslam_feature_matcher_plugins">
   <class type="vslam_feature_matcher_plugins::OpenCVFeatureMatcher" base_class_type="vslam_feature_matcher::base::FeatureMatcher">
-    <description>This is a feature matcher plugin using the OpenCV library.</description>
+    <description>This is a feature descriptor matcher plugin using the OpenCV library.</description>
+  </class>
+
+    <class type="vslam_feature_matcher_plugins::LKOpticalFlowFeatureMatcher" base_class_type="vslam_feature_matcher::base::FeatureMatcher">
+    <description>This is a feature matcher plugin using Lucas-Kanade optical flow.</description>
   </class>
 </library>

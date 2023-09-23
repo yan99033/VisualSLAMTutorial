@@ -21,7 +21,7 @@ find_package(vslam_msgs REQUIRED)
 
 set(dependencies OpenCV pluginlib vslam_plugins_base vslam_datastructure vslam_msgs)
 
-set(sources src/opencv_feature_matcher.cpp)
+set(sources src/opencv_feature_matcher.cpp src/optical_flow_feature_matcher.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${sources})
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17) # Require C99 and C++17
